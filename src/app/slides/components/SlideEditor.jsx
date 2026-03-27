@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import SlidesSidebar from "./SlidesSidebar";
 import SlideCanvas from "./SlideCanvas";
+import EditorProvider from "./EditorContext";
 
 const SlideEditor = () => {
   const [slides, setSlides] = useState([
@@ -29,7 +30,7 @@ const SlideEditor = () => {
     const newBlock = {
       id: Date.now(),
       type: type,
-      content: "",
+      content: "<p></p>",
       important: false,
     };
 
@@ -43,8 +44,6 @@ const SlideEditor = () => {
 
       return slide;
     });
-
-    console.log("updatedSlides with new block", updatedSlides);
 
     setSlides(updatedSlides);
   };
@@ -71,8 +70,6 @@ const SlideEditor = () => {
       return slide;
     });
 
-    console.log("updatedSlides after updating block", updatedSlides);
-
     setSlides(updatedSlides);
   };
 
@@ -97,24 +94,25 @@ const SlideEditor = () => {
   };
 
   const activeSlide = slides.find((slide) => slide.id === activeSlideId);
-  console.log("active slide", activeSlide);
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
-      <SlidesSidebar
-        slides={slides}
-        activeSlideId={activeSlideId}
-        setActiveSlideId={setActiveSlideId}
-        addSlide={addSlide}
-      />
+    <EditorProvider>
+      <div style={{ display: "flex", height: "100vh" }}>
+        <SlidesSidebar
+          slides={slides}
+          activeSlideId={activeSlideId}
+          setActiveSlideId={setActiveSlideId}
+          addSlide={addSlide}
+        />
 
-      <SlideCanvas
-        slide={activeSlide}
-        addBlock={addBlock}
-        updateBlock={updateBlock}
-        toggleImportant={toggleImportant}
-      />
-    </div>
+        <SlideCanvas
+          slide={activeSlide}
+          addBlock={addBlock}
+          updateBlock={updateBlock}
+          toggleImportant={toggleImportant}
+        />
+      </div>
+    </EditorProvider>
   );
 };
 

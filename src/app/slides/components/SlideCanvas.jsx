@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import BlockSelector from "./BlockSelector";
 import BlockRenderer from "./blocks/BlockRenderer";
+import EditorToolBar from "./EditorToolBar";
 
 const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
   if (!slide) return null;
@@ -19,6 +20,8 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
           border: "1px solid #ccc",
         }}
       >
+        <EditorToolBar />
+
         <h2>{slide.title}</h2>
 
         {/* BLOCKS */}
@@ -26,13 +29,15 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
         {slide.blocks.length ? (
           <div>
             {slide.blocks.map((block) => {
-              <BlockRenderer
-                key={block.id}
-                block={block}
-                slideId={slide.id}
-                updateBlock={updateBlock}
-                toggleImportant={toggleImportant}
-              />;
+              return (
+                <BlockRenderer
+                  key={block.id}
+                  block={block}
+                  slideId={slide.id}
+                  updateBlock={updateBlock}
+                  toggleImportant={toggleImportant}
+                />
+              );
             })}
           </div>
         ) : (
@@ -40,7 +45,7 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
         )}
 
         <button
-          onClick={() => addBlock(slide.id)}
+          onClick={() => setShowSelector(true)}
           style={{ marginTop: "20px", padding: "10px 15px" }}
         >
           + Add Block

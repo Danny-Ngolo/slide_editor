@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 
 const SlidesSidebar = ({
@@ -11,7 +13,7 @@ const SlidesSidebar = ({
       style={{
         width: "250px",
         padding: "15px",
-        borderRight: "1px solid ccc",
+        borderRight: "1px solid #ccc",
       }}
     >
       <h3>Slides</h3>
@@ -21,8 +23,10 @@ const SlidesSidebar = ({
           style={{
             marginBottom: "5px",
             padding: "10px",
-            background: slide.id === activeSlideId ? "#eee" : "#fff",
+            color: slide.id === activeSlideId ? "#fff" : "#111",
+            background: slide.id === activeSlideId ? "#6a6afb" : "#bdbdfb",
           }}
+          onClick={() => setActiveSlideId(slide.id)}
         >
           {slide.title}
         </div>

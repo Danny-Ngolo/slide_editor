@@ -1,16 +1,21 @@
 "use client";
 
 import React from "react";
-import TextBlock from "./blocks/TextBlock";
-import QuizBlock from "./blocks/QuizBlock";
-import DividerBlock from "./blocks/DividerBlock";
-import ImageBlock from "./blocks/ImageBlock";
+import TextBlock from "./TextBlock";
+import QuizBlock from "./QuizBlock";
+import DividerBlock from "./DividerBlock";
+import ImageBlock from "./ImageBlock";
 import YoutubeBlock from "./YoutubeBlock";
 
-const BlockRenderer = ({ block, slideId, updateBlock }) => {
+const BlockRenderer = ({ block, slideId, updateBlock, toggleImportant }) => {
   if (block.type === "text") {
     return (
-      <TextBlock block={block} slideId={slideId} updateBlock={updateBlock} />
+      <TextBlock
+        block={block}
+        slideId={slideId}
+        updateBlock={updateBlock}
+        toggleImportant={toggleImportant}
+      />
     );
   }
 

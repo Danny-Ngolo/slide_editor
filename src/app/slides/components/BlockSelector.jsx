@@ -10,7 +10,9 @@ export default function BlockSelector({ addBlock }) {
     >
       <p style={{ marginBottom: "10px" }}>Choose block type</p>
 
-      <button onClick={() => addBlock("text")}>Text</button>
+      <button onClick={() => addBlock("text")} style={{ marginLeft: "5px" }}>
+        Text
+      </button>
       <button onClick={() => addBlock("image")} style={{ marginLeft: "5px" }}>
         Image
       </button>
@@ -22,6 +24,27 @@ export default function BlockSelector({ addBlock }) {
       </button>
       <button onClick={() => addBlock("divider")} style={{ marginLeft: "5px" }}>
         Divider
+      </button>
+      <button
+        onClick={() => addBlock("definition")}
+        style={{ marginLeft: "5px" }}
+      >
+        Definition
+      </button>
+      <button onClick={() => addBlock("example")} style={{ marginLeft: "5px" }}>
+        Example
+      </button>
+      <button
+        onClick={() => addBlock("important")}
+        style={{ marginLeft: "5px" }}
+      >
+        Important
+      </button>
+      <button
+        onClick={() => addBlock("exercise")}
+        style={{ marginLeft: "5px" }}
+      >
+        Exercise
       </button>
     </div>
   );
