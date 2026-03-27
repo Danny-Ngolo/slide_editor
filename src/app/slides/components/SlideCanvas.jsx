@@ -4,14 +4,15 @@ import React, { useState } from "react";
 import BlockSelector from "./BlockSelector";
 import BlockRenderer from "./blocks/BlockRenderer";
 import EditorToolBar from "./EditorToolBar";
+import InsertMenu from "./InsertMenu";
 
 const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
   if (!slide) return null;
 
-  const [showSelector, setShowSelector] = useState(false);
+  const [showInsertMenu, setShowInsertMenu] = useState(false);
 
   return (
-    <div style={{ padding: "40px", flex: "1" }}>
+    <div style={{ padding: "40px", flex: "1", position: "relative" }}>
       <div
         styles={{
           maxWidth: "800px",
@@ -45,20 +46,18 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
         )}
 
         <button
-          onClick={() => setShowSelector(true)}
+          onClick={() => setShowInsertMenu(true)}
           style={{ marginTop: "20px", padding: "10px 15px" }}
         >
           + Add Block
         </button>
 
-        {/* BLOCK SELECTOR */}
-
-        {showSelector && (
-          <BlockSelector
-            addBlock={(type) => {
+        {showInsertMenu && (
+          <InsertMenu
+            onSelect={(type) => {
               addBlock(slide.id, type);
-              setShowSelector(false);
             }}
+            onClose={() => setShowInsertMenu(false)}
           />
         )}
       </div>
