@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Type,
   Image,
@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 
 const InsertMenu = ({ onSelect, onClose }) => {
+  const menuRef = useRef(null);
+
   const items = [
     { type: "text", label: "Text", icon: Type },
     { type: "image", label: "Image", icon: Image },
@@ -22,8 +24,31 @@ const InsertMenu = ({ onSelect, onClose }) => {
     { type: "divider", label: "Divider", icon: Minus },
   ];
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef?.current && !menuRef?.current.contains(e.target)) {
+        onClose()
+      }
+    };
+
+    const handleEscapeKey = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      };
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscapeKey);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
+    }
+   }, []);
+
   return (
     <div
+      ref={menuRef}
       style={{
         position: "absolute",
         top: "40px",
@@ -34,12 +59,11 @@ const InsertMenu = ({ onSelect, onClose }) => {
         padding: "8px",
         width: "220px",
         boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-        zIndex: 100,
+        zIndex: 100
       }}
     >
       {items.map((item) => {
         const Icon = item.icon;
-        console.log("item", item);
 
         return (
           <div

@@ -26,7 +26,7 @@ const SlideEditor = () => {
     setSlides((prev) => [...prev, newSlide]);
   };
 
-  const addBlock = (slideId, type) => {
+  const addBlock = (slideId, type, index = null) => {
     const newBlock = {
       id: Date.now(),
       type: type,
@@ -36,9 +36,19 @@ const SlideEditor = () => {
 
     const updatedSlides = slides.map((slide) => {
       if (slide.id === slideId) {
+        let blocks = [...slide.blocks];
+
+        if (index === null) {
+          blocks.push(newBlock);
+        } else {
+          blocks.splice(index, 0, newBlock);
+        }
+
+        console.log("blocks after creation:", blocks);
+
         return {
           ...slide,
-          blocks: [...slide.blocks, newBlock],
+          blocks,
         };
       }
 

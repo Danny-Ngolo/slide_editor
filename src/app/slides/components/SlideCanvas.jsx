@@ -5,6 +5,7 @@ import BlockSelector from "./BlockSelector";
 import BlockRenderer from "./blocks/BlockRenderer";
 import EditorToolBar from "./EditorToolBar";
 import InsertMenu from "./InsertMenu";
+import InsertMenuBetween from "./InsertMenuBetween";
 
 const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
   if (!slide) return null;
@@ -29,15 +30,29 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
 
         {slide.blocks.length ? (
           <div>
-            {slide.blocks.map((block) => {
+            {slide.blocks.map((block, index) => {
               return (
-                <BlockRenderer
-                  key={block.id}
-                  block={block}
-                  slideId={slide.id}
-                  updateBlock={updateBlock}
-                  toggleImportant={toggleImportant}
-                />
+                <div key={block.id}>
+                  {index === 0 && (
+                    <InsertMenuBetween
+                      onInsert={(type) => addBlock(slide.id, type, 0)}
+                    />
+                  )}
+
+                  <BlockRenderer
+                    // key={block.id}
+                    block={block}
+                    slideId={slide.id}
+                    updateBlock={updateBlock}
+                    toggleImportant={toggleImportant}
+                  />
+
+                  {/* INSERT MENU AFTER EACH BLOCK */}
+
+                  <InsertMenuBetween
+                    onInsert={(type) => addBlock(slide.id, type, index + 1)}
+                  />
+                </div>
               );
             })}
           </div>
