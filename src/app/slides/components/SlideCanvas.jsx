@@ -43,6 +43,7 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
                     // key={block.id}
                     block={block}
                     slideId={slide.id}
+                    addBlock={addBlock}
                     updateBlock={updateBlock}
                     toggleImportant={toggleImportant}
                   />

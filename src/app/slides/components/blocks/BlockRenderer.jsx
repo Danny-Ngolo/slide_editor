@@ -7,12 +7,19 @@ import DividerBlock from "./DividerBlock";
 import ImageBlock from "./ImageBlock";
 import YoutubeBlock from "./YoutubeBlock";
 
-const BlockRenderer = ({ block, slideId, updateBlock, toggleImportant }) => {
+const BlockRenderer = ({
+  block,
+  slideId,
+  addBlock,
+  updateBlock,
+  toggleImportant,
+}) => {
   if (block.type === "text") {
     return (
       <TextBlock
         block={block}
         slideId={slideId}
+        addBlock={addBlock}
         updateBlock={updateBlock}
         toggleImportant={toggleImportant}
       />

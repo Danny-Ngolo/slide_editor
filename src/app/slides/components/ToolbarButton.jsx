@@ -1,12 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 
 const ToolbarButton = ({ title, isActive, children, onClick }) => {
-  useEffect(() => {
-    console.log(title, "is", isActive);
-  }, [isActive]);
-
   return (
     <button
       title={title}

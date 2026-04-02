@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
+import InsertMenu from "../InsertMenu";
+import React, { useEffect, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -8,8 +9,17 @@ import Highlight from "@tiptap/extension-highlight";
 
 import { useEditorContext } from "../EditorContext";
 
-const TextBlock = ({ block, slideId, updateBlock, toggleImportant }) => {
+const TextBlock = ({
+  block,
+  slideId,
+  addBlock,
+  updateBlock,
+  toggleImportant,
+}) => {
   const { setActiveEditor, setEditorState } = useEditorContext();
+  const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [slashQuery, setSlashQuery] = useState("");
+  const [slashMenuPosition, setSlashMenuPosition] = useState(null);
 
   const getEditorState = (editor) => {
     if (!editor) return {};
@@ -43,8 +53,39 @@ const TextBlock = ({ block, slideId, updateBlock, toggleImportant }) => {
     },
 
     onUpdate({ editor }) {
-      updateBlock(slideId, block.id, editor.getHTML());
+      if (!editor) return;
 
+      const text = editor.getText();
+      const selection = editor.state.selection;
+
+      if (!text.includes("/")) {
+        setShowSlashMenu(false);
+      }
+
+      const lastChar = text?.slice(-1);
+
+      if (lastChar === "/") {
+        setShowSlashMenu(true);
+        setSlashQuery("");
+      }
+
+      const matchQuery = text.match(/\/(\w*)$/);
+
+      if (matchQuery) {
+        const coords = editor.view.coordsAtPos(selection.from);
+        console.log("coords", coords);
+
+        if (matchQuery?.length) setSlashQuery(matchQuery[1]);
+
+        setSlashMenuPosition({
+          top: coords.bottom + window.scrollY + 5,
+          left: coords.left + window.scrollX,
+        });
+
+        setShowSlashMenu(true);
+      }
+
+      updateBlock(slideId, block.id, editor.getHTML());
       updateEditorState(editor);
     },
   });
@@ -63,6 +104,25 @@ const TextBlock = ({ block, slideId, updateBlock, toggleImportant }) => {
 
   if (!editor) return null;
 
+  const handleSlashSelect = (type) => {
+    if (!editor) return;
+
+    // delete "/query"
+    editor
+      .chain()
+      .focus()
+      .deleteRange({
+        from: editor.state.selection.from - slashQuery.length - 1,
+        to: editor.state.selection.from,
+      })
+      .run();
+
+    // insert new block
+    addBlock(slideId, type);
+
+    setShowSlashMenu(false);
+  };
+
   return (
     <div
       style={{
@@ -70,6 +130,7 @@ const TextBlock = ({ block, slideId, updateBlock, toggleImportant }) => {
         padding: "10px",
         border: block.important ? "2px solid orange" : "1px solid #ccc",
         minHeight: "80px",
+        position: "relative",
       }}
     >
       <button onClick={() => toggleImportant(slideId, block.id)}>
@@ -77,6 +138,26 @@ const TextBlock = ({ block, slideId, updateBlock, toggleImportant }) => {
       </button>
 
       <EditorContent editor={editor} />
+
+      {showSlashMenu && slashMenuPosition && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: slashMenuPosition.top,
+            left: slashMenuPosition.left,
+            zIndex: 1000,
+          }}
+        >
+          <InsertMenu
+            query={slashQuery}
+            position={slashMenuPosition}
+            onSelect={(type) => {
+              handleSlashSelect(type);
+            }}
+            onClose={() => setShowSlashMenu(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };

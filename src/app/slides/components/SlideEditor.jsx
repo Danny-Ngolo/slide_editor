@@ -30,7 +30,7 @@ const SlideEditor = () => {
     const newBlock = {
       id: Date.now(),
       type: type,
-      content: "<p></p>",
+      content: "",
       important: false,
     };
 
@@ -43,8 +43,6 @@ const SlideEditor = () => {
         } else {
           blocks.splice(index, 0, newBlock);
         }
-
-        console.log("blocks after creation:", blocks);
 
         return {
           ...slide,
