@@ -1,81 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import {
-  Type,
-  Image,
-  Video,
-  BookOpen,
-  Brain,
-  Lightbulb,
-  Minus,
-} from "lucide-react";
+import { blocks_groups, filterBlocks } from "../editor/blocks";
 
-const InsertMenu = ({ onSelect, onClose, query = "" }) => {
+const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0 }) => {
   const menuRef = useRef(null);
+  let currentBlockIndex = 0;
 
-  const groups = [
-    {
-      title: "Basic",
-      items: [
-        { type: "text", label: "Text", desc: "Write content", icon: Type },
-        {
-          type: "divider",
-          label: "Divider",
-          desc: "Separate sections",
-          icon: Minus,
-        },
-      ],
-    },
-    {
-      title: "Media",
-      items: [
-        {
-          type: "image",
-          label: "Image",
-          desc: "Upload or display image",
-          icon: Image,
-        },
-        { type: "video", label: "Video", desc: "Embed video", icon: Video },
-      ],
-    },
-    {
-      title: "Education",
-      items: [
-        {
-          type: "definition",
-          label: "Definition",
-          desc: "Explain a concept",
-          icon: BookOpen,
-        },
-        {
-          type: "example",
-          label: "Example",
-          desc: "Show an example",
-          icon: Lightbulb,
-        },
-        {
-          type: "exercise",
-          label: "Exercise",
-          desc: "Practice activity",
-          icon: Brain,
-        },
-      ],
-    },
-  ];
-
-  const filteredGroups = groups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => {
-        return item.label
-          ? item.label
-              .toLowerCase()
-              .includes(query ? query.toString().toLowerCase() : "")
-          : null;
-      }),
-    }))
-    .filter((group) => group.items.length > 0);
+  const filteredGroups = filterBlocks(blocks_groups, query);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -130,9 +62,12 @@ const InsertMenu = ({ onSelect, onClose, query = "" }) => {
 
           {group.items.map((item) => {
             const Icon = item.icon;
+            const isSelected = currentBlockIndex === selectedBlockIndex;
+            currentBlockIndex++;
 
             return (
               <div
+                data-slash-item
                 key={item.type}
                 onClick={() => {
                   onSelect(item.type);
@@ -152,6 +87,7 @@ const InsertMenu = ({ onSelect, onClose, query = "" }) => {
                   cursor: "pointer",
                   borderRadius: "6px",
                   color: "#111",
+                  background: isSelected ? "#eee" : "transparent"
                 }}
               >
                 <Icon size={18} />

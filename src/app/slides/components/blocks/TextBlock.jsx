@@ -8,6 +8,7 @@ import Underline from "@tiptap/extension-underline";
 import Highlight from "@tiptap/extension-highlight";
 
 import { useEditorContext } from "../EditorContext";
+import { blocks_groups, filterBlocks, flattenBlocks } from "../../editor/blocks";
 
 const TextBlock = ({
   block,
@@ -20,6 +21,8 @@ const TextBlock = ({
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const [slashMenuPosition, setSlashMenuPosition] = useState(null);
+  const [selectedBlockIndex, setSelectedBlockIndex] = useState(0);
+  const [filteredItems, setFilteredItems] = useState([]);
 
   const getEditorState = (editor) => {
     if (!editor) return {};
@@ -73,7 +76,6 @@ const TextBlock = ({
 
       if (matchQuery) {
         const coords = editor.view.coordsAtPos(selection.from);
-        console.log("coords", coords);
 
         if (matchQuery?.length) setSlashQuery(matchQuery[1]);
 
@@ -83,6 +85,7 @@ const TextBlock = ({
         });
 
         setShowSlashMenu(true);
+        setSelectedBlockIndex(0);
       }
 
       updateBlock(slideId, block.id, editor.getHTML());
@@ -93,14 +96,56 @@ const TextBlock = ({
   useEffect(() => {
     if (!editor) return;
 
-    const handler = () => updateEditorState(editor);
+    const editorHandler = () => updateEditorState(editor);
 
-    editor.on("selectionUpdate", handler);
+    editor.on("selectionUpdate", editorHandler);
 
     return () => {
-      editor.off("selectionUpdate", handler);
+      editor.off("selectionUpdate", editorHandler);
     };
   }, [editor]);
+
+  useEffect(() => {
+    const filteredBlocks = filterBlocks(blocks_groups, slashQuery);
+    const filtered = flattenBlocks(filteredBlocks);
+
+    setFilteredItems(filtered);
+  }, [showSlashMenu, slashQuery]);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (!showSlashMenu) return;
+
+      const itemsCount = filteredItems.length;
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedBlockIndex(prev => (prev - 1 + itemsCount) % itemsCount);
+      };
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedBlockIndex(prev => (prev + 1) % itemsCount)
+      };
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowSlashMenu(false);
+      };
+      if (e.key === 'Enter') {
+
+        const selectedItem = filteredItems[selectedBlockIndex];
+
+        if (selectedItem) {
+          handleSlashSelect(selectedItem.type)
+        };
+      }
+    };
+
+    document.addEventListener("keydown", handleKey);
+
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+    }
+  }, [showSlashMenu, filteredItems, selectedBlockIndex]);
 
   if (!editor) return null;
 
@@ -151,6 +196,7 @@ const TextBlock = ({
           <InsertMenu
             query={slashQuery}
             position={slashMenuPosition}
+            selectedBlockIndex={selectedBlockIndex}
             onSelect={(type) => {
               handleSlashSelect(type);
             }}
