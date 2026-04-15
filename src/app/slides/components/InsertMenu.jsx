@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import { blocks_groups, filterBlocks } from "../editor/blocks";
 
-const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0, showSlashMenu = false }) => {
+const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0, showSlashMenu = false, position }) => {
   const menuRef = useRef(null);
   const itemRefs = useRef([]);
   const prevIndexRef = useRef(null);
@@ -67,9 +67,9 @@ const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0, sho
     <div
       ref={menuRef}
       style={{
-        position: "absolute",
-        top: "40px",
-        left: "0",
+        position: "fixed",
+        top: position?.top,
+        left: position?.left,
         maxHeight: "250px",
         overflowY: "auto",
         background: "white",
@@ -78,7 +78,7 @@ const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0, sho
         padding: "8px",
         width: "220px",
         boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-        zIndex: 100,
+        zIndex: 1000,
       }}
     >
       {filteredGroups.map((group) => (

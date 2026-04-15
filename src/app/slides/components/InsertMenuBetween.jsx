@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import InsertMenu from "./InsertMenu";
 
 const InsertMenuBetween = ({ onInsert }) => {

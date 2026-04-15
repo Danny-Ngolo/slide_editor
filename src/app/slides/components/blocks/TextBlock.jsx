@@ -100,10 +100,6 @@ const TextBlock = ({
         setShowSlashMenu(true);
         setSelectedBlockIndex(0);
       }
-      // else {
-      //   setSlashRange(null);
-      //   setShowSlashMenu(false);
-      // };
 
       updateBlock(slideId, block.id, editor.getHTML());
       updateEditorState(editor);
@@ -215,12 +211,12 @@ const TextBlock = ({
 
       {showSlashMenu && slashMenuPosition && (
         <div
-          style={{
-            position: "absolute",
-            bottom: slashMenuPosition.top,
-            left: slashMenuPosition.left,
-            zIndex: 1000,
-          }}
+        // style={{
+        //   position: "absolute",
+        //   bottom: slashMenuPosition.top,
+        //   left: slashMenuPosition.left,
+        //   zIndex: 1000,
+        // }}
         >
           <InsertMenu
             query={slashQuery}

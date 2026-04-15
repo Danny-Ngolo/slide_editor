@@ -30,7 +30,11 @@ const BlockRenderer = ({
     return <DividerBlock />;
   }
   if (block.type === "image") {
-    return <ImageBlock />;
+    return <ImageBlock
+      block={block}
+      slideId={slideId}
+      updateBlock={updateBlock}
+    />;
   }
   if (block.type === "youtube") {
     return <YoutubeBlock />;

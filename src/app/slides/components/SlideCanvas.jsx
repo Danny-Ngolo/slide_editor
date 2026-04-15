@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import BlockSelector from "./BlockSelector";
 import BlockRenderer from "./blocks/BlockRenderer";
 import EditorToolBar from "./EditorToolBar";
@@ -11,6 +11,16 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
   if (!slide) return null;
 
   const [showInsertMenu, setShowInsertMenu] = useState(false);
+  const [insertMenuPos, setInsertMenuPos] = useState(null);
+
+  const handleClickAddBlock = (e) => {
+    setInsertMenuPos({
+      top: e.clientY,
+      left: e.clientX + 8
+    });
+
+    setShowInsertMenu(true);
+  };
 
   return (
     <div style={{ padding: "40px", flex: "1", position: "relative" }}>
@@ -40,7 +50,6 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
                   )}
 
                   <BlockRenderer
-                    // key={block.id}
                     block={block}
                     slideId={slide.id}
                     addBlock={addBlock}
@@ -62,7 +71,7 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
         )}
 
         <button
-          onClick={() => setShowInsertMenu(true)}
+          onClick={handleClickAddBlock}
           style={{ marginTop: "20px", padding: "10px 15px" }}
         >
           + Add Block
@@ -70,6 +79,7 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
 
         {showInsertMenu && (
           <InsertMenu
+            position={insertMenuPos}
             onSelect={(type) => {
               addBlock(slide.id, type);
             }}
