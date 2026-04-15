@@ -23,6 +23,7 @@ const TextBlock = ({
   const [slashMenuPosition, setSlashMenuPosition] = useState(null);
   const [selectedBlockIndex, setSelectedBlockIndex] = useState(0);
   const [filteredItems, setFilteredItems] = useState([]);
+  const [slashRange, setSlashRange] = useState(null);
 
   const getEditorState = (editor) => {
     if (!editor) return {};
@@ -72,12 +73,24 @@ const TextBlock = ({
         setSlashQuery("");
       }
 
-      const matchQuery = text.match(/\/(\w*)$/);
+      const textBefore = editor.state.doc.textBetween(0, selection.from, " ");
+
+      const matchQuery = textBefore.match(/\/(\w*)$/);
 
       if (matchQuery) {
         const coords = editor.view.coordsAtPos(selection.from);
 
-        if (matchQuery?.length) setSlashQuery(matchQuery[1]);
+        if (matchQuery && matchQuery?.length) {
+          const from = selection.from - matchQuery[0].length;
+
+          setSlashRange({
+            from,
+            to: selection.from
+          });
+
+          setSlashQuery(matchQuery[1]);
+          setShowSlashMenu(true);
+        };
 
         setSlashMenuPosition({
           top: coords.bottom + window.scrollY + 5,
@@ -87,17 +100,43 @@ const TextBlock = ({
         setShowSlashMenu(true);
         setSelectedBlockIndex(0);
       }
+      // else {
+      //   setSlashRange(null);
+      //   setShowSlashMenu(false);
+      // };
 
       updateBlock(slideId, block.id, editor.getHTML());
       updateEditorState(editor);
     },
+    editorProps: {
+      handleKeyDown(view, event) {
+        if (event.key === 'Enter') {
+          const { state } = view;
+
+          const textBefore = state.doc.textBetween(0, state.selection.from, " ");
+
+          const matchQuery = textBefore.match(/\/(\w*)$/);
+
+          if (matchQuery) {
+            const selectedItem = filteredItems[selectedBlockIndex];
+
+            if (selectedItem) {
+              handleSlashSelect(selectedItem.type)
+            };
+          };
+
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
   });
 
   useEffect(() => {
     if (!editor) return;
 
     const editorHandler = () => updateEditorState(editor);
-
     editor.on("selectionUpdate", editorHandler);
 
     return () => {
@@ -130,14 +169,6 @@ const TextBlock = ({
         e.preventDefault();
         setShowSlashMenu(false);
       };
-      if (e.key === 'Enter') {
-
-        const selectedItem = filteredItems[selectedBlockIndex];
-
-        if (selectedItem) {
-          handleSlashSelect(selectedItem.type)
-        };
-      }
     };
 
     document.addEventListener("keydown", handleKey);
@@ -147,26 +178,24 @@ const TextBlock = ({
     }
   }, [showSlashMenu, filteredItems, selectedBlockIndex]);
 
-  if (!editor) return null;
-
   const handleSlashSelect = (type) => {
-    if (!editor) return;
+    if (!editor || !slashRange) return;
 
     // delete "/query"
     editor
       .chain()
       .focus()
-      .deleteRange({
-        from: editor.state.selection.from - slashQuery.length - 1,
-        to: editor.state.selection.from,
-      })
+      .deleteRange(slashRange)
       .run();
 
     // insert new block
     addBlock(slideId, type);
 
     setShowSlashMenu(false);
+    setSlashRange(null);
   };
+
+  if (!editor) return null;
 
   return (
     <div
@@ -197,6 +226,7 @@ const TextBlock = ({
             query={slashQuery}
             position={slashMenuPosition}
             selectedBlockIndex={selectedBlockIndex}
+            showSlashMenu={showSlashMenu}
             onSelect={(type) => {
               handleSlashSelect(type);
             }}

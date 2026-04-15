@@ -3,8 +3,10 @@
 import React, { useEffect, useRef } from "react";
 import { blocks_groups, filterBlocks } from "../editor/blocks";
 
-const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0 }) => {
+const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0, showSlashMenu = false }) => {
   const menuRef = useRef(null);
+  const itemRefs = useRef([]);
+  const prevIndexRef = useRef(null);
   let currentBlockIndex = 0;
 
   const filteredGroups = filterBlocks(blocks_groups, query);
@@ -31,6 +33,36 @@ const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0 }) =
     };
   }, []);
 
+  useEffect(() => {
+    const prev = prevIndexRef.current;
+
+    // don't apply scroll on the first render
+
+    if (prev === null) {
+      prevIndexRef.current = selectedBlockIndex;
+      return;
+    };
+
+    // only scroll when the selectedBlockIndex changed
+
+    if (prev !== selectedBlockIndex) {
+      const el = itemRefs.current[selectedBlockIndex];
+
+      el.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      })
+    };
+
+    prevIndexRef.current = selectedBlockIndex;
+  }, [selectedBlockIndex]);
+
+  useEffect(() => {
+    if (showSlashMenu) {
+      prevIndexRef.current = null;
+    }
+  }, [showSlashMenu])
+
   return (
     <div
       ref={menuRef}
@@ -38,6 +70,8 @@ const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0 }) =
         position: "absolute",
         top: "40px",
         left: "0",
+        maxHeight: "250px",
+        overflowY: "auto",
         background: "white",
         border: "1px solid #ccc",
         borderRadius: "8px",
@@ -69,6 +103,7 @@ const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0 }) =
               <div
                 data-slash-item
                 key={item.type}
+                ref={el => itemRefs.current[selectedBlockIndex] = el}
                 onClick={() => {
                   onSelect(item.type);
                   onClose();
@@ -87,7 +122,8 @@ const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0 }) =
                   cursor: "pointer",
                   borderRadius: "6px",
                   color: "#111",
-                  background: isSelected ? "#eee" : "transparent"
+                  background: isSelected ? "#eee" : "transparent",
+                  transition: "background ease 0.15s"
                 }}
               >
                 <Icon size={18} />
