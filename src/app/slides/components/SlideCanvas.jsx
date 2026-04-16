@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import BlockSelector from "./BlockSelector";
 import BlockRenderer from "./blocks/BlockRenderer";
 import EditorToolBar from "./EditorToolBar";
@@ -14,10 +14,24 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
   const [insertMenuPos, setInsertMenuPos] = useState(null);
 
   const handleClickAddBlock = (e) => {
-    setInsertMenuPos({
-      top: e.clientY,
-      left: e.clientX + 8
-    });
+    const clickY = e.clientY;
+    const clickX = e.clientX;
+    const menuHeight = 250;
+    const menuWidth = 200;
+
+    const spaceBelow = window.innerHeight - clickY;
+    const spaceAbove = clickY;
+
+    let top =
+      spaceBelow < menuHeight && spaceAbove > menuHeight
+        ? clickY - menuHeight
+        : clickY + 8;
+    let left =
+      clickX + menuWidth > window.innerWidth
+        ? window.innerWidth - menuWidth - 10
+        : clickX;
+
+    setInsertMenuPos({ top, left });
 
     setShowInsertMenu(true);
   };

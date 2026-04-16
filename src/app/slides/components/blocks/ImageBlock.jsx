@@ -5,18 +5,17 @@ import React, { useEffect, useRef, useState } from "react";
 const ImageBlock = ({ block, slideId, updateBlock }) => {
   const [image, setImage] = useState(block.content || "");
   const [imageWidth, setImageWith] = useState(block.with || 300);
+  const [caption, setCaption] = useState(block.caption || "");
+  const [align, setAlign] = useState("center");
   const isResizing = useRef(false);
   const imageRef = useRef(null);
+  const imageContainerRef = useRef(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
 
     if (!file) return;
-
-    const url = URL.createObjectURL(file);
-
-    setImage(url);
-    updateBlock(slideId, block.id, url);
+    addImageFile(file);
   };
 
   const handleMouseDown = () => {
@@ -26,10 +25,10 @@ const ImageBlock = ({ block, slideId, updateBlock }) => {
   const handleMouseMove = (e) => {
     if (!isResizing.current) return;
 
-    const newWidth =
-      e.clientX - e.target.parentElement.getBoundingClientRect().left;
+    const rect = e.target.parentElement.getBoundingClientRect();
 
-    console.log("newWidth", newWidth);
+    const newWidth = e.clientX - rect.left;
+
     setImageWith(newWidth);
   };
 
@@ -44,6 +43,36 @@ const ImageBlock = ({ block, slideId, updateBlock }) => {
     }
   };
 
+  const handleDrop = (e) => {
+    e.preventDefault();
+
+    const file = e.dataTransfer.files[0];
+
+    if (!file) return;
+    addImageFile(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const updateAlign = (value) => {
+    setAlign(value);
+
+    updateBlock(slideId, block.id, {
+      ...block.content,
+      align: value,
+    });
+  };
+
+  function addImageFile(file) {
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    setImage(url);
+    updateBlock(slideId, block.id, url);
+  }
+
   useEffect(() => {
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
@@ -55,14 +84,23 @@ const ImageBlock = ({ block, slideId, updateBlock }) => {
   }, [imageWidth]);
 
   return (
-    <div style={{ margin: "10px 0" }}>
+    <div
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      style={{
+        margin: "10px 0",
+        border: image ? "none" : "2px dashed #ccc",
+        padding: "10px",
+        borderRadius: "8px",
+      }}
+    >
       {!image && (
         <div>
           <button
             onClick={() => imageRef.current.click()}
             style={{ padding: "8px 12px", borderRadius: "4px", border: "none" }}
           >
-            Upload Image
+            Drop the Image down or click to upload
           </button>
           <input
             ref={imageRef}
@@ -74,27 +112,93 @@ const ImageBlock = ({ block, slideId, updateBlock }) => {
         </div>
       )}
       {image && (
-        <div style={{ position: "relative", width: imageWidth }}>
-          <img
-            src={image}
-            alt="uploaded"
-            style={{ maxWidth: "100%", borderRadius: "8px" }}
-          />
-
-          {/* Resize handler */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent:
+              align === "left"
+                ? "flex-start"
+                : align === "right"
+                  ? "flex-end"
+                  : "center",
+          }}
+        >
           <div
-            onMouseDown={handleMouseDown}
+            ref={imageContainerRef}
             style={{
-              position: "absolute",
-              bottom: 0,
-              right: 0,
-              width: "12px",
-              height: "12px",
-              background: "#333",
-              border: "2px solid #eee",
-              cursor: "nwse-resize",
+              position: "relative",
+              width: imageWidth,
             }}
-          ></div>
+          >
+            <img
+              src={image}
+              alt="uploaded"
+              style={{ maxWidth: "100%", borderRadius: "8px" }}
+            />
+
+            {/* Resize handler */}
+            <div
+              onMouseDown={handleMouseDown}
+              style={{
+                position: "absolute",
+                bottom: 0,
+                right: 0,
+                width: "12px",
+                height: "12px",
+                background: "#333",
+                border: "2px solid #eee",
+                cursor: "nwse-resize",
+              }}
+            ></div>
+
+            {/* Add caption to the image */}
+            <input
+              type="text"
+              value={caption}
+              placeholder="Add caption"
+              onChange={(e) => {
+                setCaption(e.target.value);
+
+                updateBlock(slideId, block.id, {
+                  ...block.content,
+                  caption: e.target.value,
+                });
+              }}
+              style={{
+                border: "none",
+                outline: "none",
+                width: "100%",
+                fontSize: "14px",
+                marginTop: "6px",
+                color: "#ccc",
+                padding: "8px",
+                background: "transparent",
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {image && (
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <button
+            style={{ padding: "8px 12px", borderRadius: "8px" }}
+            onClick={() => updateAlign("left")}
+          >
+            Left
+          </button>
+          <button
+            style={{ padding: "8px 12px", borderRadius: "8px" }}
+            onClick={() => updateAlign("center")}
+          >
+            Center
+          </button>
+          <button
+            style={{ padding: "8px 12px", borderRadius: "8px" }}
+            onClick={() => updateAlign("right")}
+          >
+            Right
+          </button>
         </div>
       )}
     </div>
