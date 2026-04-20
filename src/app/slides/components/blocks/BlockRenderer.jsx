@@ -30,14 +30,14 @@ const BlockRenderer = ({
     return <DividerBlock />;
   }
   if (block.type === "image") {
-    return <ImageBlock
-      block={block}
-      slideId={slideId}
-      updateBlock={updateBlock}
-    />;
+    return (
+      <ImageBlock block={block} slideId={slideId} updateBlock={updateBlock} />
+    );
   }
   if (block.type === "youtube") {
-    return <YoutubeBlock />;
+    return (
+      <YoutubeBlock slideId={slideId} block={block} updateBlock={updateBlock} />
+    );
   }
   if (block.type === "quiz") {
     return <QuizBlock />;

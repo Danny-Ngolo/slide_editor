@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import BlockSelector from "./BlockSelector";
 import BlockRenderer from "./blocks/BlockRenderer";
 import EditorToolBar from "./EditorToolBar";
 import InsertMenu from "./InsertMenu";

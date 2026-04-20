@@ -30,7 +30,12 @@ export const blocks_groups = [
         desc: "Upload or display image",
         icon: Image,
       },
-      { type: "video", label: "Video", desc: "Embed video", icon: Video },
+      {
+        type: "youtube",
+        label: "YouTube Video",
+        desc: "Embed YouTube video",
+        icon: Video,
+      },
     ],
   },
   {
@@ -59,7 +64,7 @@ export const blocks_groups = [
 ];
 
 export const flattenBlocks = (groups) => {
-  return groups.flatMap(group => group.items)
+  return groups.flatMap((group) => group.items);
 };
 
 export const filterBlocks = (groups, query) => {
@@ -68,9 +73,7 @@ export const filterBlocks = (groups, query) => {
       ...group,
       items: group.items.filter((item) => {
         return item.label
-          ? item.label
-            .toLowerCase()
-            .includes(query?.toString().toLowerCase())
+          ? item.label.toLowerCase().includes(query?.toString().toLowerCase())
           : null;
       }),
     }))
