@@ -6,6 +6,7 @@ const YoutubeBlock = ({ slideId, block, updateBlock }) => {
   const [url, setUrl] = useState(block.content?.url || "");
   const [videoId, setVideoId] = useState(block.content?.videoId || "");
   const [startTime, setStartTime] = useState(block.startTime || "");
+  const [caption, setCaption] = useState(block.content.caption || "");
 
   const extractVideoId = (url) => {
     const regExp =
@@ -21,9 +22,12 @@ const YoutubeBlock = ({ slideId, block, updateBlock }) => {
     return match ? match[1] : null;
   };
 
-  const handleAddVideo = () => {
-    const id = extractVideoId(url);
-    const start = extractStartTime(url);
+  const handlePaste = (e) => {
+    const pastedUrl = e.clipboardData.getData("text");
+    console.log("pasted", pastedUrl);
+
+    const id = extractVideoId(pastedUrl);
+    const start = extractStartTime(pastedUrl);
 
     if (!id) {
       alert("Invalid YouTube Link");
@@ -34,30 +38,10 @@ const YoutubeBlock = ({ slideId, block, updateBlock }) => {
     if (start) setStartTime(start);
 
     updateBlock(slideId, block.id, {
-      ...block.content,
-      url,
-      videoId,
-      startTime: start,
+      url: pastedUrl,
+      videoId: id,
+      startTime: start ? start : "",
     });
-  };
-
-  const handlePaste = (e) => {
-    const pastedUrl = e.clipboardData.getData("text");
-    console.log("pasted", pastedUrl);
-
-    const id = extractVideoId(pastedUrl);
-    const start = extractStartTime(pastedUrl);
-
-    if (id) {
-      setVideoId(id);
-      if (start) setStartTime(start);
-
-      updateBlock(slideId, block.id, {
-        url: pastedUrl,
-        videoId: id,
-        startTime: start ? start : "",
-      });
-    }
   };
 
   return (
@@ -69,38 +53,45 @@ const YoutubeBlock = ({ slideId, block, updateBlock }) => {
             placeholder="Paste YouTube Link"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            // onPaste={handlePaste}
+            onPaste={handlePaste}
             style={{ width: "100%", padding: "8px" }}
           />
-
-          <button
-            onClick={handleAddVideo}
-            style={{
-              padding: "8px 12px",
-              borderRadius: "4px",
-              margin: "10px",
-              border: "none",
-            }}
-          >
-            Add Video
-          </button>
         </div>
       )}
 
       {videoId && (
-        <div style={{ position: "relative", paddingTop: "56.25%" }}>
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}${startTime ? `?start=${startTime}` : ""}`}
-            title="YouTube Video"
-            allowFullScreen
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-            }}
-          ></iframe>
+        <div>
+          <div style={{ position: "relative", paddingTop: "56.25%" }}>
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}${startTime ? `?start=${startTime}` : ""}`}
+              title="YouTube Video"
+              allowFullScreen
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+              }}
+            ></iframe>
+          </div>
+          <div style={{ marginTop: "15px" }}>
+            <input
+              type="text"
+              placeholder="Add caption"
+              value={caption}
+              onChange={(e) => {
+                setCaption(e.target.value);
+
+                updateBlock(slideId, block.id, {
+                  ...block.content,
+                  caption: e.target.value,
+                });
+              }}
+              style={{ width: "100%", padding: "8px" }}
+            />
+            <button onClick={() => setVideoId("")}>Replace Video</button>
+          </div>
         </div>
       )}
     </div>
