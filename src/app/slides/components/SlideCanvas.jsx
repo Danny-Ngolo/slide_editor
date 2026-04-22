@@ -93,8 +93,8 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
         {showInsertMenu && (
           <InsertMenu
             position={insertMenuPos}
-            onSelect={(type) => {
-              addBlock(slide.id, type);
+            onSelect={(type, variant = undefined) => {
+              addBlock(slide.id, type, null, { variant });
             }}
             onClose={() => setShowInsertMenu(false)}
           />

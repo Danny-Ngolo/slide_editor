@@ -6,6 +6,8 @@ import {
   Brain,
   Lightbulb,
   Minus,
+  AlertTriangle,
+  FlaskConical,
 } from "lucide-react";
 
 export const blocks_groups = [
@@ -42,22 +44,32 @@ export const blocks_groups = [
     title: "Education",
     items: [
       {
-        type: "definition",
+        type: "callout",
+        variant: "definition",
         label: "Definition",
         desc: "Explain a concept",
         icon: BookOpen,
       },
       {
-        type: "example",
-        label: "Example",
-        desc: "Show an example",
+        type: "callout",
+        variant: "tip",
+        label: "Tip",
+        desc: "Highlight something useful",
         icon: Lightbulb,
       },
       {
-        type: "exercise",
-        label: "Exercise",
-        desc: "Practice activity",
-        icon: Brain,
+        type: "callout",
+        variant: "warning",
+        label: "Warning",
+        desc: "Prevent mistakes",
+        icon: AlertTriangle,
+      },
+      {
+        type: "callout",
+        variant: "example",
+        label: "Example",
+        desc: "Show a practical case",
+        icon: FlaskConical,
       },
     ],
   },

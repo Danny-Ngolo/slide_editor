@@ -6,6 +6,7 @@ import QuizBlock from "./QuizBlock";
 import DividerBlock from "./DividerBlock";
 import ImageBlock from "./ImageBlock";
 import YoutubeBlock from "./YoutubeBlock";
+import CalloutBlock from "./CalloutBlock";
 
 const BlockRenderer = ({
   block,
@@ -37,6 +38,11 @@ const BlockRenderer = ({
   if (block.type === "youtube") {
     return (
       <YoutubeBlock slideId={slideId} block={block} updateBlock={updateBlock} />
+    );
+  }
+  if (block.type === "callout") {
+    return (
+      <CalloutBlock slideId={slideId} block={block} updateBlock={updateBlock} />
     );
   }
   if (block.type === "quiz") {

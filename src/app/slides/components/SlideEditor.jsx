@@ -26,11 +26,11 @@ const SlideEditor = () => {
     setSlides((prev) => [...prev, newSlide]);
   };
 
-  const addBlock = (slideId, type, index = null) => {
+  const addBlock = (slideId, type, index = null, initialContent = {}) => {
     const newBlock = {
       id: Date.now(),
       type: type,
-      content: "",
+      content: initialContent,
       important: false,
     };
 

@@ -3,7 +3,14 @@
 import React, { useEffect, useRef } from "react";
 import { blocks_groups, filterBlocks } from "../editor/blocks";
 
-const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0, showSlashMenu = false, position }) => {
+const InsertMenu = ({
+  onSelect,
+  onClose,
+  query = "",
+  selectedBlockIndex = 0,
+  showSlashMenu = false,
+  position,
+}) => {
   const menuRef = useRef(null);
   const itemRefs = useRef([]);
   const prevIndexRef = useRef(null);
@@ -41,7 +48,7 @@ const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0, sho
     if (prev === null) {
       prevIndexRef.current = selectedBlockIndex;
       return;
-    };
+    }
 
     // only scroll when the selectedBlockIndex changed
 
@@ -50,9 +57,9 @@ const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0, sho
 
       el.scrollIntoView({
         behavior: "smooth",
-        block: "center"
-      })
-    };
+        block: "center",
+      });
+    }
 
     prevIndexRef.current = selectedBlockIndex;
   }, [selectedBlockIndex]);
@@ -61,7 +68,7 @@ const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0, sho
     if (showSlashMenu) {
       prevIndexRef.current = null;
     }
-  }, [showSlashMenu])
+  }, [showSlashMenu]);
 
   return (
     <div
@@ -102,10 +109,10 @@ const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0, sho
             return (
               <div
                 data-slash-item
-                key={item.type}
-                ref={el => itemRefs.current[selectedBlockIndex] = el}
+                key={item.variant || item.type}
+                ref={(el) => (itemRefs.current[selectedBlockIndex] = el)}
                 onClick={() => {
-                  onSelect(item.type);
+                  onSelect(item.type, item.variant);
                   onClose();
                 }}
                 onMouseEnter={(e) =>
@@ -123,7 +130,7 @@ const InsertMenu = ({ onSelect, onClose, query = "", selectedBlockIndex = 0, sho
                   borderRadius: "6px",
                   color: "#111",
                   background: isSelected ? "#eee" : "transparent",
-                  transition: "background ease 0.15s"
+                  transition: "background ease 0.15s",
                 }}
               >
                 <Icon size={18} />
