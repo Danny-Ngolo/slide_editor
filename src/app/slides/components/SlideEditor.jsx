@@ -115,6 +115,7 @@ const SlideEditor = () => {
 
         <SlideCanvas
           slide={activeSlide}
+          setSlides={setSlides}
           addBlock={addBlock}
           updateBlock={updateBlock}
           toggleImportant={toggleImportant}

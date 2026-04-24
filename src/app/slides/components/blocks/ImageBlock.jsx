@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 const ImageBlock = ({ block, slideId, updateBlock }) => {
-  const [image, setImage] = useState(block.content || "");
+  const [image, setImage] = useState(block.content.image || "");
   const [imageWidth, setImageWith] = useState(block.with || 300);
   const [caption, setCaption] = useState(block.caption || "");
   const [align, setAlign] = useState("center");
@@ -70,7 +70,7 @@ const ImageBlock = ({ block, slideId, updateBlock }) => {
 
     const url = URL.createObjectURL(file);
     setImage(url);
-    updateBlock(slideId, block.id, url);
+    updateBlock(slideId, block.id, { ...block, image: url });
   }
 
   useEffect(() => {
@@ -179,22 +179,45 @@ const ImageBlock = ({ block, slideId, updateBlock }) => {
         </div>
       )}
 
+      {/* Align the image on the page */}
+
       {image && (
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: "20px",
+          }}
+        >
           <button
-            style={{ padding: "8px 12px", borderRadius: "8px" }}
+            style={{
+              padding: "4px 8px",
+              borderRadius: "4px",
+              fontSize: "12px",
+              border: "none",
+            }}
             onClick={() => updateAlign("left")}
           >
             Left
           </button>
           <button
-            style={{ padding: "8px 12px", borderRadius: "8px" }}
+            style={{
+              padding: "4px 8px",
+              borderRadius: "4px",
+              fontSize: "12px",
+              border: "none",
+            }}
             onClick={() => updateAlign("center")}
           >
             Center
           </button>
           <button
-            style={{ padding: "8px 12px", borderRadius: "8px" }}
+            style={{
+              padding: "4px 8px",
+              borderRadius: "4px",
+              fontSize: "12px",
+              border: "none",
+            }}
             onClick={() => updateAlign("right")}
           >
             Right

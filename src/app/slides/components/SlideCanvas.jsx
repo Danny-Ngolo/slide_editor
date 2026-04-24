@@ -1,12 +1,28 @@
 "use client";
 
 import React, { useState } from "react";
+
+import { DndContext, closestCenter } from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { arrayMove } from "@dnd-kit/sortable";
+
 import BlockRenderer from "./blocks/BlockRenderer";
 import EditorToolBar from "./EditorToolBar";
 import InsertMenu from "./InsertMenu";
 import InsertMenuBetween from "./InsertMenuBetween";
+import SortableBlock from "./SortableBlock";
 
-const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
+const SlideCanvas = ({
+  slide,
+  setSlides,
+  addBlock,
+  updateBlock,
+  toggleImportant,
+}) => {
   if (!slide) return null;
 
   const [showInsertMenu, setShowInsertMenu] = useState(false);
@@ -35,72 +51,105 @@ const SlideCanvas = ({ slide, addBlock, updateBlock, toggleImportant }) => {
     setShowInsertMenu(true);
   };
 
+  // NEW CODE START *******************************
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    setSlides((prev) => {
+      return prev.map((slideItem) => {
+        if (slideItem.id !== slide.id) return slideItem;
+
+        const oldIndex = slideItem.blocks.findIndex((b) => b.id === active.id);
+        const newIndex = slideItem.blocks.findIndex((b) => b.id === over.id);
+
+        return {
+          ...slideItem,
+          blocks: arrayMove(slideItem.blocks, oldIndex, newIndex),
+        };
+      });
+    });
+  };
+
+  // NEW CODE END ********************************
+
   return (
-    <div style={{ padding: "40px", flex: "1", position: "relative" }}>
-      <div
-        styles={{
-          maxWidth: "800px",
-          margin: "auto",
-          padding: "30px",
-          border: "1px solid #ccc",
-        }}
+    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext
+        items={slide.blocks.map((b) => b.id)}
+        strategy={verticalListSortingStrategy}
       >
-        <EditorToolBar />
-
-        <h2>{slide.title}</h2>
-
-        {/* BLOCKS */}
-
-        {slide.blocks.length ? (
-          <div>
-            {slide.blocks.map((block, index) => {
-              return (
-                <div key={block.id}>
-                  {index === 0 && (
-                    <InsertMenuBetween
-                      onInsert={(type) => addBlock(slide.id, type, 0)}
-                    />
-                  )}
-
-                  <BlockRenderer
-                    block={block}
-                    slideId={slide.id}
-                    addBlock={addBlock}
-                    updateBlock={updateBlock}
-                    toggleImportant={toggleImportant}
-                  />
-
-                  {/* INSERT MENU AFTER EACH BLOCK */}
-
-                  <InsertMenuBetween
-                    onInsert={(type) => addBlock(slide.id, type, index + 1)}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p>This slide is empty. Blocks will appear here</p>
-        )}
-
-        <button
-          onClick={handleClickAddBlock}
-          style={{ marginTop: "20px", padding: "10px 15px" }}
-        >
-          + Add Block
-        </button>
-
-        {showInsertMenu && (
-          <InsertMenu
-            position={insertMenuPos}
-            onSelect={(type, variant = undefined) => {
-              addBlock(slide.id, type, null, { variant });
+        <div style={{ padding: "40px", flex: "1", position: "relative" }}>
+          <div
+            styles={{
+              maxWidth: "800px",
+              margin: "auto",
+              padding: "30px",
+              border: "1px solid #ccc",
             }}
-            onClose={() => setShowInsertMenu(false)}
-          />
-        )}
-      </div>
-    </div>
+          >
+            <EditorToolBar />
+
+            <h2>{slide.title}</h2>
+
+            {/* BLOCKS */}
+
+            {slide.blocks.length ? (
+              <div>
+                {slide.blocks.map((block, index) => {
+                  return (
+                    <div key={block.id}>
+                      {index === 0 && (
+                        <InsertMenuBetween
+                          onInsert={(type) => addBlock(slide.id, type, 0)}
+                        />
+                      )}
+
+                      <SortableBlock block={block}>
+                        <BlockRenderer
+                          block={block}
+                          slideId={slide.id}
+                          addBlock={addBlock}
+                          updateBlock={updateBlock}
+                          toggleImportant={toggleImportant}
+                        />
+                      </SortableBlock>
+
+                      {/* INSERT MENU AFTER EACH BLOCK */}
+
+                      <InsertMenuBetween
+                        onInsert={(type) => addBlock(slide.id, type, index + 1)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p>This slide is empty. Blocks will appear here</p>
+            )}
+
+            <button
+              onClick={handleClickAddBlock}
+              style={{ marginTop: "20px", padding: "10px 15px" }}
+            >
+              + Add Block
+            </button>
+
+            {showInsertMenu && (
+              <InsertMenu
+                position={insertMenuPos}
+                onSelect={(type, variant = undefined) => {
+                  addBlock(slide.id, type, null, { variant });
+                }}
+                onClose={() => setShowInsertMenu(false)}
+              />
+            )}
+          </div>
+        </div>
+      </SortableContext>
+    </DndContext>
   );
 };
 
