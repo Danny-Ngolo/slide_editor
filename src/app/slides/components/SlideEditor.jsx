@@ -14,7 +14,7 @@ const SlideEditor = () => {
     },
   ]);
 
-  const [activeSlideId, setActiveSlideId] = useState(slides[0].id);
+  const [activeSlideId, setActiveSlideId] = useState(slides[0]?.id);
 
   const addSlide = () => {
     const newSlide = {
@@ -24,6 +24,16 @@ const SlideEditor = () => {
     };
 
     setSlides((prev) => [...prev, newSlide]);
+  };
+
+  const deleteSlide = (slideId) => {
+    if (slides.length === 1) return;
+
+    if (confirm("Do you really want to delete this slide ?") && slideId) {
+      setSlides((prev) => {
+        return prev?.filter((slide) => slide.id !== slideId);
+      });
+    }
   };
 
   const addBlock = (slideId, type, index = null, initialContent = {}) => {
@@ -81,6 +91,21 @@ const SlideEditor = () => {
     setSlides(updatedSlides);
   };
 
+  const deleteBlock = (slideId, blockId) => {
+    if (confirm("Do you really want to delete this block ?")) {
+      setSlides((prev) => {
+        return prev.map((slide) => {
+          if (slide.id !== slideId) return slide;
+
+          return {
+            ...slide,
+            blocks: slide.blocks.filter((b) => b.id !== blockId),
+          };
+        });
+      });
+    }
+  };
+
   const toggleImportant = (slideId, blockId) => {
     const updatedSlides = slides.map((slide) => {
       if (slide.id === slideId) {
@@ -108,9 +133,11 @@ const SlideEditor = () => {
       <div style={{ display: "flex", height: "100vh" }}>
         <SlidesSidebar
           slides={slides}
+          setSlides={setSlides}
           activeSlideId={activeSlideId}
           setActiveSlideId={setActiveSlideId}
           addSlide={addSlide}
+          deleteSlide={deleteSlide}
         />
 
         <SlideCanvas
@@ -118,6 +145,7 @@ const SlideEditor = () => {
           setSlides={setSlides}
           addBlock={addBlock}
           updateBlock={updateBlock}
+          deleteBlock={deleteBlock}
           toggleImportant={toggleImportant}
         />
       </div>

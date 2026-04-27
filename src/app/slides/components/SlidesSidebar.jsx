@@ -2,47 +2,78 @@
 
 import React from "react";
 
+import { DndContext, closestCenter } from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { arrayMove } from "@dnd-kit/sortable";
+import SortableSlide from "./SortableSlide";
+import Slide from "./Slide";
+
 const SlidesSidebar = ({
   slides,
+  setSlides,
   activeSlideId,
   setActiveSlideId,
   addSlide,
+  deleteSlide,
 }) => {
-  return (
-    <div
-      style={{
-        width: "250px",
-        padding: "15px",
-        borderRight: "1px solid #ccc",
-      }}
-    >
-      <h3>Slides</h3>
-      {slides.map((slide) => (
-        <div
-          key={slide.id}
-          style={{
-            marginBottom: "5px",
-            padding: "10px",
-            color: slide.id === activeSlideId ? "#fff" : "#111",
-            background: slide.id === activeSlideId ? "#6a6afb" : "#bdbdfb",
-          }}
-          onClick={() => setActiveSlideId(slide.id)}
-        >
-          {slide.title}
-        </div>
-      ))}
+  const handleSlideDragEnd = (event) => {
+    const { active, over } = event;
 
-      <button
-        onClick={addSlide}
-        style={{
-          marginTop: "10px",
-          width: "100%",
-          padding: "8px",
-        }}
+    if (!over || active.id === over.id) return;
+
+    setSlides((prevSlides) => {
+      const oldIndex = prevSlides.findIndex((s) => s.id === active.id);
+      const newIndex = prevSlides.findIndex((s) => s.id === over.id);
+
+      return arrayMove(prevSlides, oldIndex, newIndex);
+    });
+  };
+
+  return (
+    <DndContext
+      onDragEnd={handleSlideDragEnd}
+      collisionDetection={closestCenter}
+    >
+      <SortableContext
+        items={slides.map((s) => s.id)}
+        strategy={verticalListSortingStrategy}
       >
-        + Add Slide
-      </button>
-    </div>
+        <div
+          style={{
+            width: "250px",
+            padding: "15px",
+            borderRight: "1px solid #ccc",
+          }}
+        >
+          <h3>Slides</h3>
+          {slides.map((slide) => (
+            <SortableSlide key={slide.id} slide={slide}>
+              <Slide
+                slide={slide}
+                activeSlideId={activeSlideId}
+                setActiveSlideId={setActiveSlideId}
+                deleteSlide={deleteSlide}
+              />
+            </SortableSlide>
+          ))}
+
+          <button
+            onClick={addSlide}
+            style={{
+              marginTop: "10px",
+              width: "100%",
+              padding: "8px",
+            }}
+          >
+            + Add Slide
+          </button>
+        </div>
+      </SortableContext>
+    </DndContext>
   );
 };
 

@@ -8,17 +8,24 @@ import Underline from "@tiptap/extension-underline";
 import Highlight from "@tiptap/extension-highlight";
 
 import { useEditorContext } from "../EditorContext";
-import { blocks_groups, filterBlocks, flattenBlocks } from "../../editor/blocks";
+import {
+  blocks_groups,
+  filterBlocks,
+  flattenBlocks,
+} from "../../editor/blocks";
+import { Trash } from "lucide-react";
 
 const TextBlock = ({
   block,
   slideId,
   addBlock,
   updateBlock,
+  deleteBlock,
   toggleImportant,
 }) => {
   const { setActiveEditor, setEditorState } = useEditorContext();
   const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [showActions, setShowActions] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const [slashMenuPosition, setSlashMenuPosition] = useState(null);
   const [selectedBlockIndex, setSelectedBlockIndex] = useState(0);
@@ -49,7 +56,7 @@ const TextBlock = ({
   const editor = useEditor({
     extensions: [StarterKit, Underline, Highlight],
     immediatelyRender: false,
-    content: block.content || "<p></p>",
+    content: block.content || { text: "<p></p>" },
     onFocus({ editor }) {
       setActiveEditor(editor);
 
@@ -85,12 +92,12 @@ const TextBlock = ({
 
           setSlashRange({
             from,
-            to: selection.from
+            to: selection.from,
           });
 
           setSlashQuery(matchQuery[1]);
           setShowSlashMenu(true);
-        };
+        }
 
         setSlashMenuPosition({
           top: coords.bottom + window.scrollY + 5,
@@ -106,10 +113,14 @@ const TextBlock = ({
     },
     editorProps: {
       handleKeyDown(view, event) {
-        if (event.key === 'Enter') {
+        if (event.key === "Enter") {
           const { state } = view;
 
-          const textBefore = state.doc.textBetween(0, state.selection.from, " ");
+          const textBefore = state.doc.textBetween(
+            0,
+            state.selection.from,
+            " ",
+          );
 
           const matchQuery = textBefore.match(/\/(\w*)$/);
 
@@ -117,16 +128,16 @@ const TextBlock = ({
             const selectedItem = filteredItems[selectedBlockIndex];
 
             if (selectedItem) {
-              handleSlashSelect(selectedItem.type)
-            };
-          };
+              handleSlashSelect(selectedItem.type);
+            }
+          }
 
           return true;
         } else {
           return false;
         }
-      }
-    }
+      },
+    },
   });
 
   useEffect(() => {
@@ -155,34 +166,30 @@ const TextBlock = ({
 
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedBlockIndex(prev => (prev - 1 + itemsCount) % itemsCount);
-      };
-      if (e.key === 'ArrowDown') {
+        setSelectedBlockIndex((prev) => (prev - 1 + itemsCount) % itemsCount);
+      }
+      if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedBlockIndex(prev => (prev + 1) % itemsCount)
-      };
-      if (e.key === 'Escape') {
+        setSelectedBlockIndex((prev) => (prev + 1) % itemsCount);
+      }
+      if (e.key === "Escape") {
         e.preventDefault();
         setShowSlashMenu(false);
-      };
+      }
     };
 
     document.addEventListener("keydown", handleKey);
 
     return () => {
       document.removeEventListener("keydown", handleKey);
-    }
+    };
   }, [showSlashMenu, filteredItems, selectedBlockIndex]);
 
   const handleSlashSelect = (type) => {
     if (!editor || !slashRange) return;
 
     // delete "/query"
-    editor
-      .chain()
-      .focus()
-      .deleteRange(slashRange)
-      .run();
+    editor.chain().focus().deleteRange(slashRange).run();
 
     // insert new block
     addBlock(slideId, type);
@@ -195,6 +202,8 @@ const TextBlock = ({
 
   return (
     <div
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => setShowActions(false)}
       style={{
         marginBottom: "15px",
         padding: "10px",
@@ -207,17 +216,24 @@ const TextBlock = ({
         {block.important ? "⭐ Important" : "Mark Important"}
       </button>
 
+      {showActions && (
+        <button
+          onClick={() => deleteBlock(slideId, block.id)}
+          style={{
+            marginLeft: "15px",
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+          }}
+        >
+          <Trash size={14} />
+        </button>
+      )}
+
       <EditorContent editor={editor} />
 
       {showSlashMenu && slashMenuPosition && (
-        <div
-        // style={{
-        //   position: "absolute",
-        //   bottom: slashMenuPosition.top,
-        //   left: slashMenuPosition.left,
-        //   zIndex: 1000,
-        // }}
-        >
+        <div>
           <InsertMenu
             query={slashQuery}
             position={slashMenuPosition}

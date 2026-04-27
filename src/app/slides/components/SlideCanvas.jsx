@@ -20,6 +20,7 @@ const SlideCanvas = ({
   slide,
   setSlides,
   addBlock,
+  deleteBlock,
   updateBlock,
   toggleImportant,
 }) => {
@@ -113,6 +114,7 @@ const SlideCanvas = ({
                           slideId={slide.id}
                           addBlock={addBlock}
                           updateBlock={updateBlock}
+                          deleteBlock={deleteBlock}
                           toggleImportant={toggleImportant}
                         />
                       </SortableBlock>

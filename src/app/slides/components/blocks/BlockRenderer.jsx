@@ -13,6 +13,7 @@ const BlockRenderer = ({
   slideId,
   addBlock,
   updateBlock,
+  deleteBlock,
   toggleImportant,
 }) => {
   if (block.type === "text") {
@@ -22,6 +23,7 @@ const BlockRenderer = ({
         slideId={slideId}
         addBlock={addBlock}
         updateBlock={updateBlock}
+        deleteBlock={deleteBlock}
         toggleImportant={toggleImportant}
       />
     );
@@ -32,17 +34,32 @@ const BlockRenderer = ({
   }
   if (block.type === "image") {
     return (
-      <ImageBlock block={block} slideId={slideId} updateBlock={updateBlock} />
+      <ImageBlock
+        block={block}
+        slideId={slideId}
+        updateBlock={updateBlock}
+        deleteBlock={deleteBlock}
+      />
     );
   }
   if (block.type === "youtube") {
     return (
-      <YoutubeBlock slideId={slideId} block={block} updateBlock={updateBlock} />
+      <YoutubeBlock
+        slideId={slideId}
+        block={block}
+        updateBlock={updateBlock}
+        deleteBlock={deleteBlock}
+      />
     );
   }
   if (block.type === "callout") {
     return (
-      <CalloutBlock slideId={slideId} block={block} updateBlock={updateBlock} />
+      <CalloutBlock
+        slideId={slideId}
+        block={block}
+        updateBlock={updateBlock}
+        deleteBlock={deleteBlock}
+      />
     );
   }
   if (block.type === "quiz") {

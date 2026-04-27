@@ -1,12 +1,14 @@
 "use client";
 
+import { Trash } from "lucide-react";
 import React, { useState } from "react";
 
-const YoutubeBlock = ({ slideId, block, updateBlock }) => {
+const YoutubeBlock = ({ slideId, block, updateBlock, deleteBlock }) => {
   const [url, setUrl] = useState(block.content?.url || "");
   const [videoId, setVideoId] = useState(block.content?.videoId || "");
   const [startTime, setStartTime] = useState(block.startTime || "");
   const [caption, setCaption] = useState(block.content.caption || "");
+  const [showActions, setShowActions] = useState(false);
 
   const extractVideoId = (url) => {
     const regExp =
@@ -45,7 +47,25 @@ const YoutubeBlock = ({ slideId, block, updateBlock }) => {
   };
 
   return (
-    <div style={{ margin: "10px 0" }}>
+    <div
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => setShowActions(false)}
+      style={{ margin: "10px 0", position: "relative" }}
+    >
+      {showActions && (
+        <button
+          onClick={() => deleteBlock(slideId, block.id)}
+          style={{
+            marginLeft: "15px",
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+          }}
+        >
+          <Trash size={14} />
+        </button>
+      )}
+
       {!videoId && (
         <div>
           <input
