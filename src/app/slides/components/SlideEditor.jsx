@@ -1,20 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import SlidesSidebar from "./SlidesSidebar";
 import SlideCanvas from "./SlideCanvas";
 import EditorProvider from "./EditorContext";
+import lessonService from "@/services/lessonService";
 
-const SlideEditor = () => {
-  const [slides, setSlides] = useState([
-    {
-      id: Date.now(),
-      title: "Slide 1",
-      blocks: [],
-    },
-  ]);
-
+const SlideEditor = ({ lessonId }) => {
+  const [isDataAlreadyFetched, setIsDataAlreadyFetched] = useState(false);
+  const [currentLesson, setCurrentLesson] = useState(null);
+  const [slides, setSlides] = useState([]);
   const [activeSlideId, setActiveSlideId] = useState(slides[0]?.id);
+  const [isSaving, setIsSaving] = useState(false);
 
   const addSlide = () => {
     const newSlide = {
@@ -126,9 +123,42 @@ const SlideEditor = () => {
     setSlides(updatedSlides);
   };
 
+  useEffect(() => {
+    const loadLesson = async () => {
+      const lesson = await lessonService.getLesson(lessonId);
+
+      if (lesson) {
+        setCurrentLesson(lesson);
+        setSlides(lesson.slides);
+      }
+
+      setIsDataAlreadyFetched(true);
+    };
+
+    loadLesson();
+  }, [lessonId]);
+
+  useEffect(() => {
+    if (!isDataAlreadyFetched) return;
+
+    if (slides.length && !activeSlideId) {
+      setActiveSlideId(slides[0].id);
+    }
+
+    const timeout = setTimeout(async () => {
+      setIsSaving(true);
+
+      await lessonService.saveLesson(lessonId, { slides });
+
+      setIsSaving(false);
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [slides]);
+
   const activeSlide = slides.find((slide) => slide.id === activeSlideId);
 
-  return (
+  return currentLesson ? (
     <EditorProvider>
       <div style={{ display: "flex", height: "100vh" }}>
         <SlidesSidebar
@@ -149,7 +179,20 @@ const SlideEditor = () => {
           toggleImportant={toggleImportant}
         />
       </div>
+      <span
+        style={{
+          position: "fixed",
+          bottom: "30px",
+          right: "30px",
+          border: "1px solid white",
+          padding: "12px",
+        }}
+      >
+        {isSaving ? "Saving..." : "Saved"}
+      </span>
     </EditorProvider>
+  ) : (
+    <p>No Lesson is available!</p>
   );
 };
 

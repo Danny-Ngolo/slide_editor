@@ -128,7 +128,7 @@ const TextBlock = ({
             const selectedItem = filteredItems[selectedBlockIndex];
 
             if (selectedItem) {
-              handleSlashSelect(selectedItem.type);
+              handleSlashSelect(selectedItem.type, selectedItem.variant);
             }
           }
 
@@ -185,14 +185,14 @@ const TextBlock = ({
     };
   }, [showSlashMenu, filteredItems, selectedBlockIndex]);
 
-  const handleSlashSelect = (type) => {
+  const handleSlashSelect = (type, variant = undefined) => {
     if (!editor || !slashRange) return;
 
     // delete "/query"
     editor.chain().focus().deleteRange(slashRange).run();
 
     // insert new block
-    addBlock(slideId, type);
+    addBlock(slideId, type, null, { variant });
 
     setShowSlashMenu(false);
     setSlashRange(null);
@@ -239,8 +239,8 @@ const TextBlock = ({
             position={slashMenuPosition}
             selectedBlockIndex={selectedBlockIndex}
             showSlashMenu={showSlashMenu}
-            onSelect={(type) => {
-              handleSlashSelect(type);
+            onSelect={(type, variant = undefined) => {
+              handleSlashSelect(type, variant);
             }}
             onClose={() => setShowSlashMenu(false)}
           />

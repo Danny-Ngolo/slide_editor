@@ -50,8 +50,8 @@ const InsertMenuBetween = ({ onInsert }) => {
 
       {showInsertMenu && (
         <InsertMenu
-          onSelect={(type) => {
-            onInsert(type);
+          onSelect={(type, variant = undefined) => {
+            onInsert(type, variant);
             setShowInsertMenu(false);
           }}
           onClose={() => setShowInsertMenu(false)}

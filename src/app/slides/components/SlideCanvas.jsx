@@ -104,7 +104,9 @@ const SlideCanvas = ({
                     <div key={block.id}>
                       {index === 0 && (
                         <InsertMenuBetween
-                          onInsert={(type) => addBlock(slide.id, type, 0)}
+                          onInsert={(type, variant = undefined) =>
+                            addBlock(slide.id, type, 0, { variant })
+                          }
                         />
                       )}
 
@@ -122,7 +124,9 @@ const SlideCanvas = ({
                       {/* INSERT MENU AFTER EACH BLOCK */}
 
                       <InsertMenuBetween
-                        onInsert={(type) => addBlock(slide.id, type, index + 1)}
+                        onInsert={(type, variant = undefined) =>
+                          addBlock(slide.id, type, index + 1, { variant })
+                        }
                       />
                     </div>
                   );
