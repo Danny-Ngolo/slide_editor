@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import SlidesSidebar from "./SlidesSidebar";
 import SlideCanvas from "./SlideCanvas";
 import EditorProvider from "./EditorContext";
@@ -11,7 +11,9 @@ const SlideEditor = ({ lessonId }) => {
   const [currentLesson, setCurrentLesson] = useState(null);
   const [slides, setSlides] = useState([]);
   const [activeSlideId, setActiveSlideId] = useState(slides[0]?.id);
-  const [isSaving, setIsSaving] = useState(false);
+  // const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
+  const saveTimeoutRef = useRef(null);
 
   const addSlide = () => {
     const newSlide = {
@@ -123,6 +125,31 @@ const SlideEditor = ({ lessonId }) => {
     setSlides(updatedSlides);
   };
 
+  const handleSave = async () => {
+    try {
+      setSaveStatus("saving");
+
+      await lessonService.saveLesson(lessonId, { slides });
+
+      setSaveStatus("saved");
+
+      setTimeout(() => {
+        setSaveStatus("idle");
+      }, 2000);
+    } catch (err) {
+      console.error(err);
+      setSaveStatus("error");
+    }
+  };
+
+  const handleManualSave = async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    await handleSave();
+  };
+
   useEffect(() => {
     const loadLesson = async () => {
       const lesson = await lessonService.getLesson(lessonId);
@@ -141,20 +168,30 @@ const SlideEditor = ({ lessonId }) => {
   useEffect(() => {
     if (!isDataAlreadyFetched) return;
 
+    // initialize the active slideId so that we don't get empty at the start
+
     if (slides.length && !activeSlideId) {
       setActiveSlideId(slides[0].id);
     }
 
-    const timeout = setTimeout(async () => {
-      setIsSaving(true);
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
 
-      await lessonService.saveLesson(lessonId, { slides });
+    saveTimeoutRef.current = setTimeout(async () => {
+      handleSave();
+    }, 2500);
 
-      setIsSaving(false);
-    }, 5000);
-
-    return () => clearTimeout(timeout);
+    return () => clearTimeout(saveTimeoutRef);
   }, [slides]);
+
+  const displaySaveState = () => {
+    if (saveStatus === "saving") return "Saving...";
+    if (saveStatus === "saved") return "Saved";
+    if (saveStatus === "error") return "Error";
+
+    return "Save";
+  };
 
   const activeSlide = slides.find((slide) => slide.id === activeSlideId);
 
@@ -179,7 +216,8 @@ const SlideEditor = ({ lessonId }) => {
           toggleImportant={toggleImportant}
         />
       </div>
-      <span
+      <button
+        onClick={handleManualSave}
         style={{
           position: "fixed",
           bottom: "30px",
@@ -188,8 +226,14 @@ const SlideEditor = ({ lessonId }) => {
           padding: "12px",
         }}
       >
-        {isSaving ? "Saving..." : "Saved"}
-      </span>
+        {saveStatus === "saving"
+          ? "Saving"
+          : saveStatus === "saved"
+            ? "Saved"
+            : saveStatus === "error"
+              ? "Error"
+              : "Save"}
+      </button>
     </EditorProvider>
   ) : (
     <p>No Lesson is available!</p>
