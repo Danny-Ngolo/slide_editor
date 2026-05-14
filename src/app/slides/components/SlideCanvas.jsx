@@ -18,6 +18,7 @@ import SortableBlock from "./SortableBlock";
 
 const SlideCanvas = ({
   slide,
+  slides,
   setSlides,
   addBlock,
   deleteBlock,
@@ -52,15 +53,13 @@ const SlideCanvas = ({
     setShowInsertMenu(true);
   };
 
-  // NEW CODE START *******************************
-
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
     if (!over || active.id === over.id) return;
 
-    setSlides((prev) => {
-      return prev.map((slideItem) => {
+    setSlides(
+      slides.map((slideItem) => {
         if (slideItem.id !== slide.id) return slideItem;
 
         const oldIndex = slideItem.blocks.findIndex((b) => b.id === active.id);
@@ -70,11 +69,9 @@ const SlideCanvas = ({
           ...slideItem,
           blocks: arrayMove(slideItem.blocks, oldIndex, newIndex),
         };
-      });
-    });
+      }),
+    );
   };
-
-  // NEW CODE END ********************************
 
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

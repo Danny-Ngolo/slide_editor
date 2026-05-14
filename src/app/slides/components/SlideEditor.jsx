@@ -5,15 +5,40 @@ import SlidesSidebar from "./SlidesSidebar";
 import SlideCanvas from "./SlideCanvas";
 import EditorProvider from "./EditorContext";
 import lessonService from "@/services/lessonService";
+import { Redo, Undo } from "lucide-react";
 
 const SlideEditor = ({ lessonId }) => {
   const [isDataAlreadyFetched, setIsDataAlreadyFetched] = useState(false);
   const [currentLesson, setCurrentLesson] = useState(null);
-  const [slides, setSlides] = useState([]);
+  const [slidesHistory, setSlidesHistory] = useState({
+    past: [],
+    present: [],
+    future: [],
+  });
+  const slides = slidesHistory?.present || [];
+
+  const setSlides = (newSlides) => {
+    setSlidesHistory((prev) => {
+      return {
+        past: [...prev.past, prev.present],
+        present: newSlides,
+        future: [], // clear redo stack
+      };
+    });
+  };
+  const isUndoRedo = useRef(false);
+
   const [activeSlideId, setActiveSlideId] = useState(slides[0]?.id);
-  // const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
   const saveTimeoutRef = useRef(null);
+
+  const initializeSlides = (slides) => {
+    setSlidesHistory((prev) => ({
+      past: [],
+      present: slides,
+      future: [],
+    }));
+  };
 
   const addSlide = () => {
     const newSlide = {
@@ -22,16 +47,14 @@ const SlideEditor = ({ lessonId }) => {
       blocks: [],
     };
 
-    setSlides((prev) => [...prev, newSlide]);
+    setSlides([...slides, newSlide]);
   };
 
   const deleteSlide = (slideId) => {
     if (slides.length === 1) return;
 
     if (confirm("Do you really want to delete this slide ?") && slideId) {
-      setSlides((prev) => {
-        return prev?.filter((slide) => slide.id !== slideId);
-      });
+      setSlides(slides.filter((slide) => slide.id !== slideId));
     }
   };
 
@@ -92,16 +115,16 @@ const SlideEditor = ({ lessonId }) => {
 
   const deleteBlock = (slideId, blockId) => {
     if (confirm("Do you really want to delete this block ?")) {
-      setSlides((prev) => {
-        return prev.map((slide) => {
+      setSlides(
+        slides.map((slide) => {
           if (slide.id !== slideId) return slide;
 
           return {
             ...slide,
             blocks: slide.blocks.filter((b) => b.id !== blockId),
           };
-        });
-      });
+        }),
+      );
     }
   };
 
@@ -150,13 +173,47 @@ const SlideEditor = ({ lessonId }) => {
     await handleSave();
   };
 
+  const undo = () => {
+    isUndoRedo.current = true;
+
+    setSlidesHistory((prev) => {
+      if (prev.past.length === 0) return prev;
+
+      // the last set in past goes to present and the present set goes to the future
+
+      const previous = prev.past[prev.past.length - 1];
+
+      return {
+        past: prev.past.slice(0, -1),
+        present: previous,
+        future: [prev.present, ...prev.future],
+      };
+    });
+  };
+
+  const redo = () => {
+    isUndoRedo.current = true;
+
+    setSlidesHistory((prev) => {
+      if (prev.future.length === 0) return prev;
+
+      const next = prev.future[0];
+
+      return {
+        past: [...prev.past, prev.present],
+        present: next,
+        future: prev.future.slice(1),
+      };
+    });
+  };
+
   useEffect(() => {
     const loadLesson = async () => {
       const lesson = await lessonService.getLesson(lessonId);
 
       if (lesson) {
         setCurrentLesson(lesson);
-        setSlides(lesson.slides);
+        initializeSlides(lesson.slides);
       }
 
       setIsDataAlreadyFetched(true);
@@ -168,10 +225,18 @@ const SlideEditor = ({ lessonId }) => {
   useEffect(() => {
     if (!isDataAlreadyFetched) return;
 
+    console.log("checking slides...", slides);
+
     // initialize the active slideId so that we don't get empty at the start
 
     if (slides.length && !activeSlideId) {
       setActiveSlideId(slides[0].id);
+    }
+
+    if (isUndoRedo.current === true) {
+      isUndoRedo.current = false;
+
+      return;
     }
 
     if (saveTimeoutRef.current) {
@@ -185,19 +250,26 @@ const SlideEditor = ({ lessonId }) => {
     return () => clearTimeout(saveTimeoutRef);
   }, [slides]);
 
-  const displaySaveState = () => {
-    if (saveStatus === "saving") return "Saving...";
-    if (saveStatus === "saved") return "Saved";
-    if (saveStatus === "error") return "Error";
-
-    return "Save";
-  };
-
   const activeSlide = slides.find((slide) => slide.id === activeSlideId);
 
   return currentLesson ? (
     <EditorProvider>
       <div style={{ display: "flex", height: "100vh" }}>
+        <div
+          style={{
+            position: "absolute",
+            top: "10px",
+            left: "280px",
+            zIndex: 200,
+          }}
+        >
+          <button onClick={undo} disabled={slidesHistory.past.length === 0}>
+            <Undo size={16} /> Undo
+          </button>
+          <button onClick={redo} disabled={slidesHistory.future.length === 0}>
+            <Redo size={16} /> Redo
+          </button>
+        </div>
         <SlidesSidebar
           slides={slides}
           setSlides={setSlides}
@@ -209,6 +281,7 @@ const SlideEditor = ({ lessonId }) => {
 
         <SlideCanvas
           slide={activeSlide}
+          slides={slides}
           setSlides={setSlides}
           addBlock={addBlock}
           updateBlock={updateBlock}

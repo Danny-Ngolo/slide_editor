@@ -25,12 +25,10 @@ const SlidesSidebar = ({
 
     if (!over || active.id === over.id) return;
 
-    setSlides((prevSlides) => {
-      const oldIndex = prevSlides.findIndex((s) => s.id === active.id);
-      const newIndex = prevSlides.findIndex((s) => s.id === over.id);
+    const oldIndex = slides.findIndex((s) => s.id === active.id);
+    const newIndex = slides.findIndex((s) => s.id === over.id);
 
-      return arrayMove(prevSlides, oldIndex, newIndex);
-    });
+    setSlides(arrayMove(slides, oldIndex, newIndex));
   };
 
   return (
