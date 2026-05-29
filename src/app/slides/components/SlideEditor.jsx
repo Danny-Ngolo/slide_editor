@@ -17,10 +17,21 @@ const SlideEditor = ({ lessonId }) => {
   });
   const slides = slidesHistory?.present || [];
 
-  const setSlides = (newSlides) => {
+  const MAX_HISTORY = 50;
+
+  const setSlides = (value) => {
     setSlidesHistory((prev) => {
+      const newSlides =
+        typeof value === "function" ? value(prev.present) : value;
+
+      // Avoid duplication of history or unnecessary updates
+
+      if (JSON.stringify(prev.present) === JSON.stringify(newSlides)) {
+        return prev;
+      }
+
       return {
-        past: [...prev.past, prev.present],
+        past: [...prev.past, prev.present].slice(MAX_HISTORY), // takes the 50 newest updates,
         present: newSlides,
         future: [], // clear redo stack
       };
@@ -126,6 +137,38 @@ const SlideEditor = ({ lessonId }) => {
         }),
       );
     }
+  };
+
+  const duplicateBlock = (slideId, blockId) => {
+    setSlides((prevSlides) => {
+      return prevSlides.map((slide) => {
+        if (slide.id !== slideId) return slide;
+
+        const blockIndex = slide.blocks.findIndex(
+          (block) => block.id === blockId,
+        );
+
+        if (blockIndex === -1) return slide;
+
+        const blockToDuplicate = slide.blocks[blockIndex];
+
+        console.log("block to duplicate", blockToDuplicate);
+
+        const duplicatedBlock = {
+          ...structuredClone(blockToDuplicate),
+          id: Date.now(),
+        };
+
+        const updatedBlocks = [...slide.blocks];
+
+        updatedBlocks.splice(blockIndex + 1, 0, duplicatedBlock);
+
+        return {
+          ...slide,
+          blocks: updatedBlocks,
+        };
+      });
+    });
   };
 
   const toggleImportant = (slideId, blockId) => {
@@ -286,6 +329,7 @@ const SlideEditor = ({ lessonId }) => {
           addBlock={addBlock}
           updateBlock={updateBlock}
           deleteBlock={deleteBlock}
+          duplicateBlock={duplicateBlock}
           toggleImportant={toggleImportant}
         />
       </div>

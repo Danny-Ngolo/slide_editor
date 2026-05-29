@@ -6,15 +6,12 @@ import React, { useState } from "react";
 
 const CalloutBlock = ({ block, updateBlock, deleteBlock, slideId }) => {
   const [text, setText] = useState(block.content?.text || "");
-  const [showActions, setShowActions] = useState(false);
 
   const variant = block.content?.variant || "definition";
   const config = calloutTypes[variant];
 
   return (
     <div
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
       style={{
         display: "flex",
         alignItems: "center",
@@ -26,20 +23,6 @@ const CalloutBlock = ({ block, updateBlock, deleteBlock, slideId }) => {
         position: "relative",
       }}
     >
-      {showActions && (
-        <button
-          onClick={() => deleteBlock(slideId, block.id)}
-          style={{
-            marginLeft: "15px",
-            position: "absolute",
-            top: "8px",
-            right: "8px",
-          }}
-        >
-          <Trash size={14} />
-        </button>
-      )}
-
       <span>{config.icon}</span>
 
       {/* TYPE SELECTOR */}

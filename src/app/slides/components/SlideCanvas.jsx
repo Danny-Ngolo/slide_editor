@@ -23,6 +23,7 @@ const SlideCanvas = ({
   addBlock,
   deleteBlock,
   updateBlock,
+  duplicateBlock,
   toggleImportant,
 }) => {
   if (!slide) return null;
@@ -114,6 +115,7 @@ const SlideCanvas = ({
                           addBlock={addBlock}
                           updateBlock={updateBlock}
                           deleteBlock={deleteBlock}
+                          duplicateBlock={duplicateBlock}
                           toggleImportant={toggleImportant}
                         />
                       </SortableBlock>

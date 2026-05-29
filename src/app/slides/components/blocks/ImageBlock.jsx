@@ -3,12 +3,11 @@
 import { Trash } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
-const ImageBlock = ({ block, slideId, updateBlock, deleteBlock }) => {
+const ImageBlock = ({ block, slideId, updateBlock }) => {
   const [image, setImage] = useState(block.content.image || "");
   const [imageWidth, setImageWith] = useState(block.with || 300);
   const [caption, setCaption] = useState(block.caption || "");
   const [align, setAlign] = useState("center");
-  const [showActions, setShowActions] = useState(false);
 
   const isResizing = useRef(false);
   const imageRef = useRef(null);
@@ -90,8 +89,6 @@ const ImageBlock = ({ block, slideId, updateBlock, deleteBlock }) => {
     <div
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
       style={{
         margin: "10px 0",
         border: image ? "none" : "2px dashed #ccc",
@@ -100,20 +97,6 @@ const ImageBlock = ({ block, slideId, updateBlock, deleteBlock }) => {
         position: "relative",
       }}
     >
-      {showActions && (
-        <button
-          onClick={() => deleteBlock(slideId, block.id)}
-          style={{
-            marginLeft: "15px",
-            position: "absolute",
-            top: "8px",
-            right: "8px",
-          }}
-        >
-          <Trash size={14} />
-        </button>
-      )}
-
       {!image && (
         <div>
           <button

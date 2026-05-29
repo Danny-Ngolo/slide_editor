@@ -13,19 +13,10 @@ import {
   filterBlocks,
   flattenBlocks,
 } from "../../editor/blocks";
-import { Trash } from "lucide-react";
 
-const TextBlock = ({
-  block,
-  slideId,
-  addBlock,
-  updateBlock,
-  deleteBlock,
-  toggleImportant,
-}) => {
+const TextBlock = ({ block, slideId, addBlock, updateBlock }) => {
   const { setActiveEditor, setEditorState } = useEditorContext();
   const [showSlashMenu, setShowSlashMenu] = useState(false);
-  const [showActions, setShowActions] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const [slashMenuPosition, setSlashMenuPosition] = useState(null);
   const [selectedBlockIndex, setSelectedBlockIndex] = useState(0);
@@ -201,35 +192,7 @@ const TextBlock = ({
   if (!editor) return null;
 
   return (
-    <div
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-      style={{
-        marginBottom: "15px",
-        padding: "10px",
-        border: block.important ? "2px solid orange" : "1px solid #ccc",
-        minHeight: "80px",
-        position: "relative",
-      }}
-    >
-      <button onClick={() => toggleImportant(slideId, block.id)}>
-        {block.important ? "⭐ Important" : "Mark Important"}
-      </button>
-
-      {showActions && (
-        <button
-          onClick={() => deleteBlock(slideId, block.id)}
-          style={{
-            marginLeft: "15px",
-            position: "absolute",
-            top: "8px",
-            right: "8px",
-          }}
-        >
-          <Trash size={14} />
-        </button>
-      )}
-
+    <div>
       <EditorContent editor={editor} />
 
       {showSlashMenu && slashMenuPosition && (
