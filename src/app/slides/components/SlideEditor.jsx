@@ -16,6 +16,7 @@ const SlideEditor = ({ lessonId }) => {
     future: [],
   });
   const slides = slidesHistory?.present || [];
+  const [copiedBlock, setCopiedBlock] = useState(null);
 
   const MAX_HISTORY = 50;
 
@@ -151,16 +152,12 @@ const SlideEditor = ({ lessonId }) => {
         if (blockIndex === -1) return slide;
 
         const blockToDuplicate = slide.blocks[blockIndex];
-
-        console.log("block to duplicate", blockToDuplicate);
-
         const duplicatedBlock = {
           ...structuredClone(blockToDuplicate),
           id: Date.now(),
         };
 
         const updatedBlocks = [...slide.blocks];
-
         updatedBlocks.splice(blockIndex + 1, 0, duplicatedBlock);
 
         return {
@@ -250,6 +247,49 @@ const SlideEditor = ({ lessonId }) => {
     });
   };
 
+  const copyBlock = (slideId, blockId) => {
+    const slide = slides.find((slide) => slide.id === slideId);
+
+    if (!slide) return;
+
+    const block = slide.blocks.find((block) => block.id === blockId);
+
+    if (!block) return;
+
+    setCopiedBlock(structuredClone(block));
+  };
+
+  const pasteBlock = (slideId, targetBlockId) => {
+    if (!copiedBlock) return;
+
+    setSlides((prevSlides) => {
+      return prevSlides.map((slide) => {
+        if (slide.id !== slideId) return slide;
+
+        const blockIndex = slide.blocks.findIndex(
+          (block) => block.id === targetBlockId,
+        );
+
+        if (blockIndex === -1) return slide;
+
+        const newBlock = {
+          ...structuredClone(copiedBlock),
+          id: Date.now(),
+        };
+
+        console.log("newBlock by paste", newBlock);
+
+        const updatedBlocks = [...slide.blocks];
+        updatedBlocks.splice(blockIndex + 1, 0, newBlock);
+
+        return {
+          ...slide,
+          blocks: updatedBlocks,
+        };
+      });
+    });
+  };
+
   useEffect(() => {
     const loadLesson = async () => {
       const lesson = await lessonService.getLesson(lessonId);
@@ -331,6 +371,9 @@ const SlideEditor = ({ lessonId }) => {
           deleteBlock={deleteBlock}
           duplicateBlock={duplicateBlock}
           toggleImportant={toggleImportant}
+          copyBlock={copyBlock}
+          pasteBlock={pasteBlock}
+          copiedBlock={copiedBlock}
         />
       </div>
       <button

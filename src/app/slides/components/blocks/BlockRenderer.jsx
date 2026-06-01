@@ -8,6 +8,7 @@ import ImageBlock from "./ImageBlock";
 import YoutubeBlock from "./YoutubeBlock";
 import CalloutBlock from "./CalloutBlock";
 import BlockActions from "../BlockActions";
+import { MoreVertical } from "lucide-react";
 
 const BlockRenderer = ({
   block,
@@ -17,6 +18,9 @@ const BlockRenderer = ({
   deleteBlock,
   duplicateBlock,
   toggleImportant,
+  copyBlock,
+  pasteBlock,
+  copiedBlock,
 }) => {
   const [showActions, setShowActions] = useState(false);
 
@@ -45,7 +49,7 @@ const BlockRenderer = ({
           borderRadius: "2px",
         }}
       >
-        ...
+        <MoreVertical size={18} />
       </div>
 
       {showActions && (
@@ -60,7 +64,17 @@ const BlockRenderer = ({
           onToggleImportant={() => {
             (toggleImportant(slideId, block.id), setShowActions(false));
           }}
+          onCopyBlock={() => {
+            copyBlock(slideId, block.id);
+            setShowActions(false);
+          }}
+          onPasteBlock={() => {
+            pasteBlock(slideId, block.id);
+            setShowActions(false);
+          }}
           setShowActions={setShowActions}
+          important={block.important}
+          copiedBlock={copiedBlock}
         />
       )}
 
@@ -103,58 +117,6 @@ const BlockRenderer = ({
       {block.type === "quiz" && <QuizBlock />}
     </div>
   );
-
-  // if (block.type === "text") {
-  //   return (
-  //     <TextBlock
-  //       block={block}
-  //       slideId={slideId}
-  //       addBlock={addBlock}
-  //       updateBlock={updateBlock}
-  //       deleteBlock={deleteBlock}
-  //       toggleImportant={toggleImportant}
-  //     />
-  //   );
-  // }
-
-  // if (block.type === "divider") {
-  //   return <DividerBlock />;
-  // }
-  // if (block.type === "image") {
-  //   return (
-  //     <ImageBlock
-  //       block={block}
-  //       slideId={slideId}
-  //       updateBlock={updateBlock}
-  //       deleteBlock={deleteBlock}
-  //     />
-  //   );
-  // }
-  // if (block.type === "youtube") {
-  //   return (
-  //     <YoutubeBlock
-  //       slideId={slideId}
-  //       block={block}
-  //       updateBlock={updateBlock}
-  //       deleteBlock={deleteBlock}
-  //     />
-  //   );
-  // }
-  // if (block.type === "callout") {
-  //   return (
-  //     <CalloutBlock
-  //       slideId={slideId}
-  //       block={block}
-  //       updateBlock={updateBlock}
-  //       deleteBlock={deleteBlock}
-  //     />
-  //   );
-  // }
-  // if (block.type === "quiz") {
-  //   return <QuizBlock />;
-  // }
-
-  // return null;
 };
 
 export default BlockRenderer;
