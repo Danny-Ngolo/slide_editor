@@ -15,6 +15,7 @@ import EditorToolBar from "./EditorToolBar";
 import InsertMenu from "./InsertMenu";
 import InsertMenuBetween from "./InsertMenuBetween";
 import SortableBlock from "./SortableBlock";
+import { useEditorContext } from "./EditorContext";
 
 const SlideCanvas = ({
   slide,
@@ -28,11 +29,13 @@ const SlideCanvas = ({
   copyBlock,
   pasteBlock,
   copiedBlock,
+  isUndoRedo,
 }) => {
   if (!slide) return null;
 
   const [showInsertMenu, setShowInsertMenu] = useState(false);
   const [insertMenuPos, setInsertMenuPos] = useState(null);
+  const { setSelectedBlock } = useEditorContext();
 
   const handleClickAddBlock = (e) => {
     const clickY = e.clientY;
@@ -85,6 +88,12 @@ const SlideCanvas = ({
       >
         <div style={{ padding: "40px", flex: "1", position: "relative" }}>
           <div
+            onClick={() =>
+              setSelectedBlock({
+                slideId: null,
+                blockId: null,
+              })
+            }
             styles={{
               maxWidth: "800px",
               margin: "auto",
@@ -123,6 +132,7 @@ const SlideCanvas = ({
                           copyBlock={copyBlock}
                           pasteBlock={pasteBlock}
                           copiedBlock={copiedBlock}
+                          isUndoRedo={isUndoRedo}
                         />
                       </SortableBlock>
 

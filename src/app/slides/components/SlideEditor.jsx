@@ -1,9 +1,11 @@
 "use client";
 
+// ********** UNDO ON TEXT WITH SHORTCUTS WORK BUT NOT WITH BUTTON. CHECK IF IT IS WORK FOR REALLY OR IT'S JUST A BEHAVIOUR OF TEXTAREA. IF NOT WORKING, THE PROBLEM COULD BE THAT UNDO ISN'T CATCHING INSIDE UNDO/REDO
+
 import React, { useEffect, useRef, useState } from "react";
 import SlidesSidebar from "./SlidesSidebar";
 import SlideCanvas from "./SlideCanvas";
-import EditorProvider from "./EditorContext";
+import { useEditorContext } from "./EditorContext";
 import lessonService from "@/services/lessonService";
 import { Redo, Undo } from "lucide-react";
 
@@ -17,6 +19,7 @@ const SlideEditor = ({ lessonId }) => {
   });
   const slides = slidesHistory?.present || [];
   const [copiedBlock, setCopiedBlock] = useState(null);
+  const { selectedBlock, activeEditor } = useEditorContext();
 
   const MAX_HISTORY = 50;
 
@@ -32,7 +35,7 @@ const SlideEditor = ({ lessonId }) => {
       }
 
       return {
-        past: [...prev.past, prev.present].slice(MAX_HISTORY), // takes the 50 newest updates,
+        past: [...prev.past, prev.present].slice(-MAX_HISTORY), // takes the 50 newest updates,
         present: newSlides,
         future: [], // clear redo stack
       };
@@ -71,6 +74,8 @@ const SlideEditor = ({ lessonId }) => {
   };
 
   const addBlock = (slideId, type, index = null, initialContent = {}) => {
+    console.log("adding a block...");
+
     const newBlock = {
       id: Date.now(),
       type: type,
@@ -101,6 +106,8 @@ const SlideEditor = ({ lessonId }) => {
   };
 
   const updateBlock = (slideId, blockId, newContent) => {
+    console.log("updating a block...");
+
     const updatedSlides = slides.map((slide) => {
       if (slide.id === slideId) {
         const updatedBlocks = slide.blocks.map((block) => {
@@ -126,6 +133,8 @@ const SlideEditor = ({ lessonId }) => {
   };
 
   const deleteBlock = (slideId, blockId) => {
+    console.log("deleting a block...");
+
     if (confirm("Do you really want to delete this block ?")) {
       setSlides(
         slides.map((slide) => {
@@ -141,6 +150,8 @@ const SlideEditor = ({ lessonId }) => {
   };
 
   const duplicateBlock = (slideId, blockId) => {
+    console.log("duplicating a block...");
+
     setSlides((prevSlides) => {
       return prevSlides.map((slide) => {
         if (slide.id !== slideId) return slide;
@@ -214,10 +225,12 @@ const SlideEditor = ({ lessonId }) => {
   };
 
   const undo = () => {
+    console.log("undoing...");
+
     isUndoRedo.current = true;
 
     setSlidesHistory((prev) => {
-      if (prev.past.length === 0) return prev;
+      if (prev?.past?.length === 0) return prev;
 
       // the last set in past goes to present and the present set goes to the future
 
@@ -232,6 +245,8 @@ const SlideEditor = ({ lessonId }) => {
   };
 
   const redo = () => {
+    console.log("redoing...");
+
     isUndoRedo.current = true;
 
     setSlidesHistory((prev) => {
@@ -277,8 +292,6 @@ const SlideEditor = ({ lessonId }) => {
           id: Date.now(),
         };
 
-        console.log("newBlock by paste", newBlock);
-
         const updatedBlocks = [...slide.blocks];
         updatedBlocks.splice(blockIndex + 1, 0, newBlock);
 
@@ -289,6 +302,60 @@ const SlideEditor = ({ lessonId }) => {
       });
     });
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // for handlers that require selectedBlock
+      if (!selectedBlock?.slideId || !selectedBlock?.blockId) return;
+      const isEditingText = !!activeEditor;
+
+      if (isEditingText) return;
+
+      const key = e.key.toLowerCase();
+
+      if (e.ctrlKey && key === "z") {
+        e.preventDefault();
+
+        undo();
+      }
+
+      if (e.ctrlKey && key === "y") {
+        e.preventDefault();
+
+        redo();
+      }
+
+      if (e.ctrlKey && key === "d") {
+        e.preventDefault();
+
+        duplicateBlock(selectedBlock.slideId, selectedBlock.blockId);
+      }
+
+      if (key === "delete") {
+        e.preventDefault();
+
+        deleteBlock(selectedBlock.slideId, selectedBlock.blockId);
+      }
+
+      if (e.ctrlKey && key === "c") {
+        e.preventDefault();
+
+        copyBlock(selectedBlock.slideId, selectedBlock.blockId);
+      }
+
+      if (e.ctrlKey && key === "v") {
+        e.preventDefault();
+
+        pasteBlock(selectedBlock.slideId, selectedBlock.blockId);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedBlock, activeEditor, copiedBlock, slides]);
 
   useEffect(() => {
     const loadLesson = async () => {
@@ -307,8 +374,6 @@ const SlideEditor = ({ lessonId }) => {
 
   useEffect(() => {
     if (!isDataAlreadyFetched) return;
-
-    console.log("checking slides...", slides);
 
     // initialize the active slideId so that we don't get empty at the start
 
@@ -336,7 +401,8 @@ const SlideEditor = ({ lessonId }) => {
   const activeSlide = slides.find((slide) => slide.id === activeSlideId);
 
   return currentLesson ? (
-    <EditorProvider>
+    // <EditorProvider>
+    <div>
       <div style={{ display: "flex", height: "100vh" }}>
         <div
           style={{
@@ -374,6 +440,7 @@ const SlideEditor = ({ lessonId }) => {
           copyBlock={copyBlock}
           pasteBlock={pasteBlock}
           copiedBlock={copiedBlock}
+          isUndoRedo={isUndoRedo}
         />
       </div>
       <button
@@ -394,8 +461,9 @@ const SlideEditor = ({ lessonId }) => {
               ? "Error"
               : "Save"}
       </button>
-    </EditorProvider>
+    </div>
   ) : (
+    // </EditorProvider>
     <p>No Lesson is available!</p>
   );
 };

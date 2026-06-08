@@ -2,6 +2,7 @@
 
 import React from "react";
 import SlideEditor from "./components/SlideEditor";
+import EditorProvider from "./components/EditorContext";
 
 const lessons = [
   {
@@ -33,7 +34,9 @@ const lessons = [
 const SlidesPage = () => {
   return (
     <div>
-      <SlideEditor lessonId={lessons[0]._id} />
+      <EditorProvider>
+        <SlideEditor lessonId={lessons[0]._id} />
+      </EditorProvider>
     </div>
   );
 };

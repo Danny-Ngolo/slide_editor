@@ -1,5 +1,7 @@
 "use client";
 
+// JUST REALIZED ANOTHER ISSUE THAT IN THE TEXTBOX CLICKING ENTER DOESN'T NO ANYTHING...
+
 import InsertMenu from "../InsertMenu";
 import React, { useEffect, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -14,7 +16,7 @@ import {
   flattenBlocks,
 } from "../../editor/blocks";
 
-const TextBlock = ({ block, slideId, addBlock, updateBlock }) => {
+const TextBlock = ({ block, slideId, addBlock, updateBlock, isUndoRedo }) => {
   const { setActiveEditor, setEditorState } = useEditorContext();
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
@@ -47,15 +49,27 @@ const TextBlock = ({ block, slideId, addBlock, updateBlock }) => {
   const editor = useEditor({
     extensions: [StarterKit, Underline, Highlight],
     immediatelyRender: false,
-    content: block.content || { text: "<p></p>" },
+    content: block.content.html || "",
     onFocus({ editor }) {
       setActiveEditor(editor);
 
       updateEditorState(editor);
     },
+    onBlur() {
+      setActiveEditor(null);
+    },
 
     onUpdate({ editor }) {
       if (!editor) return;
+
+      // if (isUndoRedo?.current) {
+      //   console.log("Ignoring update from undo/redo");
+
+      //   isUndoRedo.current = false;
+      //   return;
+      // }
+
+      // check firts if the pressed key matchs / to show the slashMenu, if not: update the
 
       const text = editor.getText();
       const selection = editor.state.selection;
@@ -99,7 +113,11 @@ const TextBlock = ({ block, slideId, addBlock, updateBlock }) => {
         setSelectedBlockIndex(0);
       }
 
-      updateBlock(slideId, block.id, editor.getHTML());
+      const newContent = {
+        html: editor.getHTML(),
+      };
+
+      updateBlock(slideId, block.id, newContent);
       updateEditorState(editor);
     },
     editorProps: {
@@ -124,9 +142,10 @@ const TextBlock = ({ block, slideId, addBlock, updateBlock }) => {
           }
 
           return true;
-        } else {
-          return false;
         }
+        // else {
+        //   return false;
+        // }
       },
     },
   });
@@ -141,6 +160,17 @@ const TextBlock = ({ block, slideId, addBlock, updateBlock }) => {
       editor.off("selectionUpdate", editorHandler);
     };
   }, [editor]);
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const blockHtml = block?.content?.html;
+    const currentHtml = editor.getHTML();
+
+    if (blockHtml !== currentHtml) {
+      editor.commands.setContent(block.content.html);
+    }
+  }, [editor, block.content]);
 
   useEffect(() => {
     const filteredBlocks = filterBlocks(blocks_groups, slashQuery);
@@ -192,8 +222,11 @@ const TextBlock = ({ block, slideId, addBlock, updateBlock }) => {
   if (!editor) return null;
 
   return (
-    <div>
-      <EditorContent editor={editor} />
+    <div style={{ color: "white", background: "black" }}>
+      <EditorContent
+        style={{ height: "100%", background: "red" }}
+        editor={editor}
+      />
 
       {showSlashMenu && slashMenuPosition && (
         <div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import TextBlock from "./TextBlock";
 import QuizBlock from "./QuizBlock";
 import DividerBlock from "./DividerBlock";
@@ -9,6 +9,7 @@ import YoutubeBlock from "./YoutubeBlock";
 import CalloutBlock from "./CalloutBlock";
 import BlockActions from "../BlockActions";
 import { MoreVertical } from "lucide-react";
+import { useEditorContext } from "../EditorContext";
 
 const BlockRenderer = ({
   block,
@@ -21,17 +22,31 @@ const BlockRenderer = ({
   copyBlock,
   pasteBlock,
   copiedBlock,
+  isUndoRedo,
 }) => {
   const [showActions, setShowActions] = useState(false);
+  const { selectedBlock, setSelectedBlock } = useEditorContext();
+
+  const isSelectedBlock =
+    (selectedBlock?.slideId === slideId && selectedBlock?.blockId) === block.id;
 
   return (
     <div
+      onClick={(e) => {
+        e.stopPropagation();
+
+        setSelectedBlock({
+          slideId,
+          blockId: block.id,
+        });
+      }}
       style={{
         marginBottom: "15px",
         padding: "10px",
         border: block.important ? "2px solid orange" : "1px solid #ccc",
         minHeight: "80px",
         position: "relative",
+        boxShadow: isSelectedBlock ? "0 0 0 2px #fff" : "none",
       }}
     >
       <div
@@ -86,6 +101,7 @@ const BlockRenderer = ({
           updateBlock={updateBlock}
           deleteBlock={deleteBlock}
           toggleImportant={toggleImportant}
+          isUndoRedo={isUndoRedo}
         />
       )}
 

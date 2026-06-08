@@ -1,10 +1,9 @@
 "use client";
 
-import { Trash } from "lucide-react";
 import calloutTypes from "../../editor/calloutTypes";
 import React, { useState } from "react";
 
-const CalloutBlock = ({ block, updateBlock, deleteBlock, slideId }) => {
+const CalloutBlock = ({ block, updateBlock, slideId }) => {
   const [text, setText] = useState(block.content?.text || "");
 
   const variant = block.content?.variant || "definition";

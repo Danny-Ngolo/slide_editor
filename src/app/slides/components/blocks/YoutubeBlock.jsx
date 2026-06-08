@@ -1,9 +1,8 @@
 "use client";
 
-import { Trash } from "lucide-react";
 import React, { useState } from "react";
 
-const YoutubeBlock = ({ slideId, block, updateBlock, deleteBlock }) => {
+const YoutubeBlock = ({ slideId, block, updateBlock }) => {
   const [url, setUrl] = useState(block.content?.url || "");
   const [videoId, setVideoId] = useState(block.content?.videoId || "");
   const [startTime, setStartTime] = useState(block.startTime || "");
