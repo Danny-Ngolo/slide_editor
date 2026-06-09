@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 const EditorContext = createContext();
 
@@ -9,6 +15,8 @@ const EditorProvider = ({ children }) => {
     blockId: null,
   });
   const [editorState, setEditorState] = useState({});
+  const editorContainerRef = useRef(null);
+  const editorToolBarRef = useRef(null);
 
   return (
     <EditorContext.Provider
@@ -19,6 +27,8 @@ const EditorProvider = ({ children }) => {
         setEditorState,
         selectedBlock,
         setSelectedBlock,
+        editorContainerRef,
+        editorToolBarRef,
       }}
     >
       {children}

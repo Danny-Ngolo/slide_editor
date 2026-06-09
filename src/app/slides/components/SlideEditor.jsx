@@ -41,6 +41,14 @@ const SlideEditor = ({ lessonId }) => {
       };
     });
   };
+
+  const setSlidesWithoutHistory = (value) => {
+    setSlidesHistory((prev) => ({
+      ...prev,
+      present: typeof value === "function" ? value(prev.present) : value,
+    }));
+  };
+
   const isUndoRedo = useRef(false);
 
   const [activeSlideId, setActiveSlideId] = useState(slides[0]?.id);
@@ -105,7 +113,7 @@ const SlideEditor = ({ lessonId }) => {
     setSlides(updatedSlides);
   };
 
-  const updateBlock = (slideId, blockId, newContent) => {
+  const updateBlock = (slideId, blockId, newContent, options = {}) => {
     console.log("updating a block...");
 
     const updatedSlides = slides.map((slide) => {
@@ -129,7 +137,13 @@ const SlideEditor = ({ lessonId }) => {
       return slide;
     });
 
-    setSlides(updatedSlides);
+    const { recordHistory } = options;
+
+    if (recordHistory) {
+      setSlides(updatedSlides);
+    } else {
+      setSlidesWithoutHistory(updatedSlides);
+    }
   };
 
   const deleteBlock = (slideId, blockId) => {
@@ -397,6 +411,12 @@ const SlideEditor = ({ lessonId }) => {
 
     return () => clearTimeout(saveTimeoutRef);
   }, [slides]);
+
+  // ************ TRIAL
+
+  useEffect(() => {
+    console.log(slidesHistory.past);
+  }, [slidesHistory]);
 
   const activeSlide = slides.find((slide) => slide.id === activeSlideId);
 

@@ -17,10 +17,11 @@ import {
 import ToolbarButton from "./ToolbarButton";
 
 const EditorToolBar = () => {
-  const { activeEditor, editorState } = useEditorContext();
+  const { activeEditor, editorState, editorToolBarRef } = useEditorContext();
 
   return (
     <div
+      ref={editorToolBarRef}
       style={{
         padding: "10px",
         borderBottom: "1px solid #ccc",

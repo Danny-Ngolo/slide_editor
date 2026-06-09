@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 
 import { DndContext, closestCenter } from "@dnd-kit/core";
 
@@ -35,7 +35,7 @@ const SlideCanvas = ({
 
   const [showInsertMenu, setShowInsertMenu] = useState(false);
   const [insertMenuPos, setInsertMenuPos] = useState(null);
-  const { setSelectedBlock } = useEditorContext();
+  const { setSelectedBlock, editorToolBarRef } = useEditorContext();
 
   const handleClickAddBlock = (e) => {
     const clickY = e.clientY;
@@ -101,7 +101,7 @@ const SlideCanvas = ({
               border: "1px solid #ccc",
             }}
           >
-            <EditorToolBar />
+            <EditorToolBar useRef={editorToolBarRef} />
 
             <h2>{slide.title}</h2>
 
@@ -132,7 +132,8 @@ const SlideCanvas = ({
                           copyBlock={copyBlock}
                           pasteBlock={pasteBlock}
                           copiedBlock={copiedBlock}
-                          isUndoRedo={isUndoRedo}
+                          isUndoRedo={isUndoRedo} // THIS IS NOT USED ANYWHERE
+                          editorToolbarRef={editorToolBarRef}
                         />
                       </SortableBlock>
 

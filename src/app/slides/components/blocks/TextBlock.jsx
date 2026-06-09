@@ -16,8 +16,16 @@ import {
   flattenBlocks,
 } from "../../editor/blocks";
 
-const TextBlock = ({ block, slideId, addBlock, updateBlock, isUndoRedo }) => {
-  const { setActiveEditor, setEditorState } = useEditorContext();
+const TextBlock = ({
+  block,
+  slideId,
+  addBlock,
+  updateBlock,
+  isUndoRedo,
+  editorToolbarRef,
+}) => {
+  const { setActiveEditor, setEditorState, editorContainerRef } =
+    useEditorContext();
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const [slashMenuPosition, setSlashMenuPosition] = useState(null);
@@ -55,19 +63,8 @@ const TextBlock = ({ block, slideId, addBlock, updateBlock, isUndoRedo }) => {
 
       updateEditorState(editor);
     },
-    onBlur() {
-      setActiveEditor(null);
-    },
-
     onUpdate({ editor }) {
       if (!editor) return;
-
-      // if (isUndoRedo?.current) {
-      //   console.log("Ignoring update from undo/redo");
-
-      //   isUndoRedo.current = false;
-      //   return;
-      // }
 
       // check firts if the pressed key matchs / to show the slashMenu, if not: update the
 
@@ -117,7 +114,7 @@ const TextBlock = ({ block, slideId, addBlock, updateBlock, isUndoRedo }) => {
         html: editor.getHTML(),
       };
 
-      updateBlock(slideId, block.id, newContent);
+      updateBlock(slideId, block.id, newContent, { recordHistory: false });
       updateEditorState(editor);
     },
     editorProps: {
@@ -206,6 +203,23 @@ const TextBlock = ({ block, slideId, addBlock, updateBlock, isUndoRedo }) => {
     };
   }, [showSlashMenu, filteredItems, selectedBlockIndex]);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      const insideEditor = editorContainerRef.current?.contains(e.target);
+      const insideToolbar = editorToolbarRef.current?.contains(e.target);
+
+      if (insideEditor || insideToolbar) {
+        return;
+      }
+
+      setActiveEditor(null);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleSlashSelect = (type, variant = undefined) => {
     if (!editor || !slashRange) return;
 
@@ -224,6 +238,7 @@ const TextBlock = ({ block, slideId, addBlock, updateBlock, isUndoRedo }) => {
   return (
     <div style={{ color: "white", background: "black" }}>
       <EditorContent
+        ref={editorContainerRef}
         style={{ height: "100%", background: "red" }}
         editor={editor}
       />

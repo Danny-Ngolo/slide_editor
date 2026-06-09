@@ -23,6 +23,8 @@ const BlockRenderer = ({
   pasteBlock,
   copiedBlock,
   isUndoRedo,
+  editorToolbarRef,
+  setSlidesWithoutHistory,
 }) => {
   const [showActions, setShowActions] = useState(false);
   const { selectedBlock, setSelectedBlock } = useEditorContext();
@@ -102,6 +104,8 @@ const BlockRenderer = ({
           deleteBlock={deleteBlock}
           toggleImportant={toggleImportant}
           isUndoRedo={isUndoRedo}
+          editorToolbarRef={editorToolbarRef}
+          setSlidesWithoutHistory={setSlidesWithoutHistory}
         />
       )}
 
