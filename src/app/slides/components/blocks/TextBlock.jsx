@@ -1,7 +1,5 @@
 "use client";
 
-// JUST REALIZED ANOTHER ISSUE THAT IN THE TEXTBOX CLICKING ENTER DOESN'T NO ANYTHING...
-
 import InsertMenu from "../InsertMenu";
 import React, { useEffect, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -21,7 +19,6 @@ const TextBlock = ({
   slideId,
   addBlock,
   updateBlock,
-  isUndoRedo,
   editorToolbarRef,
 }) => {
   const { setActiveEditor, setEditorState, editorContainerRef } =
@@ -130,7 +127,9 @@ const TextBlock = ({
 
           const matchQuery = textBefore.match(/\/(\w*)$/);
 
-          if (matchQuery) {
+          if (!matchQuery) {
+            return false;
+          } else {
             const selectedItem = filteredItems[selectedBlockIndex];
 
             if (selectedItem) {
@@ -140,9 +139,6 @@ const TextBlock = ({
 
           return true;
         }
-        // else {
-        //   return false;
-        // }
       },
     },
   });

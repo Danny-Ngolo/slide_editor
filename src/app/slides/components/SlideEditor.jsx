@@ -1,7 +1,5 @@
 "use client";
 
-// ********** UNDO ON TEXT WITH SHORTCUTS WORK BUT NOT WITH BUTTON. CHECK IF IT IS WORK FOR REALLY OR IT'S JUST A BEHAVIOUR OF TEXTAREA. IF NOT WORKING, THE PROBLEM COULD BE THAT UNDO ISN'T CATCHING INSIDE UNDO/REDO
-
 import React, { useEffect, useRef, useState } from "react";
 import SlidesSidebar from "./SlidesSidebar";
 import SlideCanvas from "./SlideCanvas";
@@ -19,7 +17,14 @@ const SlideEditor = ({ lessonId }) => {
   });
   const slides = slidesHistory?.present || [];
   const [copiedBlock, setCopiedBlock] = useState(null);
-  const { selectedBlock, activeEditor } = useEditorContext();
+  const {
+    selectedBlock,
+    activeEditor,
+    selectedBlocks,
+    setSelectedBlocks,
+    copiedBlocks,
+    setCopiedBlocks,
+  } = useEditorContext();
 
   const MAX_HISTORY = 50;
 
@@ -114,8 +119,6 @@ const SlideEditor = ({ lessonId }) => {
   };
 
   const updateBlock = (slideId, blockId, newContent, options = {}) => {
-    console.log("updating a block...");
-
     const updatedSlides = slides.map((slide) => {
       if (slide.id === slideId) {
         const updatedBlocks = slide.blocks.map((block) => {
@@ -317,10 +320,104 @@ const SlideEditor = ({ lessonId }) => {
     });
   };
 
+  const deleteSelectedBlocks = () => {
+    if (selectedBlocks.length === 0) return;
+
+    if (confirm("Do you really want to delete the selected blocks ?")) {
+      setSlides((prev) =>
+        prev.map((slide) => ({
+          ...slide,
+          blocks: slide.blocks.filter(
+            (block) =>
+              !selectedBlocks.some(
+                (selected) =>
+                  selected.slideId === slide.id &&
+                  selected.blockId === block.id,
+              ),
+          ),
+        })),
+      );
+
+      setSelectedBlocks([]);
+    }
+  };
+
+  const copySelectedBlocks = () => {
+    const blocksToCopy = [];
+
+    slides.forEach((slide) => {
+      slide.blocks.forEach((block) => {
+        const selected = selectedBlocks.some(
+          (s) => s.slideId === slide.id && s.blockId === block.id,
+        );
+
+        if (selected) {
+          blocksToCopy.push(structuredClone(block));
+        }
+      });
+    });
+
+    setCopiedBlocks(blocksToCopy);
+  };
+
+  const pasteBlocks = () => {
+    if (copiedBlocks.length === 0) return;
+
+    setSlides((prev) =>
+      prev.map((slide) => {
+        if (slide.id !== activeSlideId) return slide;
+
+        return {
+          ...slide,
+          blocks: [
+            ...slide.blocks,
+            ...copiedBlocks.map((block) => ({
+              ...structuredClone(block),
+              id: Date.now(),
+            })),
+          ],
+        };
+      }),
+    );
+  };
+
+  const duplicateSelectedBlocks = () => {
+    const blocksToDuplicate = [];
+
+    slides.forEach((slide) => {
+      slide.blocks.forEach((block) => {
+        const selected = selectedBlocks.some(
+          (s) => s.slideId === slide.id && s.blockId === block.id,
+        );
+
+        if (selected) {
+          blocksToDuplicate.push({
+            slideId: slide.id,
+            block,
+          });
+        }
+      });
+    });
+
+    setSlides((prev) =>
+      prev.map((slide) => {
+        const duplicates = blocksToDuplicate
+          .filter((b) => b.slideId === slide.id)
+          .map((b) => ({
+            ...structuredClone(b.block),
+            id: Date.now(),
+          }));
+
+        return {
+          ...slide,
+          blocks: [...slide.blocks, ...duplicates],
+        };
+      }),
+    );
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // for handlers that require selectedBlock
-      if (!selectedBlock?.slideId || !selectedBlock?.blockId) return;
       const isEditingText = !!activeEditor;
 
       if (isEditingText) return;
@@ -339,28 +436,25 @@ const SlideEditor = ({ lessonId }) => {
         redo();
       }
 
-      if (e.ctrlKey && key === "d") {
-        e.preventDefault();
+      // NEW IMPLEMENTATION
 
-        duplicateBlock(selectedBlock.slideId, selectedBlock.blockId);
-      }
+      if (!selectedBlocks.length) return;
 
       if (key === "delete") {
-        e.preventDefault();
-
-        deleteBlock(selectedBlock.slideId, selectedBlock.blockId);
+        deleteSelectedBlocks();
       }
 
       if (e.ctrlKey && key === "c") {
-        e.preventDefault();
-
-        copyBlock(selectedBlock.slideId, selectedBlock.blockId);
+        copySelectedBlocks();
       }
 
       if (e.ctrlKey && key === "v") {
-        e.preventDefault();
+        pasteBlocks();
+      }
 
-        pasteBlock(selectedBlock.slideId, selectedBlock.blockId);
+      if (e.ctrlKey && key === "d") {
+        e.preventDefault();
+        duplicateSelectedBlocks();
       }
     };
 
@@ -369,7 +463,7 @@ const SlideEditor = ({ lessonId }) => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedBlock, activeEditor, copiedBlock, slides]);
+  }, [activeEditor, selectedBlock, selectedBlocks, copiedBlocks, slides]);
 
   useEffect(() => {
     const loadLesson = async () => {
@@ -412,16 +506,9 @@ const SlideEditor = ({ lessonId }) => {
     return () => clearTimeout(saveTimeoutRef);
   }, [slides]);
 
-  // ************ TRIAL
-
-  useEffect(() => {
-    console.log(slidesHistory.past);
-  }, [slidesHistory]);
-
   const activeSlide = slides.find((slide) => slide.id === activeSlideId);
 
   return currentLesson ? (
-    // <EditorProvider>
     <div>
       <div style={{ display: "flex", height: "100vh" }}>
         <div
@@ -483,7 +570,6 @@ const SlideEditor = ({ lessonId }) => {
       </button>
     </div>
   ) : (
-    // </EditorProvider>
     <p>No Lesson is available!</p>
   );
 };

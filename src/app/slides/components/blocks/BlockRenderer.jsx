@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import TextBlock from "./TextBlock";
 import QuizBlock from "./QuizBlock";
 import DividerBlock from "./DividerBlock";
@@ -10,6 +10,8 @@ import CalloutBlock from "./CalloutBlock";
 import BlockActions from "../BlockActions";
 import { MoreVertical } from "lucide-react";
 import { useEditorContext } from "../EditorContext";
+
+// *********** FIX THE ISSELECTEDBLOCK FOR ONE AND MANY SELECTED BLOCKS AND THE ONCLICK AT THE BLOCK
 
 const BlockRenderer = ({
   block,
@@ -27,20 +29,12 @@ const BlockRenderer = ({
   setSlidesWithoutHistory,
 }) => {
   const [showActions, setShowActions] = useState(false);
-  const { selectedBlock, setSelectedBlock } = useEditorContext();
-
-  const isSelectedBlock =
-    (selectedBlock?.slideId === slideId && selectedBlock?.blockId) === block.id;
+  const { handleSelectBlock, isBlockSelected } = useEditorContext();
 
   return (
     <div
       onClick={(e) => {
-        e.stopPropagation();
-
-        setSelectedBlock({
-          slideId,
-          blockId: block.id,
-        });
+        handleSelectBlock(e, slideId, block.id);
       }}
       style={{
         marginBottom: "15px",
@@ -48,7 +42,9 @@ const BlockRenderer = ({
         border: block.important ? "2px solid orange" : "1px solid #ccc",
         minHeight: "80px",
         position: "relative",
-        boxShadow: isSelectedBlock ? "0 0 0 2px #fff" : "none",
+        boxShadow: isBlockSelected(slideId, block.id)
+          ? "0 0 0 2px #fff"
+          : "none",
       }}
     >
       <div
