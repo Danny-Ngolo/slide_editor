@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import TextBlock from "./TextBlock";
 import QuizBlock from "./QuizBlock";
 import DividerBlock from "./DividerBlock";
@@ -10,26 +10,17 @@ import CalloutBlock from "./CalloutBlock";
 import BlockActions from "../BlockActions";
 import { MoreVertical } from "lucide-react";
 import { useEditorContext } from "../EditorContext";
+import { useSelection } from "../../hooks/useSelection";
+import { useSlides } from "../../hooks/useSlides";
+import { useClipboard } from "../../hooks/useClipboard";
 
-// *********** FIX THE ISSELECTEDBLOCK FOR ONE AND MANY SELECTED BLOCKS AND THE ONCLICK AT THE BLOCK
-
-const BlockRenderer = ({
-  block,
-  slideId,
-  addBlock,
-  updateBlock,
-  deleteBlock,
-  duplicateBlock,
-  toggleImportant,
-  copyBlock,
-  pasteBlock,
-  copiedBlock,
-  isUndoRedo,
-  editorToolbarRef,
-  setSlidesWithoutHistory,
-}) => {
+const BlockRenderer = ({ block, slideId }) => {
   const [showActions, setShowActions] = useState(false);
-  const { handleSelectBlock, isBlockSelected } = useEditorContext();
+  const { handleSelectBlock, isBlockSelected } = useSelection();
+  const { selectedBlocks, copiedBlock } = useEditorContext();
+  const { deleteBlock, toggleImportant } = useSlides();
+
+  const { copyBlock, pasteBlock, duplicateBlock } = useClipboard();
 
   return (
     <div
@@ -42,7 +33,7 @@ const BlockRenderer = ({
         border: block.important ? "2px solid orange" : "1px solid #ccc",
         minHeight: "80px",
         position: "relative",
-        boxShadow: isBlockSelected(slideId, block.id)
+        boxShadow: isBlockSelected(slideId, block.id, selectedBlocks)
           ? "0 0 0 2px #fff"
           : "none",
       }}
@@ -87,48 +78,18 @@ const BlockRenderer = ({
           }}
           setShowActions={setShowActions}
           important={block.important}
-          copiedBlock={copiedBlock}
         />
       )}
 
-      {block.type === "text" && (
-        <TextBlock
-          block={block}
-          slideId={slideId}
-          addBlock={addBlock}
-          updateBlock={updateBlock}
-          deleteBlock={deleteBlock}
-          toggleImportant={toggleImportant}
-          isUndoRedo={isUndoRedo}
-          editorToolbarRef={editorToolbarRef}
-          setSlidesWithoutHistory={setSlidesWithoutHistory}
-        />
-      )}
+      {block.type === "text" && <TextBlock block={block} slideId={slideId} />}
 
       {block.type === "divider" && <DividerBlock />}
-      {block.type === "image" && (
-        <ImageBlock
-          block={block}
-          slideId={slideId}
-          updateBlock={updateBlock}
-          deleteBlock={deleteBlock}
-        />
-      )}
+      {block.type === "image" && <ImageBlock block={block} slideId={slideId} />}
       {block.type === "youtube" && (
-        <YoutubeBlock
-          slideId={slideId}
-          block={block}
-          updateBlock={updateBlock}
-          deleteBlock={deleteBlock}
-        />
+        <YoutubeBlock slideId={slideId} block={block} />
       )}
       {block.type === "callout" && (
-        <CalloutBlock
-          slideId={slideId}
-          block={block}
-          updateBlock={updateBlock}
-          deleteBlock={deleteBlock}
-        />
+        <CalloutBlock slideId={slideId} block={block} />
       )}
       {block.type === "quiz" && <QuizBlock />}
     </div>

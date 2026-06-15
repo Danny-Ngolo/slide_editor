@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import ActionButton from "./ActionButton";
+import { useEditorContext } from "./EditorContext";
 
 const BlockActions = ({
   onDuplicate,
@@ -11,8 +12,8 @@ const BlockActions = ({
   onPasteBlock,
   important = false,
   setShowActions,
-  copiedBlock,
 }) => {
+  const { copiedBlock } = useEditorContext();
   const actionsRef = useRef(null);
 
   useEffect(() => {

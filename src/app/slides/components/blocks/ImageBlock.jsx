@@ -2,8 +2,11 @@
 
 import { Trash } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { useSlides } from "../../hooks/useSlides";
 
-const ImageBlock = ({ block, slideId, updateBlock }) => {
+const ImageBlock = ({ block, slideId }) => {
+  const { updateBlock } = useSlides();
+
   const [image, setImage] = useState(block.content.image || "");
   const [imageWidth, setImageWith] = useState(block.with || 300);
   const [caption, setCaption] = useState(block.caption || "");

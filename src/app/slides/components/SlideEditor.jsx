@@ -6,215 +6,40 @@ import SlideCanvas from "./SlideCanvas";
 import { useEditorContext } from "./EditorContext";
 import lessonService from "@/services/lessonService";
 import { Redo, Undo } from "lucide-react";
+import { useSlides } from "../hooks/useSlides";
+import { useHistory } from "../hooks/useHistory";
+import { useClipboard } from "../hooks/useClipboard";
 
 const SlideEditor = ({ lessonId }) => {
   const [isDataAlreadyFetched, setIsDataAlreadyFetched] = useState(false);
   const [currentLesson, setCurrentLesson] = useState(null);
-  const [slidesHistory, setSlidesHistory] = useState({
-    past: [],
-    present: [],
-    future: [],
-  });
-  const slides = slidesHistory?.present || [];
-  const [copiedBlock, setCopiedBlock] = useState(null);
   const {
     selectedBlock,
     activeEditor,
     selectedBlocks,
-    setSelectedBlocks,
     copiedBlocks,
-    setCopiedBlocks,
+    isUndoRedo,
   } = useEditorContext();
 
-  const MAX_HISTORY = 50;
+  const {
+    recordActiveSlideId,
+    recordedActiveSlideId,
+    initializeSlides,
+    addSlide,
+    deleteSlide,
+  } = useSlides();
+  const { setSlides, slidesHistory, undo, redo } = useHistory();
+  const {
+    deleteSelectedBlocks,
+    copySelectedBlocks,
+    duplicateSelectedBlocks,
+    pasteBlocks,
+  } = useClipboard();
 
-  const setSlides = (value) => {
-    setSlidesHistory((prev) => {
-      const newSlides =
-        typeof value === "function" ? value(prev.present) : value;
-
-      // Avoid duplication of history or unnecessary updates
-
-      if (JSON.stringify(prev.present) === JSON.stringify(newSlides)) {
-        return prev;
-      }
-
-      return {
-        past: [...prev.past, prev.present].slice(-MAX_HISTORY), // takes the 50 newest updates,
-        present: newSlides,
-        future: [], // clear redo stack
-      };
-    });
-  };
-
-  const setSlidesWithoutHistory = (value) => {
-    setSlidesHistory((prev) => ({
-      ...prev,
-      present: typeof value === "function" ? value(prev.present) : value,
-    }));
-  };
-
-  const isUndoRedo = useRef(false);
-
+  const slides = slidesHistory?.present || [];
   const [activeSlideId, setActiveSlideId] = useState(slides[0]?.id);
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
   const saveTimeoutRef = useRef(null);
-
-  const initializeSlides = (slides) => {
-    setSlidesHistory((prev) => ({
-      past: [],
-      present: slides,
-      future: [],
-    }));
-  };
-
-  const addSlide = () => {
-    const newSlide = {
-      id: Date.now(),
-      title: `Slide ${slides.length + 1}`,
-      blocks: [],
-    };
-
-    setSlides([...slides, newSlide]);
-  };
-
-  const deleteSlide = (slideId) => {
-    if (slides.length === 1) return;
-
-    if (confirm("Do you really want to delete this slide ?") && slideId) {
-      setSlides(slides.filter((slide) => slide.id !== slideId));
-    }
-  };
-
-  const addBlock = (slideId, type, index = null, initialContent = {}) => {
-    console.log("adding a block...");
-
-    const newBlock = {
-      id: Date.now(),
-      type: type,
-      content: initialContent,
-      important: false,
-    };
-
-    const updatedSlides = slides.map((slide) => {
-      if (slide.id === slideId) {
-        let blocks = [...slide.blocks];
-
-        if (index === null) {
-          blocks.push(newBlock);
-        } else {
-          blocks.splice(index, 0, newBlock);
-        }
-
-        return {
-          ...slide,
-          blocks,
-        };
-      }
-
-      return slide;
-    });
-
-    setSlides(updatedSlides);
-  };
-
-  const updateBlock = (slideId, blockId, newContent, options = {}) => {
-    const updatedSlides = slides.map((slide) => {
-      if (slide.id === slideId) {
-        const updatedBlocks = slide.blocks.map((block) => {
-          if (block.id === blockId)
-            return {
-              ...block,
-              content: newContent,
-            };
-
-          return block;
-        });
-
-        return {
-          ...slide,
-          blocks: updatedBlocks,
-        };
-      }
-
-      return slide;
-    });
-
-    const { recordHistory } = options;
-
-    if (recordHistory) {
-      setSlides(updatedSlides);
-    } else {
-      setSlidesWithoutHistory(updatedSlides);
-    }
-  };
-
-  const deleteBlock = (slideId, blockId) => {
-    console.log("deleting a block...");
-
-    if (confirm("Do you really want to delete this block ?")) {
-      setSlides(
-        slides.map((slide) => {
-          if (slide.id !== slideId) return slide;
-
-          return {
-            ...slide,
-            blocks: slide.blocks.filter((b) => b.id !== blockId),
-          };
-        }),
-      );
-    }
-  };
-
-  const duplicateBlock = (slideId, blockId) => {
-    console.log("duplicating a block...");
-
-    setSlides((prevSlides) => {
-      return prevSlides.map((slide) => {
-        if (slide.id !== slideId) return slide;
-
-        const blockIndex = slide.blocks.findIndex(
-          (block) => block.id === blockId,
-        );
-
-        if (blockIndex === -1) return slide;
-
-        const blockToDuplicate = slide.blocks[blockIndex];
-        const duplicatedBlock = {
-          ...structuredClone(blockToDuplicate),
-          id: Date.now(),
-        };
-
-        const updatedBlocks = [...slide.blocks];
-        updatedBlocks.splice(blockIndex + 1, 0, duplicatedBlock);
-
-        return {
-          ...slide,
-          blocks: updatedBlocks,
-        };
-      });
-    });
-  };
-
-  const toggleImportant = (slideId, blockId) => {
-    const updatedSlides = slides.map((slide) => {
-      if (slide.id === slideId) {
-        const updatedBlocks = slide.blocks.map((block) => {
-          if (block.id === blockId) {
-            return { ...block, important: !block.important };
-          }
-
-          return block;
-        });
-
-        return { ...slide, blocks: updatedBlocks };
-      }
-
-      return slide;
-    });
-
-    setSlides(updatedSlides);
-  };
 
   const handleSave = async () => {
     try {
@@ -241,180 +66,177 @@ const SlideEditor = ({ lessonId }) => {
     await handleSave();
   };
 
-  const undo = () => {
-    console.log("undoing...");
+  //   isUndoRedo.current = true;
 
-    isUndoRedo.current = true;
+  //   setSlidesHistory((prev) => {
+  //     if (prev?.past?.length === 0) return prev;
 
-    setSlidesHistory((prev) => {
-      if (prev?.past?.length === 0) return prev;
+  //     // the last set in past goes to present and the present set goes to the future
 
-      // the last set in past goes to present and the present set goes to the future
+  //     const previous = prev.past[prev.past.length - 1];
 
-      const previous = prev.past[prev.past.length - 1];
+  //     return {
+  //       past: prev.past.slice(0, -1),
+  //       present: previous,
+  //       future: [prev.present, ...prev.future],
+  //     };
+  //   });
+  // };
 
-      return {
-        past: prev.past.slice(0, -1),
-        present: previous,
-        future: [prev.present, ...prev.future],
-      };
-    });
-  };
+  // const redo = () => {
+  //   console.log("redoing...");
 
-  const redo = () => {
-    console.log("redoing...");
+  //   isUndoRedo.current = true;
 
-    isUndoRedo.current = true;
+  //   setSlidesHistory((prev) => {
+  //     if (prev.future.length === 0) return prev;
 
-    setSlidesHistory((prev) => {
-      if (prev.future.length === 0) return prev;
+  //     const next = prev.future[0];
 
-      const next = prev.future[0];
+  //     return {
+  //       past: [...prev.past, prev.present],
+  //       present: next,
+  //       future: prev.future.slice(1),
+  //     };
+  //   });
+  // };
 
-      return {
-        past: [...prev.past, prev.present],
-        present: next,
-        future: prev.future.slice(1),
-      };
-    });
-  };
+  // const copyBlock = (slideId, blockId) => {
+  //   const slide = slides.find((slide) => slide.id === slideId);
 
-  const copyBlock = (slideId, blockId) => {
-    const slide = slides.find((slide) => slide.id === slideId);
+  //   if (!slide) return;
 
-    if (!slide) return;
+  //   const block = slide.blocks.find((block) => block.id === blockId);
 
-    const block = slide.blocks.find((block) => block.id === blockId);
+  //   if (!block) return;
 
-    if (!block) return;
+  //   setCopiedBlock(structuredClone(block));
+  // };
 
-    setCopiedBlock(structuredClone(block));
-  };
+  // const pasteBlock = (slideId, targetBlockId) => {
+  //   if (!copiedBlock) return;
 
-  const pasteBlock = (slideId, targetBlockId) => {
-    if (!copiedBlock) return;
+  //   setSlides((prevSlides) => {
+  //     return prevSlides.map((slide) => {
+  //       if (slide.id !== slideId) return slide;
 
-    setSlides((prevSlides) => {
-      return prevSlides.map((slide) => {
-        if (slide.id !== slideId) return slide;
+  //       const blockIndex = slide.blocks.findIndex(
+  //         (block) => block.id === targetBlockId,
+  //       );
 
-        const blockIndex = slide.blocks.findIndex(
-          (block) => block.id === targetBlockId,
-        );
+  //       if (blockIndex === -1) return slide;
 
-        if (blockIndex === -1) return slide;
+  //       const newBlock = {
+  //         ...structuredClone(copiedBlock),
+  //         id: Date.now(),
+  //       };
 
-        const newBlock = {
-          ...structuredClone(copiedBlock),
-          id: Date.now(),
-        };
+  //       const updatedBlocks = [...slide.blocks];
+  //       updatedBlocks.splice(blockIndex + 1, 0, newBlock);
 
-        const updatedBlocks = [...slide.blocks];
-        updatedBlocks.splice(blockIndex + 1, 0, newBlock);
+  //       return {
+  //         ...slide,
+  //         blocks: updatedBlocks,
+  //       };
+  //     });
+  //   });
+  // };
 
-        return {
-          ...slide,
-          blocks: updatedBlocks,
-        };
-      });
-    });
-  };
+  // const deleteSelectedBlocks = () => {
+  //   if (selectedBlocks.length === 0) return;
 
-  const deleteSelectedBlocks = () => {
-    if (selectedBlocks.length === 0) return;
+  //   if (confirm("Do you really want to delete the selected blocks ?")) {
+  //     setSlides((prev) =>
+  //       prev.map((slide) => ({
+  //         ...slide,
+  //         blocks: slide.blocks.filter(
+  //           (block) =>
+  //             !selectedBlocks.some(
+  //               (selected) =>
+  //                 selected.slideId === slide.id &&
+  //                 selected.blockId === block.id,
+  //             ),
+  //         ),
+  //       })),
+  //     );
 
-    if (confirm("Do you really want to delete the selected blocks ?")) {
-      setSlides((prev) =>
-        prev.map((slide) => ({
-          ...slide,
-          blocks: slide.blocks.filter(
-            (block) =>
-              !selectedBlocks.some(
-                (selected) =>
-                  selected.slideId === slide.id &&
-                  selected.blockId === block.id,
-              ),
-          ),
-        })),
-      );
+  //     setSelectedBlocks([]);
+  //   }
+  // };
 
-      setSelectedBlocks([]);
-    }
-  };
+  // const copySelectedBlocks = () => {
+  //   const blocksToCopy = [];
 
-  const copySelectedBlocks = () => {
-    const blocksToCopy = [];
+  //   slides.forEach((slide) => {
+  //     slide.blocks.forEach((block) => {
+  //       const selected = selectedBlocks.some(
+  //         (s) => s.slideId === slide.id && s.blockId === block.id,
+  //       );
 
-    slides.forEach((slide) => {
-      slide.blocks.forEach((block) => {
-        const selected = selectedBlocks.some(
-          (s) => s.slideId === slide.id && s.blockId === block.id,
-        );
+  //       if (selected) {
+  //         blocksToCopy.push(structuredClone(block));
+  //       }
+  //     });
+  //   });
 
-        if (selected) {
-          blocksToCopy.push(structuredClone(block));
-        }
-      });
-    });
+  //   setCopiedBlocks(blocksToCopy);
+  // };
 
-    setCopiedBlocks(blocksToCopy);
-  };
+  // const pasteBlocks = () => {
+  //   if (copiedBlocks.length === 0) return;
 
-  const pasteBlocks = () => {
-    if (copiedBlocks.length === 0) return;
+  //   setSlides((prev) =>
+  //     prev.map((slide) => {
+  //       if (slide.id !== activeSlideId) return slide;
 
-    setSlides((prev) =>
-      prev.map((slide) => {
-        if (slide.id !== activeSlideId) return slide;
+  //       return {
+  //         ...slide,
+  //         blocks: [
+  //           ...slide.blocks,
+  //           ...copiedBlocks.map((block) => ({
+  //             ...structuredClone(block),
+  //             id: Date.now(),
+  //           })),
+  //         ],
+  //       };
+  //     }),
+  //   );
+  // };
 
-        return {
-          ...slide,
-          blocks: [
-            ...slide.blocks,
-            ...copiedBlocks.map((block) => ({
-              ...structuredClone(block),
-              id: Date.now(),
-            })),
-          ],
-        };
-      }),
-    );
-  };
+  // const duplicateSelectedBlocks = () => {
+  //   const blocksToDuplicate = [];
 
-  const duplicateSelectedBlocks = () => {
-    const blocksToDuplicate = [];
+  //   slides.forEach((slide) => {
+  //     slide.blocks.forEach((block) => {
+  //       const selected = selectedBlocks.some(
+  //         (s) => s.slideId === slide.id && s.blockId === block.id,
+  //       );
 
-    slides.forEach((slide) => {
-      slide.blocks.forEach((block) => {
-        const selected = selectedBlocks.some(
-          (s) => s.slideId === slide.id && s.blockId === block.id,
-        );
+  //       if (selected) {
+  //         blocksToDuplicate.push({
+  //           slideId: slide.id,
+  //           block,
+  //         });
+  //       }
+  //     });
+  //   });
 
-        if (selected) {
-          blocksToDuplicate.push({
-            slideId: slide.id,
-            block,
-          });
-        }
-      });
-    });
+  //   setSlides((prev) =>
+  //     prev.map((slide) => {
+  //       const duplicates = blocksToDuplicate
+  //         .filter((b) => b.slideId === slide.id)
+  //         .map((b) => ({
+  //           ...structuredClone(b.block),
+  //           id: Date.now(),
+  //         }));
 
-    setSlides((prev) =>
-      prev.map((slide) => {
-        const duplicates = blocksToDuplicate
-          .filter((b) => b.slideId === slide.id)
-          .map((b) => ({
-            ...structuredClone(b.block),
-            id: Date.now(),
-          }));
-
-        return {
-          ...slide,
-          blocks: [...slide.blocks, ...duplicates],
-        };
-      }),
-    );
-  };
+  //       return {
+  //         ...slide,
+  //         blocks: [...slide.blocks, ...duplicates],
+  //       };
+  //     }),
+  //   );
+  // };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -427,13 +249,13 @@ const SlideEditor = ({ lessonId }) => {
       if (e.ctrlKey && key === "z") {
         e.preventDefault();
 
-        undo();
+        undo(isUndoRedo);
       }
 
       if (e.ctrlKey && key === "y") {
         e.preventDefault();
 
-        redo();
+        redo(isUndoRedo);
       }
 
       // NEW IMPLEMENTATION
@@ -506,6 +328,10 @@ const SlideEditor = ({ lessonId }) => {
     return () => clearTimeout(saveTimeoutRef);
   }, [slides]);
 
+  useEffect(() => {
+    recordActiveSlideId(activeSlideId);
+  }, [activeSlideId]);
+
   const activeSlide = slides.find((slide) => slide.id === activeSlideId);
 
   return currentLesson ? (
@@ -535,20 +361,7 @@ const SlideEditor = ({ lessonId }) => {
           deleteSlide={deleteSlide}
         />
 
-        <SlideCanvas
-          slide={activeSlide}
-          slides={slides}
-          setSlides={setSlides}
-          addBlock={addBlock}
-          updateBlock={updateBlock}
-          deleteBlock={deleteBlock}
-          duplicateBlock={duplicateBlock}
-          toggleImportant={toggleImportant}
-          copyBlock={copyBlock}
-          pasteBlock={pasteBlock}
-          copiedBlock={copiedBlock}
-          isUndoRedo={isUndoRedo}
-        />
+        <SlideCanvas slide={activeSlide} slides={slides} />
       </div>
       <button
         onClick={handleManualSave}

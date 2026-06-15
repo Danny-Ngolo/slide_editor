@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 
 import { DndContext, closestCenter } from "@dnd-kit/core";
 
@@ -16,26 +16,17 @@ import InsertMenu from "./InsertMenu";
 import InsertMenuBetween from "./InsertMenuBetween";
 import SortableBlock from "./SortableBlock";
 import { useEditorContext } from "./EditorContext";
+import { useSlides } from "../hooks/useSlides";
+import { useHistory } from "../hooks/useHistory";
 
-const SlideCanvas = ({
-  slide,
-  slides,
-  setSlides,
-  addBlock,
-  deleteBlock,
-  updateBlock,
-  duplicateBlock,
-  toggleImportant,
-  copyBlock,
-  pasteBlock,
-  copiedBlock,
-  isUndoRedo,
-}) => {
+const SlideCanvas = ({ slide, slides }) => {
   if (!slide) return null;
 
   const [showInsertMenu, setShowInsertMenu] = useState(false);
   const [insertMenuPos, setInsertMenuPos] = useState(null);
   const { setSelectedBlock, editorToolBarRef } = useEditorContext();
+  const { addBlock } = useSlides();
+  const { setSlides } = useHistory();
 
   const handleClickAddBlock = (e) => {
     const clickY = e.clientY;
@@ -124,16 +115,7 @@ const SlideCanvas = ({
                         <BlockRenderer
                           block={block}
                           slideId={slide.id}
-                          addBlock={addBlock}
-                          updateBlock={updateBlock}
-                          deleteBlock={deleteBlock}
-                          duplicateBlock={duplicateBlock}
-                          toggleImportant={toggleImportant}
-                          copyBlock={copyBlock}
-                          pasteBlock={pasteBlock}
-                          copiedBlock={copiedBlock}
-                          isUndoRedo={isUndoRedo} // THIS IS NOT USED ANYWHERE
-                          editorToolbarRef={editorToolBarRef}
+                          slides={slides}
                         />
                       </SortableBlock>
 
@@ -141,7 +123,9 @@ const SlideCanvas = ({
 
                       <InsertMenuBetween
                         onInsert={(type, variant = undefined) =>
-                          addBlock(slide.id, type, index + 1, { variant })
+                          addBlock(slide.id, type, index + 1, {
+                            variant,
+                          })
                         }
                       />
                     </div>

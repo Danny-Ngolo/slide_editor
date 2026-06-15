@@ -1,8 +1,22 @@
-import React, { createContext, useContext, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 const EditorContext = createContext();
 
 const EditorProvider = ({ children }) => {
+  const [slidesHistory, setSlidesHistory] = useState({
+    past: [],
+    present: [],
+    future: [],
+  });
+
+  const [recordedActiveSlideId, setRecordedActiveSlideId] = useState(null);
+
   const [activeEditor, setActiveEditor] = useState(null);
   const [selectedBlock, setSelectedBlock] = useState({
     slideId: null,
@@ -11,69 +25,130 @@ const EditorProvider = ({ children }) => {
   const [editorState, setEditorState] = useState({});
   const editorContainerRef = useRef(null);
   const editorToolBarRef = useRef(null);
+
   const [selectedBlocks, setSelectedBlocks] = useState([]);
   const [copiedBlocks, setCopiedBlocks] = useState([]);
+  const [copiedBlock, setCopiedBlock] = useState(null);
 
-  const handleSelectBlock = (e, slideId, blockId) => {
-    e.stopPropagation();
+  const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [slashQuery, setSlashQuery] = useState("");
+  const [slashMenuPosition, setSlashMenuPosition] = useState({
+    top: "20px",
+    left: "20px",
+  });
+  const [selectedBlockIndex, setSelectedBlockIndex] = useState(0);
+  //  const [filteredItems, setFilteredItems] = useState([]);
+  const [slashRange, setSlashRange] = useState(null);
+  const isUndoRedo = useRef(false);
 
-    // set multiple selectedBlocks with ctrlKey
+  const [filteredItems, setFilteredItems] = useState([]);
 
-    if (e.ctrlKey) {
-      setSelectedBlocks((prev) => {
-        const exists = prev.some(
-          (block) => block.slideId === slideId && block.blockId === blockId,
-        );
+  // const handleSelectBlock = (e, slideId, blockId) => {
+  //   e.stopPropagation();
 
-        if (exists) {
-          return prev.filter(
-            (block) =>
-              !(block.slideId === slideId && block.blockId === blockId),
-          );
-        }
+  //   // set multiple selectedBlocks with ctrlKey
 
-        return [...prev, { slideId, blockId }];
-      });
+  //   if (e.ctrlKey) {
+  //     setSelectedBlocks((prev) => {
+  //       const exists = prev.some(
+  //         (block) => block.slideId === slideId && block.blockId === blockId,
+  //       );
 
-      return;
-    } else {
-      // Set the single selectedBlock for it is used in other staffs
+  //       if (exists) {
+  //         return prev.filter(
+  //           (block) =>
+  //             !(block.slideId === slideId && block.blockId === blockId),
+  //         );
+  //       }
 
-      setSelectedBlock({
-        slideId,
-        blockId,
-      });
-      setSelectedBlocks([{ slideId, blockId }]);
-    }
-  };
+  //       return [...prev, { slideId, blockId }];
+  //     });
 
-  const isBlockSelected = (slideId, blockId) => {
-    return selectedBlocks.some(
-      (b) => b.slideId === slideId && b.blockId === blockId,
-    );
-  };
+  //     return;
+  //   } else {
+  //     // Set the single selectedBlock for it is used in other staffs
+
+  //     setSelectedBlock({
+  //       slideId,
+  //       blockId,
+  //     });
+  //     setSelectedBlocks([{ slideId, blockId }]);
+  //   }
+  // };
+
+  // const isBlockSelected = (slideId, blockId) => {
+  //   return selectedBlocks.some(
+  //     (b) => b.slideId === slideId && b.blockId === blockId,
+  //   );
+  // };
+
+  // const updateBlock = (slideId, blockId, newContent, options = {}) => {
+  //   const updatedSlides = slides.map((slide) => {
+  //     if (slide.id === slideId) {
+  //       const updatedBlocks = slide.blocks.map((block) => {
+  //         if (block.id === blockId)
+  //           return {
+  //             ...block,
+  //             content: newContent,
+  //           };
+
+  //         return block;
+  //       });
+
+  //       return {
+  //         ...slide,
+  //         blocks: updatedBlocks,
+  //       };
+  //     }
+
+  //     return slide;
+  //   });
+
+  //   const { recordHistory } = options;
+
+  //   if (recordHistory) {
+  //     setSlides(updatedSlides);
+  //   } else {
+  //     setSlidesWithoutHistory(updatedSlides);
+  //   }
+  // };
 
   return (
     <EditorContext.Provider
       value={{
+        recordedActiveSlideId,
+        setRecordedActiveSlideId,
         activeEditor,
         setActiveEditor,
         editorState,
         setEditorState,
+        slidesHistory,
+        setSlidesHistory,
         selectedBlock,
         setSelectedBlock,
         selectedBlocks,
         setSelectedBlocks,
         copiedBlocks,
         setCopiedBlocks,
+        copiedBlock,
+        setCopiedBlock,
         editorContainerRef,
         editorToolBarRef,
-        handleSelectBlock,
-        // deleteSelectedBlocks,
-        // duplicateSelectedBlocks,
-        // copySelectedBlocks,
-        // pasteBlocks,
-        isBlockSelected,
+        isUndoRedo,
+        showSlashMenu,
+        setShowSlashMenu,
+        slashQuery,
+        setSlashQuery,
+        slashRange,
+        setSlashRange,
+        selectedBlockIndex,
+        setSelectedBlockIndex,
+        slashMenuPosition,
+        setSlashMenuPosition,
+        editorContainerRef,
+        editorToolBarRef,
+        filteredItems,
+        setFilteredItems,
       }}
     >
       {children}

@@ -2,21 +2,18 @@
 
 import React, { useEffect, useRef } from "react";
 import { blocks_groups, filterBlocks } from "../editor/blocks";
+import { useEditorContext } from "./EditorContext";
 
-const InsertMenu = ({
-  onSelect,
-  onClose,
-  query = "",
-  selectedBlockIndex = 0,
-  showSlashMenu = false,
-  position,
-}) => {
+const InsertMenu = ({ onSelect, onClose }) => {
+  const { showSlashMenu, slashQuery, selectedBlockIndex, slashMenuPosition } =
+    useEditorContext();
+
   const menuRef = useRef(null);
   const itemRefs = useRef([]);
   const prevIndexRef = useRef(null);
   let currentBlockIndex = 0;
 
-  const filteredGroups = filterBlocks(blocks_groups, query);
+  const filteredGroups = filterBlocks(blocks_groups, slashQuery);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -75,8 +72,8 @@ const InsertMenu = ({
       ref={menuRef}
       style={{
         position: "fixed",
-        top: position?.top,
-        left: position?.left,
+        top: slashMenuPosition?.top,
+        left: slashMenuPosition?.left,
         maxHeight: "250px",
         overflowY: "auto",
         background: "white",

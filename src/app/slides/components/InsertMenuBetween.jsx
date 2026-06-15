@@ -32,7 +32,9 @@ const InsertMenuBetween = ({ onInsert }) => {
         }}
       />
       <button
-        onClick={() => setShowInsertMenu((prev) => !prev)}
+        onClick={() => {
+          setShowInsertMenu((prev) => !prev);
+        }}
         style={{
           position: "relative",
           zIndex: 1,

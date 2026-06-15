@@ -8,7 +8,6 @@ const Slide = ({ slide, activeSlideId, setActiveSlideId, deleteSlide }) => {
 
   return (
     <div
-      // key={slide.id}
       style={{
         marginBottom: "5px",
         padding: "10px",

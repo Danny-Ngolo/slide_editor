@@ -2,8 +2,11 @@
 
 import calloutTypes from "../../editor/calloutTypes";
 import React, { useState } from "react";
+import { useSlides } from "../../hooks/useSlides";
 
-const CalloutBlock = ({ block, updateBlock, slideId }) => {
+const CalloutBlock = ({ block, slideId }) => {
+  const { updateBlock } = useSlides();
+
   const [text, setText] = useState(block.content?.text || "");
 
   const variant = block.content?.variant || "definition";

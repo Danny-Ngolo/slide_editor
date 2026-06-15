@@ -1,8 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSlides } from "../../hooks/useSlides";
+import { useHistory } from "../../hooks/useHistory";
 
-const YoutubeBlock = ({ slideId, block, updateBlock }) => {
+const YoutubeBlock = ({ slideId, block }) => {
+  const { updateBlock } = useSlides();
+  const { slidesHistory } = useHistory();
+  const slides = slidesHistory.present;
+
   const [url, setUrl] = useState(block.content?.url || "");
   const [videoId, setVideoId] = useState(block.content?.videoId || "");
   const [startTime, setStartTime] = useState(block.startTime || "");
@@ -37,11 +43,16 @@ const YoutubeBlock = ({ slideId, block, updateBlock }) => {
     setVideoId(id);
     if (start) setStartTime(start);
 
-    updateBlock(slideId, block.id, {
-      url: pastedUrl,
-      videoId: id,
-      startTime: start ? start : "",
-    });
+    updateBlock(
+      slideId,
+      block.id,
+      {
+        url: pastedUrl,
+        videoId: id,
+        startTime: start ? start : "",
+      },
+      slides,
+    );
   };
 
   return (
@@ -83,10 +94,15 @@ const YoutubeBlock = ({ slideId, block, updateBlock }) => {
               onChange={(e) => {
                 setCaption(e.target.value);
 
-                updateBlock(slideId, block.id, {
-                  ...block.content,
-                  caption: e.target.value,
-                });
+                updateBlock(
+                  slideId,
+                  block.id,
+                  {
+                    ...block.content,
+                    caption: e.target.value,
+                  },
+                  slides,
+                );
               }}
               style={{ width: "100%", padding: "8px" }}
             />
