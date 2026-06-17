@@ -102,6 +102,7 @@ export function useRichTextEditor() {
         }
 
         const newContent = {
+          ...blockContent,
           html: editor.getHTML(),
         };
 

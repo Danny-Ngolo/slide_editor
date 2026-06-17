@@ -49,6 +49,10 @@ export function useSlides() {
       important: false,
     };
 
+    if (type === "callout" || (type === "text" && !newBlock.content.html)) {
+      newBlock.content.html = "<p></p>";
+    }
+
     console.log("newBlock", newBlock);
 
     const updatedSlides = slides.map((slide) => {

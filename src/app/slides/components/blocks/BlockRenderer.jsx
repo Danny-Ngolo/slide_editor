@@ -32,6 +32,7 @@ const BlockRenderer = ({ block, slideId }) => {
         padding: "10px",
         border: block.important ? "2px solid orange" : "1px solid #ccc",
         minHeight: "80px",
+        width: "100%",
         position: "relative",
         boxShadow: isBlockSelected(slideId, block.id, selectedBlocks)
           ? "0 0 0 2px #fff"
