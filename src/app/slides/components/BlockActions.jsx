@@ -3,6 +3,8 @@
 import React, { useEffect, useRef } from "react";
 import ActionButton from "./ActionButton";
 import { useEditorContext } from "./EditorContext";
+import { transformOptions } from "../editor/transformBlockOptions";
+import { useSlides } from "../hooks/useSlides";
 
 const BlockActions = ({
   onDuplicate,
@@ -10,11 +12,13 @@ const BlockActions = ({
   onToggleImportant,
   onCopyBlock,
   onPasteBlock,
+  onTransform,
   important = false,
   setShowActions,
 }) => {
   const { copiedBlock } = useEditorContext();
   const actionsRef = useRef(null);
+  const { transformBlock } = useSlides();
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -49,18 +53,31 @@ const BlockActions = ({
         zIndex: 200,
       }}
     >
-      <ActionButton label={"Duplicate"} onClick={onDuplicate} />
-      <ActionButton label={"Copy Block"} onClick={onCopyBlock} />
-      <ActionButton
-        disabled={!copiedBlock}
-        label={"Paste below"}
-        onClick={onPasteBlock}
-      />
-      <ActionButton
-        label={important ? "Unmark important" : "Mark Important"}
-        onClick={onToggleImportant}
-      />
-      <ActionButton label={"Delete"} onClick={onDelete} />
+      <>
+        <ActionButton label={"Duplicate"} onClick={onDuplicate} />
+        <ActionButton label={"Copy Block"} onClick={onCopyBlock} />
+        <ActionButton
+          disabled={!copiedBlock}
+          label={"Paste below"}
+          onClick={onPasteBlock}
+        />
+        <ActionButton
+          label={important ? "Unmark important" : "Mark Important"}
+          onClick={onToggleImportant}
+        />
+        <ActionButton label={"Delete"} onClick={onDelete} />
+      </>
+
+      <hr />
+      <p style={{ textAlign: "center", fontSize: "inherit" }}>Turn into</p>
+      {transformOptions.map((option, index) => (
+        <ActionButton
+          isSubOption={true}
+          key={index}
+          label={option.label}
+          onClick={() => onTransform(option)}
+        />
+      ))}
     </div>
   );
 };

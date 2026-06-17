@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 
-const ActionButton = ({ disabled = false, label, onClick }) => {
+const ActionButton = ({
+  disabled = false,
+  isSubOption = false,
+  label,
+  onClick,
+}) => {
   const [isHover, setIsHover] = useState(false);
 
   return (
@@ -16,6 +21,7 @@ const ActionButton = ({ disabled = false, label, onClick }) => {
         background: isHover ? "#e7e7ff" : "transparent",
         color: "black",
         cursor: disabled ? "not-allowed" : "pointer",
+        fontSize: isSubOption ? "0.9em" : "inherit",
       }}
       onClick={onClick}
     >

@@ -108,6 +108,43 @@ export function useSlides() {
     }
   };
 
+  const replaceBlock = (slideId, blockId, newBlock) => {
+    const updatedSlides = slides.map((slide) => {
+      if (slide.id === slideId) {
+        const updatedBlocks = slide.blocks.map((block) => {
+          if (block.id === blockId) return newBlock;
+
+          return block;
+        });
+
+        return {
+          ...slide,
+          blocks: updatedBlocks,
+        };
+      }
+
+      return slide;
+    });
+
+    setSlides(updatedSlides);
+  };
+
+  const transformBlock = (slideId, blockId, block, target) => {
+    const transformed = {
+      ...block,
+      type: target.type,
+      content: {
+        html: block.content.html,
+      },
+    };
+
+    if (target.variant) {
+      transformed.content.variant = target.variant;
+    }
+
+    replaceBlock(slideId, blockId, transformed);
+  };
+
   const deleteBlock = (slideId, blockId) => {
     console.log("deleting block...");
 
@@ -155,5 +192,7 @@ export function useSlides() {
     updateBlock,
     deleteBlock,
     toggleImportant,
+    transformBlock,
+    replaceBlock,
   };
 }

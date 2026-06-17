@@ -17,8 +17,8 @@ import { useClipboard } from "../../hooks/useClipboard";
 const BlockRenderer = ({ block, slideId }) => {
   const [showActions, setShowActions] = useState(false);
   const { handleSelectBlock, isBlockSelected } = useSelection();
-  const { selectedBlocks, copiedBlock } = useEditorContext();
-  const { deleteBlock, toggleImportant } = useSlides();
+  const { selectedBlocks } = useEditorContext();
+  const { deleteBlock, transformBlock, toggleImportant } = useSlides();
 
   const { copyBlock, pasteBlock, duplicateBlock } = useClipboard();
 
@@ -75,6 +75,10 @@ const BlockRenderer = ({ block, slideId }) => {
           }}
           onPasteBlock={() => {
             pasteBlock(slideId, block.id);
+            setShowActions(false);
+          }}
+          onTransform={(option) => {
+            transformBlock(slideId, block.id, block, option);
             setShowActions(false);
           }}
           setShowActions={setShowActions}
