@@ -20,7 +20,6 @@ const CalloutBlock = ({ block, slideId }) => {
   const { updateBlock } = useSlides();
 
   const {
-    editorContainerRef,
     showSlashMenu,
     setShowSlashMenu,
     slashQuery,
@@ -39,7 +38,11 @@ const CalloutBlock = ({ block, slideId }) => {
   const variant = block.content?.variant || "definition";
   const config = calloutTypes[variant];
 
-  const editor = initEditor(slideId, block.id, block.content);
+  const editor = initEditor({
+    slideId,
+    blockId: block.id,
+    content: block.content,
+  });
 
   useEffect(() => {
     if (!editor) return;
@@ -71,15 +74,7 @@ const CalloutBlock = ({ block, slideId }) => {
     };
   }, [showSlashMenu, filteredItems, selectedBlockIndex]);
 
-  useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   if (!editor) return null;
-
-  // const [text, setText] = useState(block.content?.text || "");
 
   return (
     <div
@@ -87,7 +82,6 @@ const CalloutBlock = ({ block, slideId }) => {
         display: "flex",
         flexDirection: "column",
         gap: "8px",
-        // width: "100%",
         minHeight: "50px",
         padding: "12px",
         borderRadius: "8px",
@@ -120,30 +114,7 @@ const CalloutBlock = ({ block, slideId }) => {
         </select>
       </div>
 
-      {/* TEXT */}
-      {/* <textarea
-        placeholder="Write something important..."
-        value={text}
-        onChange={(e) => {
-          setText(e.target.value);
-          updateBlock(slideId, block.id, {
-            ...block.content,
-            text: e.target.value,
-          });
-        }}
-        style={{
-          width: "100%",
-          border: "none",
-          outline: "none",
-          background: "transparent",
-          marginTop: "8px",
-          resize: "none",
-          color: "#333",
-        }}
-      /> */}
-
       <EditorContent
-        ref={editorContainerRef}
         style={{ height: "100%", background: "red" }}
         editor={editor}
       />

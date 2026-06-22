@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useEditorContext } from "../components/EditorContext";
 import { generateId } from "../utils/generateId";
 import { useHistory } from "./useHistory";
+import { useTable } from "./useTable";
 
 export function useSlides() {
   const { setSlides, slidesHistory, setSlidesWithoutHistory } = useHistory();
   const { setSlidesHistory, recordedActiveSlideId, setRecordedActiveSlideId } =
     useEditorContext();
+  const { createTableBlock } = useTable();
   const slides = slidesHistory.present;
 
   const initializeSlides = (slides) => {
@@ -42,12 +44,15 @@ export function useSlides() {
   const addBlock = (slideId, type, index = null, initialContent) => {
     console.log("adding a block...");
 
-    const newBlock = {
-      id: generateId(),
-      type: type,
-      content: initialContent || {},
-      important: false,
-    };
+    const newBlock =
+      type === "table"
+        ? createTableBlock()
+        : {
+            id: generateId(),
+            type: type,
+            content: initialContent || {},
+            important: false,
+          };
 
     if (type === "callout" || (type === "text" && !newBlock.content.html)) {
       newBlock.content.html = "<p></p>";

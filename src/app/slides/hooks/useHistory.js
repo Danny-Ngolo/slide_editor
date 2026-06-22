@@ -4,8 +4,6 @@ export function useHistory() {
   const { slidesHistory, setSlidesHistory } = useEditorContext();
 
   const setSlides = (value) => {
-    console.log("setting slides...");
-
     const MAX_HISTORY = 50;
 
     setSlidesHistory((prev) => {

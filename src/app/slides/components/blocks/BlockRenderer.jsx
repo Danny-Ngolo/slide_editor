@@ -13,6 +13,7 @@ import { useEditorContext } from "../EditorContext";
 import { useSelection } from "../../hooks/useSelection";
 import { useSlides } from "../../hooks/useSlides";
 import { useClipboard } from "../../hooks/useClipboard";
+import TableBlock from "./Table/TableBlock";
 
 const BlockRenderer = ({ block, slideId }) => {
   const [showActions, setShowActions] = useState(false);
@@ -87,6 +88,7 @@ const BlockRenderer = ({ block, slideId }) => {
       )}
 
       {block.type === "text" && <TextBlock block={block} slideId={slideId} />}
+      {block.type === "table" && <TableBlock block={block} slideId={slideId} />}
 
       {block.type === "divider" && <DividerBlock />}
       {block.type === "image" && <ImageBlock block={block} slideId={slideId} />}

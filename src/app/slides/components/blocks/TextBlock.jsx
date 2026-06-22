@@ -15,7 +15,6 @@ import { useSlashMenu } from "../../hooks/useSlashMenu";
 
 const TextBlock = ({ block, slideId }) => {
   const {
-    editorContainerRef,
     showSlashMenu,
     setShowSlashMenu,
     slashQuery,
@@ -26,12 +25,15 @@ const TextBlock = ({ block, slideId }) => {
     setFilteredItems,
   } = useEditorContext();
 
-  const { updateEditorState, initEditor, updateEditorUI, handleClickOutside } =
-    useRichTextEditor();
+  const { updateEditorState, initEditor, updateEditorUI } = useRichTextEditor();
 
   const { handleDirectionKey, handleSlashSelect } = useSlashMenu();
 
-  const editor = initEditor(slideId, block.id, block.content);
+  const editor = initEditor({
+    slideId,
+    blockId: block.id,
+    content: block.content,
+  });
 
   useEffect(() => {
     if (!editor) return;
@@ -63,18 +65,11 @@ const TextBlock = ({ block, slideId }) => {
     };
   }, [showSlashMenu, filteredItems, selectedBlockIndex]);
 
-  useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   if (!editor) return null;
 
   return (
     <div style={{ color: "white", background: "black" }}>
       <EditorContent
-        ref={editorContainerRef}
         style={{ height: "100%", background: "red" }}
         editor={editor}
       />

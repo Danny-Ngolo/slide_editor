@@ -8,6 +8,7 @@ import {
   Minus,
   AlertTriangle,
   FlaskConical,
+  Table2,
 } from "lucide-react";
 
 export const blocks_groups = [
@@ -15,6 +16,7 @@ export const blocks_groups = [
     title: "Basic",
     items: [
       { type: "text", label: "Text", desc: "Write content", icon: Type },
+      { type: "table", label: "Table", desc: "Add a table", icon: Table2 },
       {
         type: "divider",
         label: "Divider",

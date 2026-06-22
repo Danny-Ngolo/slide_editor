@@ -23,8 +23,8 @@ const EditorProvider = ({ children }) => {
     blockId: null,
   });
   const [editorState, setEditorState] = useState({});
-  const editorContainerRef = useRef(null);
   const editorToolBarRef = useRef(null);
+  const activeEditorRef = useRef(null);
 
   const [selectedBlocks, setSelectedBlocks] = useState([]);
   const [copiedBlocks, setCopiedBlocks] = useState([]);
@@ -41,6 +41,23 @@ const EditorProvider = ({ children }) => {
   const isUndoRedo = useRef(false);
 
   const [filteredItems, setFilteredItems] = useState([]);
+
+  const handleClickOutside = (e) => {
+    const insideEditor = activeEditorRef.current?.contains(e.target);
+    const insideToolBar = editorToolBarRef.current?.contains(e.target);
+
+    if (insideEditor || insideToolBar) {
+      return;
+    }
+
+    setActiveEditor(null);
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <EditorContext.Provider
@@ -61,7 +78,7 @@ const EditorProvider = ({ children }) => {
         setCopiedBlocks,
         copiedBlock,
         setCopiedBlock,
-        editorContainerRef,
+        activeEditorRef,
         editorToolBarRef,
         isUndoRedo,
         showSlashMenu,
@@ -74,7 +91,7 @@ const EditorProvider = ({ children }) => {
         setSelectedBlockIndex,
         slashMenuPosition,
         setSlashMenuPosition,
-        editorContainerRef,
+        activeEditorRef,
         editorToolBarRef,
         filteredItems,
         setFilteredItems,

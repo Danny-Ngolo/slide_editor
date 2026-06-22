@@ -10,8 +10,8 @@ export function useRichTextEditor() {
   const {
     setEditorState,
     setActiveEditor,
-    editorContainerRef,
-    editorToolBarRef,
+    activeEditorRef,
+    // editorToolBarRef,
     setShowSlashMenu,
     setSlashQuery,
     setSlashRange,
@@ -44,12 +44,13 @@ export function useRichTextEditor() {
     setEditorState(getEditorState(editor));
   };
 
-  const initEditor = (slideId, blockId, blockContent) => {
+  const initEditor = ({ slideId, blockId, content, onContentChange }) => {
     const editor = useEditor({
       extensions: [StarterKit, Underline, Highlight],
       immediatelyRender: false,
-      content: blockContent?.html || "",
+      content: content?.html || "",
       onFocus({ editor }) {
+        activeEditorRef.current = editor.view.dom;
         setActiveEditor(editor);
 
         updateEditorState(editor);
@@ -102,11 +103,19 @@ export function useRichTextEditor() {
         }
 
         const newContent = {
-          ...blockContent,
+          ...content,
           html: editor.getHTML(),
         };
 
-        updateBlock(slideId, blockId, newContent, { recordHistory: false });
+        // modify the cell if it's a table
+
+        if (onContentChange) {
+          onContentChange(newContent);
+        } else {
+          updateBlock(slideId, blockId, newContent, {
+            recordHistory: false,
+          });
+        }
         updateEditorState(editor);
       },
       editorProps: {
@@ -146,26 +155,15 @@ export function useRichTextEditor() {
     return editor;
   };
 
-  const updateEditorUI = (editor, blockContent = {}) => {
+  const updateEditorUI = (editor, content = {}) => {
     if (!editor) return;
 
-    const blockHtml = blockContent?.html;
+    const blockHtml = content?.html;
     const currentHtml = editor.getHTML();
 
     if (blockHtml !== currentHtml) {
-      editor.commands.setContent(blockContent?.html);
+      editor.commands.setContent(content?.html);
     }
-  };
-
-  const handleClickOutside = (e) => {
-    const insideEditor = editorContainerRef.current?.contains(e.target);
-    const insideToolbar = editorToolBarRef.current?.contains(e.target);
-
-    if (insideEditor || insideToolbar) {
-      return;
-    }
-
-    setActiveEditor(null);
   };
 
   return {
@@ -173,6 +171,6 @@ export function useRichTextEditor() {
     updateEditorState,
     initEditor,
     updateEditorUI,
-    handleClickOutside,
+    // handleClickOutside,
   };
 }
