@@ -1,0 +1,47 @@
+.row-handle-cell,
+th {
+  width: 36px;
+  text-align: center;
+}
+
+.table-row-handle,
+.table-column-handle {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.table-action-menu {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 190px;
+  padding: 6px;
+  border-radius: 8px;
+  background: white;
+  color: black;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.table-action-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.table-action-menu button:hover {
+  background: #f5f5f5;
+}
+
+.table-action-menu .danger {
+  color: #d11a2a;
+}

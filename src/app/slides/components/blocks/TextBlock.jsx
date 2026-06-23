@@ -69,10 +69,7 @@ const TextBlock = ({ block, slideId }) => {
 
   return (
     <div style={{ color: "white", background: "black" }}>
-      <EditorContent
-        style={{ height: "100%", background: "red" }}
-        editor={editor}
-      />
+      <EditorContent editor={editor} />
 
       {showSlashMenu && slashMenuPosition && (
         <div>

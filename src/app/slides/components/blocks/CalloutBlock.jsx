@@ -114,10 +114,7 @@ const CalloutBlock = ({ block, slideId }) => {
         </select>
       </div>
 
-      <EditorContent
-        style={{ height: "100%", background: "red" }}
-        editor={editor}
-      />
+      <EditorContent editor={editor} />
 
       {showSlashMenu && slashMenuPosition && (
         <div>
