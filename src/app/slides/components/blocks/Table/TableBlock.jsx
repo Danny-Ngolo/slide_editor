@@ -3,44 +3,81 @@
 import { useTable } from "@/app/slides/hooks/useTable";
 import React, { useEffect, useRef, useState } from "react";
 import TableCell from "./TableCell";
-import TableRowHandle from "./TableRowHandle";
-import TableColumnHandle from "./TableColumnHandle";
 import "./table.css";
 import TableActionMenu from "./TableActionMenu";
+import TableHandle from "./TableHandle";
+import { useEditorContext } from "../../EditorContext";
 
 const TableBlock = ({ slideId, block }) => {
   const {
     updateCell,
-    addRow,
-    deleteRow,
-    duplicateRow,
-    addColumn,
-    deleteColumn,
-    duplicateColumn,
+    handleColumnHandleClick,
+    handleRowHandleClick,
+    tableSelection,
+    setTableSelection,
   } = useTable();
+  const {
+    setSelectedBlock,
+    setSelectedBlocks,
+    tableMenu,
+    setTableMenu,
+    tableMenuRef,
+  } = useEditorContext();
 
-  const [menu, setMenu] = useState(null);
+  const tableRef = useRef(null);
 
   const rows = block.content?.rows || [];
 
-  const menuRef = useRef(null);
-
   useEffect(() => {
-    if (!menu) return;
+    const closeTableMenu = () => setTableMenu(null);
+
+    const clearSelection = () => {
+      setTableSelection({
+        blockId: null,
+        type: null,
+        row: null,
+        column: null,
+      });
+    };
 
     const handleClickOutside = (e) => {
-      if (menuRef.current?.contains(e.target)) return;
-      setMenu(null);
+      console.log("closing menu...");
+
+      const insideTable = tableRef.current?.contains(e.target);
+      const insideMenu = tableMenuRef.current?.contains(e.target);
+
+      console.log("insideMenu", insideMenu);
+      console.log("insideTable", insideTable);
+
+      if (insideMenu) {
+        console.log("inside menu");
+
+        return;
+      }
+
+      if (insideTable) {
+        console.log("inside table");
+        closeTableMenu();
+        return;
+      }
+
+      console.log("Inside nothing");
+
+      console.log("menu before close", tableMenu);
+
+      closeTableMenu();
+      clearSelection();
     };
 
     document.addEventListener("click", handleClickOutside);
 
     return () => document.removeEventListener("click", handleClickOutside);
-  }, [menu]);
+  }, [tableMenu, tableSelection]);
 
   return (
     <>
       <table
+        ref={tableRef}
         style={{
           width: "100%",
           borderCollapse: "collapse",
@@ -55,21 +92,17 @@ const TableBlock = ({ slideId, block }) => {
             {/* Column handles */}
             {rows[0].map((cell, columnIndex) => (
               <th key={cell.id}>
-                {/* <TableColumnHandle
-                onClick={() =>
-                  addColumn(slideId, block.id, columnIndex, "after")
-                }
-              /> */}
-
-                <TableColumnHandle
+                <TableHandle
                   onClick={(e) => {
-                    e.stopPropagation();
+                    setSelectedBlock({ slideId, blockId: block.id });
+                    setSelectedBlocks([{ slideId, blockId: block.id }]);
 
-                    setMenu({
-                      type: "column",
+                    handleColumnHandleClick(
+                      e,
+                      block,
+                      setTableMenu,
                       columnIndex,
-                      anchor: e.currentTarget.getBoundingClientRect(),
-                    });
+                    );
                   }}
                 />
               </th>
@@ -79,22 +112,24 @@ const TableBlock = ({ slideId, block }) => {
 
         <tbody>
           {rows.map((row, rowIndex) => (
-            <tr key={row[0].id}>
+            <tr
+              key={row[0].id}
+              className={
+                tableSelection.blockId === block.id &&
+                tableSelection.type === "row" &&
+                tableSelection.row === rowIndex
+                  ? "selected-row"
+                  : ""
+              }
+            >
               {/* Row Handle */}
               <td className="row-handle-cell">
-                {/* <TableRowHandle
-                onClick={() => addRow(slideId, block.id, rowIndex, "after")}
-              /> */}
-
-                <TableRowHandle
+                <TableHandle
                   onClick={(e) => {
-                    e.stopPropagation();
+                    setSelectedBlock({ slideId, blockId: block.id });
+                    setSelectedBlocks([{ slideId, blockId: block.id }]);
 
-                    setMenu({
-                      type: "row",
-                      rowIndex,
-                      anchor: e.currentTarget.getBoundingClientRect(),
-                    });
+                    handleRowHandleClick(e, block, setTableMenu, rowIndex);
                   }}
                 />
               </td>
@@ -102,13 +137,13 @@ const TableBlock = ({ slideId, block }) => {
               {row.map((cell, columnIndex) => (
                 <td
                   key={cell.id}
-                  style={{
-                    border: "1px solid #ccc",
-                    minWidth: "120px",
-                    minHeight: "40px",
-                    padding: "8px",
-                    verticalAlign: "top",
-                  }}
+                  className={
+                    tableSelection.blockId === block.id &&
+                    tableSelection.type === "column" &&
+                    tableSelection.column === columnIndex
+                      ? "selected-column"
+                      : "table-cell"
+                  }
                 >
                   <TableCell
                     slideId={slideId}
@@ -125,21 +160,16 @@ const TableBlock = ({ slideId, block }) => {
         </tbody>
       </table>
 
-      {menu && (
-        <TableActionMenu
-          ref={menuRef}
-          menu={menu}
-          slideId={slideId}
-          blockId={block.id}
-          // addRow={addRow}
-          // addColumn={addColumn}
-          // deleteRow={deleteRow}
-          // deleteColumn={deleteColumn}
-          // duplicateRow={duplicateRow}
-          // duplicateColumn={duplicateColumn}
-          closeMenu={() => setMenu(null)}
-        />
-      )}
+      {/* {tableMenu && (
+        <div ref={tableMenuRef}>
+          <TableActionMenu
+            menu={tableMenu}
+            slideId={slideId}
+            blockId={block.id}
+            closeMenu={() => setTableMenu(null)}
+          />
+        </div>
+      )} */}
     </>
   );
 };

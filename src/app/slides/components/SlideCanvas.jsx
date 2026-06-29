@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { DndContext, closestCenter } from "@dnd-kit/core";
 
@@ -18,13 +18,22 @@ import SortableBlock from "./SortableBlock";
 import { useEditorContext } from "./EditorContext";
 import { useSlides } from "../hooks/useSlides";
 import { useHistory } from "../hooks/useHistory";
+import TableActionMenu from "./blocks/Table/TableActionMenu";
 
 const SlideCanvas = ({ slide, slides }) => {
   if (!slide) return null;
 
   const [showInsertMenu, setShowInsertMenu] = useState(false);
   const [insertMenuPos, setInsertMenuPos] = useState(null);
-  const { setSelectedBlock, editorToolBarRef } = useEditorContext();
+  const {
+    setSelectedBlock,
+    editorToolBarRef,
+    tableMenu,
+    setTableMenu,
+    // tableRef,
+    tableMenuRef,
+    setTableSelection,
+  } = useEditorContext();
   const { addBlock } = useSlides();
   const { setSlides } = useHistory();
 
@@ -70,6 +79,50 @@ const SlideCanvas = ({ slide, slides }) => {
       }),
     );
   };
+
+  // useEffect(() => {
+  //   const closeTableMenu = () => setTableMenu(null);
+
+  //   const clearTableSelection = () => {
+  //     setTableSelection({
+  //       blockId: null,
+  //       type: null,
+  //       row: null,
+  //       column: null,
+  //     });
+  //   };
+
+  //   const handleClickOutside = (e) => {
+  //     const insideTable = tableRef.current?.contains(e.target);
+  //     const insideMenu = tableMenuRef.current?.contains(e.target);
+
+  //     console.log("insideMenu", insideMenu);
+  //     console.log("insideTable", insideTable);
+
+  //     if (insideMenu) {
+  //       console.log("inside menu");
+
+  //       return;
+  //     }
+
+  //     if (insideTable) {
+  //       console.log("inside table");
+  //       closeTableMenu();
+  //       return;
+  //     }
+
+  //     console.log("Inside nothing");
+
+  //     console.log("menu before close", tableMenu);
+
+  //     closeTableMenu();
+  //     clearTableSelection();
+  //   };
+
+  //   document.addEventListener("click", handleClickOutside);
+
+  //   return () => document.removeEventListener("click", handleClickOutside);
+  // }, [tableMenu]);
 
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -151,6 +204,18 @@ const SlideCanvas = ({ slide, slides }) => {
                 }}
                 onClose={() => setShowInsertMenu(false)}
               />
+            )}
+
+            {/* Render the tableMenu */}
+            {tableMenu && (
+              // <div ref={tableMenuRef}>
+              <TableActionMenu
+                tableMenu={tableMenu}
+                // slideId={slideId}
+                // blockId={block.id}
+                closeMenu={() => setTableMenu(null)}
+              />
+              // </div>
             )}
           </div>
         </div>

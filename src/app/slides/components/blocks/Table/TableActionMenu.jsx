@@ -3,10 +3,11 @@
 import { Plus, Copy, Trash2 } from "lucide-react";
 
 import "./table.css";
-import { useEffect } from "react";
 import { useTable } from "@/app/slides/hooks/useTable";
+import { useEditorContext } from "../../EditorContext";
+import { useEffect } from "react";
 
-const TableActionMenu = ({ menu, slideId, blockId, closeMenu }) => {
+const TableActionMenu = ({ tableMenu, /* slideId, blockId, */ closeMenu }) => {
   const {
     addRow,
     addColumn,
@@ -18,21 +19,27 @@ const TableActionMenu = ({ menu, slideId, blockId, closeMenu }) => {
     duplicateColumn,
   } = useTable();
 
+  const { selectedBlock, tableMenuRef } = useEditorContext();
+
+  const { blockId, slideId } = selectedBlock;
+
   return (
     <div
+      ref={tableMenuRef}
       className="table-action-menu"
       style={{
         position: "fixed",
-        left: menu.anchor.right + 6,
-        top: menu.anchor.top,
+        left: tableMenu?.anchor?.right + 6 || 6,
+        top: tableMenu?.anchor?.top || 0,
       }}
       onClick={(e) => e.stopPropagation()}
     >
-      {menu.type === "row" ? (
+      {tableMenu.type === "row" ? (
         <>
           <button
             onClick={() => {
-              addRow(slideId, blockId, menu.rowIndex, "before");
+              console.log(slideId, blockId);
+              addRow(slideId, blockId, tableMenu.rowIndex, "before");
               closeMenu();
             }}
           >
@@ -41,7 +48,7 @@ const TableActionMenu = ({ menu, slideId, blockId, closeMenu }) => {
 
           <button
             onClick={() => {
-              addRow(slideId, blockId, menu.rowIndex, "after");
+              addRow(slideId, blockId, tableMenu.rowIndex, "after");
               closeMenu();
             }}
           >
@@ -50,7 +57,7 @@ const TableActionMenu = ({ menu, slideId, blockId, closeMenu }) => {
 
           <button
             onClick={() => {
-              duplicateRow(slideId, blockId, menu.rowIndex);
+              duplicateRow(slideId, blockId, tableMenu.rowIndex);
               closeMenu();
             }}
           >
@@ -60,7 +67,7 @@ const TableActionMenu = ({ menu, slideId, blockId, closeMenu }) => {
           <button
             className="danger"
             onClick={() => {
-              deleteRow(slideId, blockId, menu.rowIndex);
+              deleteRow(slideId, blockId, tableMenu.rowIndex);
               closeMenu();
             }}
           >
@@ -71,7 +78,7 @@ const TableActionMenu = ({ menu, slideId, blockId, closeMenu }) => {
         <>
           <button
             onClick={() => {
-              addColumn(slideId, blockId, menu.columnIndex, "before");
+              addColumn(slideId, blockId, tableMenu.columnIndex, "before");
               closeMenu();
             }}
           >
@@ -80,7 +87,7 @@ const TableActionMenu = ({ menu, slideId, blockId, closeMenu }) => {
 
           <button
             onClick={() => {
-              addColumn(slideId, blockId, menu.columnIndex, "after");
+              addColumn(slideId, blockId, tableMenu.columnIndex, "after");
               closeMenu();
             }}
           >
@@ -89,7 +96,7 @@ const TableActionMenu = ({ menu, slideId, blockId, closeMenu }) => {
 
           <button
             onClick={() => {
-              duplicateColumn(slideId, blockId, menu.columnIndex);
+              duplicateColumn(slideId, blockId, tableMenu.columnIndex);
               closeMenu();
             }}
           >
@@ -99,7 +106,7 @@ const TableActionMenu = ({ menu, slideId, blockId, closeMenu }) => {
           <button
             className="danger"
             onClick={() => {
-              deleteColumn(slideId, blockId, menu.columnIndex);
+              deleteColumn(slideId, blockId, tableMenu.columnIndex);
               closeMenu();
             }}
           >

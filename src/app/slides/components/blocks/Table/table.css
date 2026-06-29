@@ -4,8 +4,16 @@ th {
   text-align: center;
 }
 
-.table-row-handle,
-.table-column-handle {
+.table-cell,
+.selected-column {
+  border: 1px solid #ccc;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 8px;
+  vertical-align: top;
+}
+
+.table-handle {
   border: none;
   background: transparent;
   cursor: pointer;
@@ -44,4 +52,11 @@ th {
 
 .table-action-menu .danger {
   color: #d11a2a;
+}
+
+/* Selection handlers */
+
+.selected-row td,
+.selected-column {
+  background: #dbeafe99;
 }

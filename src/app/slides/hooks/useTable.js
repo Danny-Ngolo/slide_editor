@@ -1,8 +1,10 @@
 import { generateId } from "../utils/generateId";
 import { useHistory } from "./useHistory";
+import { useEditorContext } from "../components/EditorContext";
 
 export function useTable() {
   const { setSlides, setSlidesWithoutHistory } = useHistory();
+  const { tableSelection, setTableSelection } = useEditorContext();
 
   const createTableBlock = () => {
     const tableBlock = {
@@ -246,6 +248,54 @@ export function useTable() {
     });
   };
 
+  const handleRowHandleClick = (e, block, setMenu, rowIndex) => {
+    e.stopPropagation();
+
+    const selected =
+      tableSelection.blockId === block.id &&
+      tableSelection.type === "row" &&
+      tableSelection.row === rowIndex;
+
+    if (selected) {
+      setMenu({
+        type: "row",
+        rowIndex,
+        anchor: e.currentTarget.getBoundingClientRect(),
+      });
+    } else {
+      setTableSelection({
+        blockId: block.id,
+        type: "row",
+        row: rowIndex,
+        column: null,
+      });
+    }
+  };
+
+  const handleColumnHandleClick = (e, block, setMenu, columnIndex) => {
+    e.stopPropagation();
+
+    const selected =
+      tableSelection.blockId === block.id &&
+      tableSelection.type === "column" &&
+      tableSelection.column === columnIndex;
+
+    if (selected) {
+      setMenu({
+        type: "column",
+        columnIndex,
+        anchor: e.currentTarget.getBoundingClientRect(),
+      });
+    } else {
+      setTableSelection({
+        blockId: block.id,
+        type: "column",
+        column: columnIndex,
+        row: null,
+      });
+    }
+  };
+
   return {
     createTableBlock,
     updateCell,
@@ -255,5 +305,9 @@ export function useTable() {
     addColumn,
     duplicateColumn,
     deleteColumn,
+    tableSelection,
+    setTableSelection,
+    handleColumnHandleClick,
+    handleRowHandleClick,
   };
 }

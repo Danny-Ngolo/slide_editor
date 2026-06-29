@@ -42,22 +42,46 @@ const EditorProvider = ({ children }) => {
 
   const [filteredItems, setFilteredItems] = useState([]);
 
-  const handleClickOutside = (e) => {
-    const insideEditor = activeEditorRef.current?.contains(e.target);
-    const insideToolBar = editorToolBarRef.current?.contains(e.target);
+  const [tableSelection, setTableSelection] = useState({
+    blockId: null,
+    type: null,
+    row: null,
+    column: null,
+  });
 
-    if (insideEditor || insideToolBar) {
-      return;
-    }
+  // const [tableMenu, setTableMenu] = useState({
+  //   blockId: null,
+  //   type: null,
+  //   row: null,
+  //   column: null,
+  //   anchor: null,
+  // });
 
-    setActiveEditor(null);
-  };
+  const [tableMenu, setTableMenu] = useState(null);
+
+  // const tableRef = useRef(null);
+  const tableMenuRef = useRef(null);
 
   useEffect(() => {
+    const handleClickOutside = (e) => {
+      const insideEditor = activeEditorRef.current?.contains(e.target);
+      const insideToolBar = editorToolBarRef.current?.contains(e.target);
+
+      if (insideEditor || insideToolBar) {
+        return;
+      }
+
+      setActiveEditor(null);
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    console.log("selectedBlock: ", selectedBlock);
+  }, [selectedBlock]);
 
   return (
     <EditorContext.Provider
@@ -74,6 +98,8 @@ const EditorProvider = ({ children }) => {
         setSelectedBlock,
         selectedBlocks,
         setSelectedBlocks,
+        selectedBlockIndex,
+        setSelectedBlockIndex,
         copiedBlocks,
         setCopiedBlocks,
         copiedBlock,
@@ -87,14 +113,18 @@ const EditorProvider = ({ children }) => {
         setSlashQuery,
         slashRange,
         setSlashRange,
-        selectedBlockIndex,
-        setSelectedBlockIndex,
         slashMenuPosition,
         setSlashMenuPosition,
-        activeEditorRef,
-        editorToolBarRef,
         filteredItems,
         setFilteredItems,
+
+        tableSelection,
+        setTableSelection,
+
+        tableMenu,
+        setTableMenu,
+        tableMenuRef,
+        // tableRef,
       }}
     >
       {children}
