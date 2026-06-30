@@ -79,10 +79,6 @@ const EditorProvider = ({ children }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    console.log("selectedBlock: ", selectedBlock);
-  }, [selectedBlock]);
-
   return (
     <EditorContext.Provider
       value={{

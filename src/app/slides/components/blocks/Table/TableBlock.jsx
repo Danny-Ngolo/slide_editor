@@ -1,10 +1,9 @@
 "use client";
 
 import { useTable } from "@/app/slides/hooks/useTable";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import TableCell from "./TableCell";
 import "./table.css";
-import TableActionMenu from "./TableActionMenu";
 import TableHandle from "./TableHandle";
 import { useEditorContext } from "../../EditorContext";
 
@@ -15,6 +14,13 @@ const TableBlock = ({ slideId, block }) => {
     handleRowHandleClick,
     tableSelection,
     setTableSelection,
+
+    resizeState,
+    setResizeState,
+    handleMouseMove,
+    handleMouseUp,
+    startColumnResize,
+    startRowResize,
   } = useTable();
   const {
     setSelectedBlock,
@@ -29,6 +35,8 @@ const TableBlock = ({ slideId, block }) => {
   const rows = block.content?.rows || [];
 
   useEffect(() => {
+    if (tableSelection?.blockId !== block.id) return;
+
     const closeTableMenu = () => setTableMenu(null);
 
     const clearSelection = () => {
@@ -41,29 +49,9 @@ const TableBlock = ({ slideId, block }) => {
     };
 
     const handleClickOutside = (e) => {
-      console.log("closing menu...");
-
-      const insideTable = tableRef.current?.contains(e.target);
       const insideMenu = tableMenuRef.current?.contains(e.target);
 
-      console.log("insideMenu", insideMenu);
-      console.log("insideTable", insideTable);
-
-      if (insideMenu) {
-        console.log("inside menu");
-
-        return;
-      }
-
-      if (insideTable) {
-        console.log("inside table");
-        closeTableMenu();
-        return;
-      }
-
-      console.log("Inside nothing");
-
-      console.log("menu before close", tableMenu);
+      if (insideMenu) return;
 
       closeTableMenu();
       clearSelection();
@@ -73,6 +61,26 @@ const TableBlock = ({ slideId, block }) => {
 
     return () => document.removeEventListener("click", handleClickOutside);
   }, [tableMenu, tableSelection]);
+
+  useEffect(() => {
+    if (!resizeState) return;
+
+    const mouseMove = (e) => {
+      handleMouseMove(e, slideId, block);
+    };
+
+    const mouseUp = () => {
+      handleMouseUp();
+    };
+
+    document.addEventListener("mousemove", mouseMove);
+    document.addEventListener("mouseup", mouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", mouseMove);
+      document.removeEventListener("mouseup", mouseUp);
+    };
+  }, [resizeState, slideId, block]);
 
   return (
     <>
@@ -114,13 +122,17 @@ const TableBlock = ({ slideId, block }) => {
           {rows.map((row, rowIndex) => (
             <tr
               key={row[0].id}
-              className={
-                tableSelection.blockId === block.id &&
-                tableSelection.type === "row" &&
-                tableSelection.row === rowIndex
-                  ? "selected-row"
-                  : ""
-              }
+              className={`
+table-row
+  ${
+    tableSelection.blockId === block.id &&
+    tableSelection.type === "row" &&
+    tableSelection.row === rowIndex
+      ? "selected-row"
+      : ""
+  }
+  ${rowIndex === block.content?.headerRow ? "table-header-row" : ""}
+`}
             >
               {/* Row Handle */}
               <td className="row-handle-cell">
@@ -137,13 +149,22 @@ const TableBlock = ({ slideId, block }) => {
               {row.map((cell, columnIndex) => (
                 <td
                   key={cell.id}
-                  className={
-                    tableSelection.blockId === block.id &&
-                    tableSelection.type === "column" &&
-                    tableSelection.column === columnIndex
-                      ? "selected-column"
-                      : "table-cell"
-                  }
+                  className={`
+table-cell
+  ${
+    tableSelection.blockId === block.id &&
+    tableSelection.type === "column" &&
+    tableSelection.column === columnIndex
+      ? "selected-column"
+      : ""
+  }
+  ${columnIndex === block.content?.headerColumn ? "table-header-column" : ""}
+`}
+                  style={{
+                    width: block.content.columnWidths?.[columnIndex] ?? 100,
+
+                    height: block.content.rowHeights?.[rowIndex] ?? 40,
+                  }}
                 >
                   <TableCell
                     slideId={slideId}
@@ -153,23 +174,27 @@ const TableBlock = ({ slideId, block }) => {
                     cell={cell}
                     updateCell={updateCell}
                   />
+
+                  {rowIndex === 0 && (
+                    <div
+                      className="column-resize-handle"
+                      onMouseDown={(e) =>
+                        startColumnResize(e, block, columnIndex)
+                      }
+                    />
+                  )}
+                  {columnIndex === 0 && (
+                    <div
+                      className="row-resize-handle"
+                      onMouseDown={(e) => startRowResize(e, block, rowIndex)}
+                    />
+                  )}
                 </td>
               ))}
             </tr>
           ))}
         </tbody>
       </table>
-
-      {/* {tableMenu && (
-        <div ref={tableMenuRef}>
-          <TableActionMenu
-            menu={tableMenu}
-            slideId={slideId}
-            blockId={block.id}
-            closeMenu={() => setTableMenu(null)}
-          />
-        </div>
-      )} */}
     </>
   );
 };

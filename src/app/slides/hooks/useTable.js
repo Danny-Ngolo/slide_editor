@@ -1,10 +1,16 @@
 import { generateId } from "../utils/generateId";
 import { useHistory } from "./useHistory";
 import { useEditorContext } from "../components/EditorContext";
+import { useState } from "react";
 
 export function useTable() {
   const { setSlides, setSlidesWithoutHistory } = useHistory();
   const { tableSelection, setTableSelection } = useEditorContext();
+
+  const [resizeState, setResizeState] = useState(null);
+
+  const minColumnWidth = 36;
+  const minRowHeight = 30;
 
   const createTableBlock = () => {
     const tableBlock = {
@@ -33,6 +39,10 @@ export function useTable() {
             },
           ],
         ],
+        headerRow: null,
+        headerColumn: null,
+        columnWidths: [minColumnWidth, minColumnWidth],
+        rowHeights: [minRowHeight, minRowHeight],
       },
     };
 
@@ -258,6 +268,7 @@ export function useTable() {
 
     if (selected) {
       setMenu({
+        blockId: block.id,
         type: "row",
         rowIndex,
         anchor: e.currentTarget.getBoundingClientRect(),
@@ -282,6 +293,7 @@ export function useTable() {
 
     if (selected) {
       setMenu({
+        blockId: block.id,
         type: "column",
         columnIndex,
         anchor: e.currentTarget.getBoundingClientRect(),
@@ -294,6 +306,118 @@ export function useTable() {
         row: null,
       });
     }
+  };
+
+  const toggleHeaderColumn = ({ slideId, blockId, columnIndex }) => {
+    updateTable(slideId, blockId, (block) => ({
+      ...block,
+      content: {
+        ...block.content,
+        headerColumn:
+          block.content.headerColumn === columnIndex ? null : columnIndex,
+      },
+    }));
+  };
+
+  const toggleHeaderRow = ({ slideId, blockId, rowIndex }) => {
+    updateTable(slideId, blockId, (block) => ({
+      ...block,
+      content: {
+        ...block.content,
+        headerRow: block.content.headerRow === rowIndex ? null : rowIndex,
+      },
+    }));
+  };
+
+  const startColumnResize = (e, block, columnIndex) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setResizeState({
+      type: "column",
+      index: columnIndex,
+      startX: e.clientX,
+      initialWidth:
+        block.content?.columnWidths?.[columnIndex] ?? minColumnWidth,
+    });
+  };
+
+  const startRowResize = (e, block, rowIndex) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setResizeState({
+      type: "row",
+      index: rowIndex,
+      startY: e.clientY,
+      initialHeight: block.content?.rowHeights?.[rowIndex] ?? minRowHeight,
+    });
+  };
+
+  const handleMouseMove = (e, slideId, block) => {
+    if (resizeState.type === "column") {
+      const delta = e.clientX - resizeState.startX;
+
+      const newWidth = Math.max(
+        minColumnWidth,
+        resizeState.initialWidth + delta,
+      );
+
+      updateTable(
+        slideId,
+        block.id,
+        (tableBlock) => {
+          const widths = [...(tableBlock.content.columnWidths || [])];
+
+          widths[resizeState.index] = newWidth;
+
+          return {
+            ...tableBlock,
+            content: {
+              ...tableBlock.content,
+              columnWidths: widths,
+            },
+          };
+        },
+        {
+          recordHistory: false,
+        },
+      );
+    }
+
+    if (resizeState.type === "row") {
+      const delta = e.clientY - resizeState.startY;
+
+      const newHeight = Math.max(
+        minRowHeight,
+        resizeState.initialHeight + delta,
+      );
+
+      updateTable(
+        slideId,
+        block.id,
+        (tableBlock) => {
+          const heights = [...(tableBlock.content.rowHeights || [])];
+
+          heights[resizeState.index] = newHeight;
+
+          return {
+            ...tableBlock,
+            content: {
+              ...tableBlock.content,
+              rowHeights: heights,
+            },
+          };
+        },
+        {
+          recordHistory: false,
+        },
+      );
+    }
+  };
+
+  const handleMouseUp = () => {
+    setResizeState(null);
   };
 
   return {
@@ -309,5 +433,14 @@ export function useTable() {
     setTableSelection,
     handleColumnHandleClick,
     handleRowHandleClick,
+    toggleHeaderRow,
+    toggleHeaderColumn,
+
+    resizeState,
+    setResizeState,
+    startColumnResize,
+    startRowResize,
+    handleMouseMove,
+    handleMouseUp,
   };
 }

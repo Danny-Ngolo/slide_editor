@@ -60,3 +60,34 @@ th {
 .selected-column {
   background: #dbeafe99;
 }
+
+.table-header-row td,
+.table-header-column {
+  font-weight: 600;
+  background: #b6c1ce;
+  color: #235;
+}
+
+.table-cell {
+  position: relative;
+}
+
+.column-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 50;
+}
+
+.row-resize-handle {
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  cursor: row-resize;
+  z-index: 50;
+}

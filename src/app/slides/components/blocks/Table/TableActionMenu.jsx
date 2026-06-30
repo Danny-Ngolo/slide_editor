@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Copy, Trash2 } from "lucide-react";
+import { Plus, Copy, Trash2, Headset } from "lucide-react";
 
 import "./table.css";
 import { useTable } from "@/app/slides/hooks/useTable";
@@ -17,6 +17,9 @@ const TableActionMenu = ({ tableMenu, /* slideId, blockId, */ closeMenu }) => {
 
     duplicateRow,
     duplicateColumn,
+
+    toggleHeaderRow,
+    toggleHeaderColumn,
   } = useTable();
 
   const { selectedBlock, tableMenuRef } = useEditorContext();
@@ -73,6 +76,19 @@ const TableActionMenu = ({ tableMenu, /* slideId, blockId, */ closeMenu }) => {
           >
             <Trash2 size={15} /> Delete row
           </button>
+
+          <button
+            onClick={() => {
+              toggleHeaderRow({
+                slideId,
+                blockId,
+                rowIndex: tableMenu.rowIndex,
+              });
+              closeMenu();
+            }}
+          >
+            <Headset size={15} /> Toggle Header
+          </button>
         </>
       ) : (
         <>
@@ -111,6 +127,19 @@ const TableActionMenu = ({ tableMenu, /* slideId, blockId, */ closeMenu }) => {
             }}
           >
             <Trash2 size={15} /> Delete column
+          </button>
+
+          <button
+            onClick={() => {
+              toggleHeaderColumn({
+                slideId,
+                blockId,
+                columnIndex: tableMenu.columnIndex,
+              });
+              closeMenu();
+            }}
+          >
+            <Headset size={15} /> Toggle Header
           </button>
         </>
       )}
