@@ -1,13 +1,15 @@
 import { generateId } from "../utils/generateId";
 import { useHistory } from "./useHistory";
 import { useEditorContext } from "../components/EditorContext";
-import { useState } from "react";
 
 export function useTable() {
   const { setSlides, setSlidesWithoutHistory } = useHistory();
-  const { tableSelection, setTableSelection } = useEditorContext();
-
-  const [resizeState, setResizeState] = useState(null);
+  const {
+    tableSelection,
+    setTableSelection,
+    tableResizeState,
+    setTableResizeState,
+  } = useEditorContext();
 
   const minColumnWidth = 36;
   const minRowHeight = 30;
@@ -18,32 +20,26 @@ export function useTable() {
       type: "table",
       content: {
         rows: [
-          [
-            {
-              id: generateId(),
-              html: "<p></p>",
-            },
-            {
-              id: generateId(),
-              html: "<p></p>",
-            },
-          ],
-          [
-            {
-              id: generateId(),
-              html: "<p></p>",
-            },
-            {
-              id: generateId(),
-              html: "<p></p>",
-            },
-          ],
+          {
+            id: generateId(),
+            cells: [
+              { id: generateId(), html: "<p></p>" },
+              { id: generateId(), html: "<p></p>" },
+            ],
+          },
+          {
+            id: generateId(),
+            cells: [
+              { id: generateId(), html: "<p></p>" },
+              { id: generateId(), html: "<p></p>" },
+            ],
+          },
         ],
-        headerRow: null,
-        headerColumn: null,
-        columnWidths: [minColumnWidth, minColumnWidth],
-        rowHeights: [minRowHeight, minRowHeight],
       },
+      headerRow: null,
+      headerColumn: null,
+      columnWidths: [minColumnWidth, minColumnWidth],
+      rowHeights: [minRowHeight, minRowHeight],
     };
 
     return tableBlock;
@@ -63,7 +59,9 @@ export function useTable() {
   });
 
   const createRow = (columnCount) => {
-    return Array.from({ length: columnCount }, () => createEmptyCell());
+    const cells = Array.from({ length: columnCount }, () => createEmptyCell());
+
+    return { id: generateId(), cells };
   };
 
   const updateTable = (
@@ -97,12 +95,15 @@ export function useTable() {
       slideId,
       blockId,
       (block) => {
-        const newRows = [...block.content?.rows];
+        const newRows = [...block.content.rows];
 
-        newRows[rowIndex] = [...newRows[rowIndex]];
+        newRows[rowIndex] = {
+          ...newRows[rowIndex],
+          cells: [...newRows[rowIndex].cells],
+        };
 
-        newRows[rowIndex][columnIndex] = {
-          ...newRows[rowIndex][columnIndex],
+        newRows[rowIndex].cells[columnIndex] = {
+          ...newRows[rowIndex].cells[columnIndex],
           ...newContent,
         };
 
@@ -123,11 +124,8 @@ export function useTable() {
       slideId,
       blockId,
       (block) => {
-        console.log("adding row");
-
         const newRows = [...block.content?.rows];
-
-        const columnCount = newRows[0]?.length || 0;
+        const columnCount = newRows[0]?.cells.length || 0;
 
         const newRow = createRow(columnCount);
 
@@ -168,10 +166,14 @@ export function useTable() {
     updateTable(slideId, blockId, (block) => {
       const newRows = [...block.content?.rows];
 
-      const duplicated = newRows[rowIndex].map((cell) => ({
-        ...cell,
+      const duplicated = {
+        ...newRows[rowIndex],
         id: generateId(),
-      }));
+        cells: newRows[rowIndex].cells.map((cell) => ({
+          ...cell,
+          id: generateId(),
+        })),
+      };
 
       newRows.splice(rowIndex + 1, 0, duplicated);
 
@@ -193,12 +195,17 @@ export function useTable() {
           position === "before" ? columnIndex : columnIndex + 1;
 
         const newRows = block.content?.rows?.map((row) => {
-          const newRow = [...row];
+          const newRow = {
+            ...row,
+            cells: [...row.cells],
+          };
 
-          newRow.splice(insertIndex, 0, createEmptyCell());
+          newRow.cells.splice(insertIndex, 0, createEmptyCell());
 
           return newRow;
         });
+
+        console.log("newRows", newRows);
 
         return {
           ...block,
@@ -214,12 +221,15 @@ export function useTable() {
 
   const deleteColumn = (slideId, blockId, columnIndex) =>
     updateTable(slideId, blockId, (block) => {
-      if (block.content?.rows[0].length === 1) return block;
+      if (block.content?.rows[0].cells.length === 1) return block;
 
       const newRows = block.content.rows.map((row) => {
-        const newRow = [...row];
+        const newRow = {
+          ...row,
+          cells: [...row.cells],
+        };
 
-        newRow.splice(columnIndex, 1);
+        newRow.cells.splice(columnIndex, 1);
 
         return newRow;
       });
@@ -236,14 +246,17 @@ export function useTable() {
   const duplicateColumn = (slideId, blockId, columnIndex) => {
     updateTable(slideId, blockId, (block) => {
       const newRows = block.content?.rows?.map((row) => {
-        const newRow = [...row];
+        const newRow = {
+          ...row,
+          cells: [...row.cells],
+        };
 
         const duplicated = {
-          ...row[columnIndex],
+          ...newRow.cells[columnIndex],
           id: generateId(),
         };
 
-        newRow.splice(columnIndex + 1, 0, duplicated);
+        newRow.cells.splice(columnIndex + 1, 0, duplicated);
 
         return newRow;
       });
@@ -333,7 +346,7 @@ export function useTable() {
     e.preventDefault();
     e.stopPropagation();
 
-    setResizeState({
+    setTableResizeState({
       type: "column",
       index: columnIndex,
       startX: e.clientX,
@@ -346,7 +359,7 @@ export function useTable() {
     e.preventDefault();
     e.stopPropagation();
 
-    setResizeState({
+    setTableResizeState({
       type: "row",
       index: rowIndex,
       startY: e.clientY,
@@ -355,21 +368,21 @@ export function useTable() {
   };
 
   const handleMouseMove = (e, slideId, block) => {
-    if (resizeState.type === "column") {
-      const delta = e.clientX - resizeState.startX;
+    if (tableResizeState.type === "column") {
+      const delta = e.clientX - tableResizeState.startX;
 
       const newWidth = Math.max(
         minColumnWidth,
-        resizeState.initialWidth + delta,
+        tableResizeState.initialWidth + delta,
       );
 
       updateTable(
         slideId,
         block.id,
         (tableBlock) => {
-          const widths = [...(tableBlock.content.columnWidths || [])];
+          const widths = [...(tableBlock.content?.columnWidths || [])];
 
-          widths[resizeState.index] = newWidth;
+          widths[tableResizeState.index] = newWidth;
 
           return {
             ...tableBlock,
@@ -385,12 +398,12 @@ export function useTable() {
       );
     }
 
-    if (resizeState.type === "row") {
-      const delta = e.clientY - resizeState.startY;
+    if (tableResizeState.type === "row") {
+      const delta = e.clientY - tableResizeState.startY;
 
       const newHeight = Math.max(
         minRowHeight,
-        resizeState.initialHeight + delta,
+        tableResizeState.initialHeight + delta,
       );
 
       updateTable(
@@ -399,7 +412,7 @@ export function useTable() {
         (tableBlock) => {
           const heights = [...(tableBlock.content.rowHeights || [])];
 
-          heights[resizeState.index] = newHeight;
+          heights[tableResizeState.index] = newHeight;
 
           return {
             ...tableBlock,
@@ -417,7 +430,63 @@ export function useTable() {
   };
 
   const handleMouseUp = () => {
-    setResizeState(null);
+    setTableResizeState(null);
+  };
+
+  const moveRow = (slideId, blockId, fromIndex, toIndex) => {
+    updateTable(
+      slideId,
+      blockId,
+      (block) => {
+        const rows = [...(block.content?.rows || [])];
+        const rowHeights = [...(block.content?.rowHeights || [])];
+
+        if (
+          fromIndex === toIndex ||
+          fromIndex < 0 ||
+          toIndex < 0 ||
+          fromIndex >= rows.length ||
+          toIndex >= rows.length
+        ) {
+          return block;
+        }
+
+        // 1. Extract the row
+        const [movedRow] = rows.splice(fromIndex, 1);
+
+        // 2. Insert it at new position
+        rows.splice(toIndex, 0, movedRow);
+
+        // 3. Move corresponding row height
+        if (rowHeights.length) {
+          const [movedHeight] = rowHeights.splice(fromIndex, 1);
+          rowHeights.splice(toIndex, 0, movedHeight);
+        }
+
+        return {
+          ...block,
+          content: {
+            ...block.content,
+            rows,
+            rowHeights,
+          },
+        };
+      },
+      { recordHistory: true },
+    );
+  };
+
+  const handleRowDragEnd = ({ e, slideId, block }) => {
+    const { active, over } = e;
+
+    if (!over || active.id === over.id) return;
+
+    const rows = block.content.rows;
+
+    const fromIndex = rows.findIndex((row) => row.id === active.id);
+    const toIndex = rows.findIndex((row) => row.id === over.id);
+
+    moveRow(slideId, block.id, fromIndex, toIndex);
   };
 
   return {
@@ -436,11 +505,14 @@ export function useTable() {
     toggleHeaderRow,
     toggleHeaderColumn,
 
-    resizeState,
-    setResizeState,
     startColumnResize,
     startRowResize,
     handleMouseMove,
     handleMouseUp,
+    minColumnWidth,
+    minRowHeight,
+
+    moveRow,
+    handleRowDragEnd,
   };
 }

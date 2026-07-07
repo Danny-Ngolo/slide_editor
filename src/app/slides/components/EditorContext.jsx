@@ -49,18 +49,11 @@ const EditorProvider = ({ children }) => {
     column: null,
   });
 
-  // const [tableMenu, setTableMenu] = useState({
-  //   blockId: null,
-  //   type: null,
-  //   row: null,
-  //   column: null,
-  //   anchor: null,
-  // });
-
   const [tableMenu, setTableMenu] = useState(null);
 
-  // const tableRef = useRef(null);
   const tableMenuRef = useRef(null);
+
+  const [tableResizeState, setTableResizeState] = useState(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -120,7 +113,9 @@ const EditorProvider = ({ children }) => {
         tableMenu,
         setTableMenu,
         tableMenuRef,
-        // tableRef,
+
+        tableResizeState,
+        setTableResizeState,
       }}
     >
       {children}

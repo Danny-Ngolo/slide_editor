@@ -9,6 +9,7 @@ import { Redo, Undo } from "lucide-react";
 import { useSlides } from "../hooks/useSlides";
 import { useHistory } from "../hooks/useHistory";
 import { useClipboard } from "../hooks/useClipboard";
+import { generateId } from "../utils/generateId";
 
 const SlideEditor = ({ lessonId }) => {
   const [isDataAlreadyFetched, setIsDataAlreadyFetched] = useState(false);
@@ -121,6 +122,7 @@ const SlideEditor = ({ lessonId }) => {
 
       if (lesson) {
         setCurrentLesson(lesson);
+
         initializeSlides(lesson.slides);
       }
 

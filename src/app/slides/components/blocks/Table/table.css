@@ -1,3 +1,9 @@
+.table-block {
+  width: fit-content;
+  margin: auto;
+  border-collapse: collapse;
+}
+
 .row-handle-cell,
 th {
   width: 36px;
@@ -7,7 +13,7 @@ th {
 .table-cell,
 .selected-column {
   border: 1px solid #ccc;
-  min-width: 30px;
+  min-width: 36px;
   min-height: 30px;
   padding: 8px;
   vertical-align: top;
@@ -15,7 +21,7 @@ th {
 
 .table-handle {
   border: none;
-  background: transparent;
+  background: none;
   cursor: pointer;
   padding: 2px;
 }
@@ -90,4 +96,19 @@ th {
   height: 6px;
   cursor: row-resize;
   z-index: 50;
+}
+
+.table-drag-handle {
+  cursor: grab;
+  border: none;
+  background: transparent;
+  color: #888;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-drag-handle:active {
+  cursor: grabbing;
 }
