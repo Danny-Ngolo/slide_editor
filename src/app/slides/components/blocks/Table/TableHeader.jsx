@@ -1,39 +1,39 @@
 "use client";
 
-import { useTable } from "@/app/slides/hooks/useTable";
 import React from "react";
 import "./table.css";
-import TableHandle from "./TableHandle";
-import { useEditorContext } from "../../EditorContext";
+import {
+  horizontalListSortingStrategy,
+  SortableContext,
+} from "@dnd-kit/sortable";
+import TableHeaderCell from "./TableHeaderCell";
 
 const TableHeader = ({ firstRowCells, slideId, block }) => {
-  const { handleColumnHandleClick } = useTable();
-  const { setSelectedBlock, setSelectedBlocks, setTableMenu } =
-    useEditorContext();
-
   return (
-    <thead>
-      <tr>
-        {/* Empty corner */}
-        <th />
+    <SortableContext
+      items={firstRowCells.map((cell) => cell.id)}
+      strategy={horizontalListSortingStrategy}
+    >
+      <thead>
+        <tr>
+          {/* Empty corner */}
+          <th />
 
-        {/* Column handles */}
-        {firstRowCells.map((cell, columnIndex) => {
-          return (
-            <th key={cell.id}>
-              <TableHandle
-                onClick={(e) => {
-                  setSelectedBlock({ slideId, blockId: block.id });
-                  setSelectedBlocks([{ slideId, blockId: block.id }]);
-
-                  handleColumnHandleClick(e, block, setTableMenu, columnIndex);
-                }}
+          {/* Column handles */}
+          {firstRowCells.map((cell, columnIndex) => {
+            return (
+              <TableHeaderCell
+                key={cell.id}
+                slideId={slideId}
+                cell={cell}
+                columnIndex={columnIndex}
+                block={block}
               />
-            </th>
-          );
-        })}
-      </tr>
-    </thead>
+            );
+          })}
+        </tr>
+      </thead>
+    </SortableContext>
   );
 };
 

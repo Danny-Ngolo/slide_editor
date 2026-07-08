@@ -17,7 +17,7 @@ const TableBlock = ({ slideId, block }) => {
 
     handleMouseMove,
     handleMouseUp,
-    handleRowDragEnd,
+    handleDragEnd,
   } = useTable();
   const { tableMenu, setTableMenu, tableMenuRef, tableResizeState } =
     useEditorContext();
@@ -74,7 +74,7 @@ const TableBlock = ({ slideId, block }) => {
     <DndContext
       collisionDetection={closestCenter}
       onDragEnd={(e) =>
-        handleRowDragEnd({
+        handleDragEnd({
           e,
           slideId,
           block,

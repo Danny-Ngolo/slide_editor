@@ -1,6 +1,7 @@
 import { generateId } from "../utils/generateId";
 import { useHistory } from "./useHistory";
 import { useEditorContext } from "../components/EditorContext";
+import { arrayMove } from "@dnd-kit/sortable";
 
 export function useTable() {
   const { setSlides, setSlidesWithoutHistory } = useHistory();
@@ -476,6 +477,48 @@ export function useTable() {
     );
   };
 
+  const moveColumn = (slideId, blockId, fromIndex, toIndex) => {
+    updateTable(
+      slideId,
+      blockId,
+      (block) => {
+        const rows = block.content.rows || [];
+
+        const newRows = rows.map((row) => ({
+          ...row,
+          cells: arrayMove([...row.cells], fromIndex, toIndex),
+        }));
+
+        const newColumnWidths = arrayMove(
+          [...(block.content.columnWidths || [])],
+          fromIndex,
+          toIndex,
+        );
+
+        let headerColumn = block.content.headerColumn;
+
+        if (headerColumn === fromIndex) {
+          headerColumn = toIndex;
+        } else if (headerColumn > fromIndex && headerColumn <= toIndex) {
+          headerColumn -= 1;
+        } else if (headerColumn < fromIndex && headerColumn >= toIndex) {
+          headerColumn += 1;
+        }
+
+        return {
+          ...block,
+          content: {
+            ...block.content,
+            rows: newRows,
+            columnWidths: newColumnWidths,
+            headerColumn,
+          },
+        };
+      },
+      { recordHistory: true },
+    );
+  };
+
   const handleRowDragEnd = ({ e, slideId, block }) => {
     const { active, over } = e;
 
@@ -487,6 +530,32 @@ export function useTable() {
     const toIndex = rows.findIndex((row) => row.id === over.id);
 
     moveRow(slideId, block.id, fromIndex, toIndex);
+  };
+
+  const handleColumnDragEnd = ({ e, slideId, block }) => {
+    const { active, over } = e;
+
+    if (!over || active.id === over.id) return;
+
+    const columns = block.content.rows?.[0]?.cells || [];
+
+    const fromIndex = columns.findIndex((cell) => cell.id === active.id);
+    const toIndex = columns.findIndex((cell) => cell.id === over.id);
+
+    moveColumn(slideId, block.id, fromIndex, toIndex);
+  };
+
+  const handleDragEnd = ({ e, slideId, block }) => {
+    const dragType = e.active.data.current?.type;
+
+    switch (dragType) {
+      case "row":
+        handleRowDragEnd({ e, slideId, block });
+        break;
+      case "column":
+        handleColumnDragEnd({ e, slideId, block });
+        break;
+    }
   };
 
   return {
@@ -513,6 +582,6 @@ export function useTable() {
     minRowHeight,
 
     moveRow,
-    handleRowDragEnd,
+    handleDragEnd,
   };
 }

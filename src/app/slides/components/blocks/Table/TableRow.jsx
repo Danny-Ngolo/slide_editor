@@ -23,9 +23,10 @@ const TableRow = ({ slideId, block, row, rowIndex }) => {
   const { setSelectedBlock, setSelectedBlocks, setTableMenu } =
     useEditorContext();
 
-  const { listeners, attributes, setNodeRef, style } = useEditorSortable(
-    row.id,
-  );
+  const { listeners, attributes, setNodeRef, style } = useEditorSortable({
+    id: row.id,
+    data: { type: "row" },
+  });
 
   return (
     <tr
@@ -88,16 +89,12 @@ table-cell
           <div
             className="column-resize-handle"
             onMouseDown={(e) => {
-              console.log("resizing column...");
-
               startColumnResize(e, block, columnIndex);
             }}
           />
           <div
             className="row-resize-handle"
             onMouseDown={(e) => {
-              console.log("resing row...");
-
               startRowResize(e, block, rowIndex);
             }}
           />
