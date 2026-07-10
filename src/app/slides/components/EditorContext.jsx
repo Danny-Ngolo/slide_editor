@@ -55,6 +55,22 @@ const EditorProvider = ({ children }) => {
 
   const [tableResizeState, setTableResizeState] = useState(null);
 
+  const cellEditors = useRef({});
+
+  const registerEditor = (cellId, editor) => {
+    if (!cellId || !editor) return;
+
+    cellEditors.current[cellId] = editor;
+  };
+
+  const unregisterEditor = (cellId) => {
+    delete cellEditors.current[cellId];
+  };
+
+  const focusEditor = (cellId) => {
+    cellEditors.current[cellId]?.commands?.focus();
+  };
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       const insideEditor = activeEditorRef.current?.contains(e.target);
@@ -116,6 +132,10 @@ const EditorProvider = ({ children }) => {
 
         tableResizeState,
         setTableResizeState,
+
+        registerEditor,
+        unregisterEditor,
+        focusEditor,
       }}
     >
       {children}

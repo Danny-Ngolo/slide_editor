@@ -32,8 +32,6 @@ export function useHistory() {
   };
 
   const undo = (isUndoRedo) => {
-    console.log("undoing...");
-
     isUndoRedo.current = true;
 
     setSlidesHistory((prev) => {
@@ -52,8 +50,6 @@ export function useHistory() {
   };
 
   const redo = (isUndoRedo) => {
-    console.log("redoing...");
-
     isUndoRedo.current = true;
 
     setSlidesHistory((prev) => {

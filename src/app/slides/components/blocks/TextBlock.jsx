@@ -33,6 +33,7 @@ const TextBlock = ({ block, slideId }) => {
     slideId,
     blockId: block.id,
     content: block.content,
+    blockType: block.type || "text",
   });
 
   useEffect(() => {

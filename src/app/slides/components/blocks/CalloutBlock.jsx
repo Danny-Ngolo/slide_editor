@@ -30,8 +30,7 @@ const CalloutBlock = ({ block, slideId }) => {
     setFilteredItems,
   } = useEditorContext();
 
-  const { updateEditorState, initEditor, updateEditorUI, handleClickOutside } =
-    useRichTextEditor();
+  const { updateEditorState, initEditor, updateEditorUI } = useRichTextEditor();
 
   const { handleDirectionKey, handleSlashSelect } = useSlashMenu();
 
@@ -42,6 +41,7 @@ const CalloutBlock = ({ block, slideId }) => {
     slideId,
     blockId: block.id,
     content: block.content,
+    blockType: block.type || "callout",
   });
 
   useEffect(() => {

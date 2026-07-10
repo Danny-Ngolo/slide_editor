@@ -84,6 +84,7 @@ table-cell
             columnIndex={columnIndex}
             cell={cell}
             updateCell={updateCell}
+            block={block}
           />
 
           <div

@@ -21,11 +21,12 @@ const saveLesson = async (lessonId, lessonData) => {
 
   const data = await res.json();
 
-  console.log("data after save", data);
+  console.log("data after save", data.lesson?.slides);
 
-  if (data.status !== "success")
-    throw new Error(data.message || "Could not save the lesson");
-
+  if (data.status !== "success") {
+    data.message || "Could not save the lesson due to some error";
+    return alert("Could not save the lesson due to some error");
+  }
   return data.lesson;
 };
 

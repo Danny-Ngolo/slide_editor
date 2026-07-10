@@ -5,13 +5,13 @@ import StarterKit from "@tiptap/starter-kit";
 import { useEditorContext } from "../components/EditorContext";
 import { useSlides } from "./useSlides";
 import { useSlashMenu } from "./useSlashMenu";
+import { useTable } from "./useTable";
 
 export function useRichTextEditor() {
   const {
     setEditorState,
     setActiveEditor,
     activeEditorRef,
-    // editorToolBarRef,
     setShowSlashMenu,
     setSlashQuery,
     setSlashRange,
@@ -19,9 +19,13 @@ export function useRichTextEditor() {
     setSlashMenuPosition,
     filteredItems,
     selectedBlockIndex,
+
+    setTableSelection,
   } = useEditorContext();
   const { handleSlashSelect } = useSlashMenu();
   const { updateBlock } = useSlides();
+
+  const { focusAdjacentCell } = useTable();
 
   const getEditorState = (editor) => {
     if (!editor) return {};
@@ -44,7 +48,105 @@ export function useRichTextEditor() {
     setEditorState(getEditorState(editor));
   };
 
-  const initEditor = ({ slideId, blockId, content, onContentChange }) => {
+  const handleTableKeyDown = ({
+    event,
+    editor,
+    rows,
+    rowIndex,
+    columnIndex,
+  }) => {
+    switch (event.key) {
+      case "ArrowLeft":
+        event.preventDefault();
+        focusAdjacentCell({
+          rows,
+          rowIndex,
+          columnIndex,
+          direction: "left",
+        });
+        return true;
+
+      case "ArrowRight":
+        event.preventDefault();
+        focusAdjacentCell({
+          rows,
+          rowIndex,
+          columnIndex,
+          direction: "right",
+        });
+        return true;
+
+      case "ArrowUp":
+        event.preventDefault();
+        focusAdjacentCell({
+          rows,
+          rowIndex,
+          columnIndex,
+          direction: "up",
+        });
+        return true;
+
+      case "ArrowDown":
+        event.preventDefault();
+        focusAdjacentCell({
+          rows,
+          rowIndex,
+          columnIndex,
+          direction: "down",
+        });
+        return true;
+
+      case "Tab":
+        event.preventDefault();
+
+        focusAdjacentCell({
+          rows,
+          rowIndex,
+          columnIndex,
+          direction: event.shiftKey ? "left" : "right",
+        });
+
+        return true;
+
+      case "Enter":
+        event.preventDefault();
+
+        focusAdjacentCell({
+          rows,
+          rowIndex,
+          columnIndex,
+          direction: event.shiftKey ? "up" : "down",
+        });
+
+        return true;
+
+      case "Escape":
+        event.preventDefault();
+
+        setTableSelection({
+          blockId: null,
+          row: null,
+          column: null,
+          type: null,
+        });
+
+        return true;
+
+      default:
+        return false;
+    }
+  };
+
+  const initEditor = ({
+    slideId,
+    blockId,
+    blockType,
+    content,
+    onContentChange,
+    rows,
+    rowIndex,
+    columnIndex,
+  }) => {
     const editor = useEditor({
       extensions: [StarterKit, Underline, Highlight],
       immediatelyRender: false,
@@ -118,6 +220,7 @@ export function useRichTextEditor() {
         }
         updateEditorState(editor);
       },
+
       editorProps: {
         handleKeyDown(view, event) {
           if (event.key === "Enter") {
@@ -148,6 +251,16 @@ export function useRichTextEditor() {
 
             return true;
           }
+
+          if (blockType === "table") {
+            handleTableKeyDown({
+              event,
+              editor,
+              rows,
+              rowIndex,
+              columnIndex,
+            });
+          }
         },
       },
     });
@@ -171,6 +284,5 @@ export function useRichTextEditor() {
     updateEditorState,
     initEditor,
     updateEditorUI,
-    // handleClickOutside,
   };
 }

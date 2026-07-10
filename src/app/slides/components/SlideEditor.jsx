@@ -37,7 +37,7 @@ const SlideEditor = ({ lessonId }) => {
     pasteBlocks,
   } = useClipboard();
 
-  const slides = slidesHistory?.present || [];
+  let slides = slidesHistory?.present || [];
   const [activeSlideId, setActiveSlideId] = useState(slides[0]?.id);
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
   const saveTimeoutRef = useRef(null);
@@ -153,7 +153,7 @@ const SlideEditor = ({ lessonId }) => {
 
     saveTimeoutRef.current = setTimeout(async () => {
       handleSave();
-    }, 2500);
+    }, 2000);
 
     return () => clearTimeout(saveTimeoutRef);
   }, [slides]);

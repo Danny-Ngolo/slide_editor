@@ -2,6 +2,7 @@ import { generateId } from "../utils/generateId";
 import { useHistory } from "./useHistory";
 import { useEditorContext } from "../components/EditorContext";
 import { arrayMove } from "@dnd-kit/sortable";
+import { useRichTextEditor } from "./useRichTextEditor";
 
 export function useTable() {
   const { setSlides, setSlidesWithoutHistory } = useHistory();
@@ -10,6 +11,7 @@ export function useTable() {
     setTableSelection,
     tableResizeState,
     setTableResizeState,
+    focusEditor,
   } = useEditorContext();
 
   const minColumnWidth = 36;
@@ -558,6 +560,39 @@ export function useTable() {
     }
   };
 
+  const focusAdjacentCell = ({ rows, rowIndex, columnIndex, direction }) => {
+    console.log(`rowIndex: ${rowIndex} columnIndex: ${columnIndex}`);
+
+    console.log("rows", rows);
+
+    let nextRow = rowIndex;
+    let nextColumn = columnIndex;
+
+    switch (direction) {
+      case "left":
+        nextColumn--;
+        break;
+
+      case "right":
+        nextColumn++;
+        break;
+
+      case "up":
+        nextRow--;
+        break;
+
+      case "down":
+        nextRow++;
+        break;
+    }
+
+    const nextCell = rows[nextRow]?.cells[nextColumn];
+
+    if (!nextCell) return;
+
+    focusEditor(nextCell.id);
+  };
+
   return {
     createTableBlock,
     updateCell,
@@ -583,5 +618,7 @@ export function useTable() {
 
     moveRow,
     handleDragEnd,
+
+    focusAdjacentCell,
   };
 }
