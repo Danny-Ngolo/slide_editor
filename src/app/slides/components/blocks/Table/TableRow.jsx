@@ -14,13 +14,13 @@ const TableRow = ({ slideId, block, row, rowIndex }) => {
   const {
     updateCell,
     handleRowHandleClick,
-    tableSelection,
+    // tableSelection,
     startColumnResize,
     startRowResize,
     minColumnWidth,
     minRowHeight,
   } = useTable();
-  const { setSelectedBlock, setSelectedBlocks, setTableMenu } =
+  const { setSelectedBlock, setSelectedBlocks, setTableMenu, tableSelection } =
     useEditorContext();
 
   const { listeners, attributes, setNodeRef, style } = useEditorSortable({

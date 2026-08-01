@@ -112,3 +112,7 @@ th {
 .table-drag-handle:active {
   cursor: grabbing;
 }
+
+.selected-cell {
+  outline: 2px solid #ccc;
+}

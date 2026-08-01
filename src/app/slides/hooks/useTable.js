@@ -2,7 +2,6 @@ import { generateId } from "../utils/generateId";
 import { useHistory } from "./useHistory";
 import { useEditorContext } from "../components/EditorContext";
 import { arrayMove } from "@dnd-kit/sortable";
-import { useRichTextEditor } from "./useRichTextEditor";
 
 export function useTable() {
   const { setSlides, setSlidesWithoutHistory } = useHistory();
@@ -208,8 +207,6 @@ export function useTable() {
           return newRow;
         });
 
-        console.log("newRows", newRows);
-
         return {
           ...block,
           content: {
@@ -322,6 +319,15 @@ export function useTable() {
         row: null,
       });
     }
+  };
+
+  const clearTableSelection = () => {
+    setTableSelection({
+      blockId: null,
+      type: null,
+      row: null,
+      column: null,
+    });
   };
 
   const toggleHeaderColumn = ({ slideId, blockId, columnIndex }) => {
@@ -593,6 +599,15 @@ export function useTable() {
     focusEditor(nextCell.id);
   };
 
+  const selectCell = ({ blockId, rowIndex, columnIndex }) => {
+    setTableSelection({
+      blockId,
+      type: "cell",
+      row: rowIndex,
+      column: columnIndex,
+    });
+  };
+
   return {
     createTableBlock,
     updateCell,
@@ -602,8 +617,7 @@ export function useTable() {
     addColumn,
     duplicateColumn,
     deleteColumn,
-    tableSelection,
-    setTableSelection,
+    clearTableSelection,
     handleColumnHandleClick,
     handleRowHandleClick,
     toggleHeaderRow,
@@ -620,5 +634,6 @@ export function useTable() {
     handleDragEnd,
 
     focusAdjacentCell,
+    selectCell,
   };
 }

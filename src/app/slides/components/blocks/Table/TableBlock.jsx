@@ -12,15 +12,19 @@ import TableBody from "./TableBody";
 
 const TableBlock = ({ slideId, block }) => {
   const {
-    tableSelection,
-    setTableSelection,
+    clearTableSelection,
 
     handleMouseMove,
     handleMouseUp,
     handleDragEnd,
   } = useTable();
-  const { tableMenu, setTableMenu, tableMenuRef, tableResizeState } =
-    useEditorContext();
+  const {
+    tableMenu,
+    setTableMenu,
+    tableMenuRef,
+    tableResizeState,
+    tableSelection,
+  } = useEditorContext();
 
   const tableRef = useRef(null);
 
@@ -31,22 +35,13 @@ const TableBlock = ({ slideId, block }) => {
 
     const closeTableMenu = () => setTableMenu(null);
 
-    const clearSelection = () => {
-      setTableSelection({
-        blockId: null,
-        type: null,
-        row: null,
-        column: null,
-      });
-    };
-
     const handleClickOutside = (e) => {
       const insideMenu = tableMenuRef.current?.contains(e.target);
 
       if (insideMenu) return;
 
       closeTableMenu();
-      clearSelection();
+      clearTableSelection();
     };
 
     document.addEventListener("click", handleClickOutside);

@@ -1,9 +1,11 @@
 "use client";
 
+import "./table.css";
 import { EditorContent } from "@tiptap/react";
 import React, { useEffect } from "react";
 import { useRichTextEditor } from "@/app/slides/hooks/useRichTextEditor";
 import { useEditorContext } from "../../EditorContext";
+import { useTable } from "@/app/slides/hooks/useTable";
 
 const TableCell = ({
   slideId,
@@ -16,7 +18,10 @@ const TableCell = ({
 }) => {
   const { updateEditorState, initEditor, updateEditorUI } = useRichTextEditor();
 
-  const { registerEditor, unregisterEditor, focusEditor } = useEditorContext();
+  const { registerEditor, unregisterEditor, focusEditor, tableSelection } =
+    useEditorContext();
+
+  const { selectCell } = useTable();
 
   const editor = initEditor({
     slideId,
@@ -68,7 +73,31 @@ const TableCell = ({
 
   if (!editor) return null;
 
-  return <EditorContent editor={editor} />;
+  return (
+    //     <div
+    //       onClick={() =>
+    //         selectCell({
+    //           blockId,
+    //           rowIndex,
+    //           columnIndex,
+    //         })
+    //       }
+    //       className={`
+    // table-cell
+
+    // ${
+    //   tableSelection.blockId === blockId &&
+    //   tableSelection.type === "cell" &&
+    //   tableSelection.row === rowIndex &&
+    //   tableSelection.column === columnIndex
+    //     ? "selected-cell"
+    //     : ""
+    // }
+    // `}
+    //     >
+    <EditorContent editor={editor} />
+    // </div>
+  );
 };
 
 export default TableCell;
