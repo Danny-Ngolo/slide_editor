@@ -2,6 +2,7 @@
   width: fit-content;
   margin: auto;
   border-collapse: collapse;
+  border-spacing: 0;
 }
 
 .row-handle-cell,
@@ -114,5 +115,18 @@ th {
 }
 
 .selected-cell {
-  outline: 2px solid #ccc;
+  background: #dbeafe99;
+  transition: background 0.2s ease;
+}
+
+.table-cell-inner {
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+/* Enable pointer-events on ProseMirror for typing/editing,
+   but disable them while actively dragging to select multiple cells */
+table[data-selecting="true"] .ProseMirror {
+  pointer-events: none;
 }

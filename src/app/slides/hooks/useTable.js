@@ -1,4 +1,5 @@
 import { generateId } from "../utils/generateId";
+
 import { useHistory } from "./useHistory";
 import { useEditorContext } from "../components/EditorContext";
 import { arrayMove } from "@dnd-kit/sortable";
@@ -11,7 +12,122 @@ export function useTable() {
     tableResizeState,
     setTableResizeState,
     focusEditor,
+    selectedCells,
+    setSelectedCells,
+    isSelecting,
+    setIsSelecting,
+    selectionAnchor,
+    setSelectionAnchor,
+    setTableMenu,
   } = useEditorContext();
+
+  // Drag selection — state is now shared via EditorContext (not local useState)
+  // so every component calling useTable() reads the same values.
+
+  // Utility to compute rectangular range set
+  const getRangeSet = (anchor, current) => {
+    const startRow = Math.min(anchor.row, current.row);
+    const endRow = Math.max(anchor.row, current.row);
+    const startCol = Math.min(anchor.col, current.col);
+    const endCol = Math.max(anchor.col, current.col);
+    const set = new Set();
+    for (let r = startRow; r <= endRow; r++) {
+      for (let c = startCol; c <= endCol; c++) {
+        set.add(`${r},${c}`);
+      }
+    }
+    return set;
+  };
+
+  // Mouse handlers for drag selection
+  const handleCellMouseDown = (row, col, cellId, shiftKey = false) => {
+    let anchor = selectionAnchor;
+    if (shiftKey && anchor) {
+      const newSet = getRangeSet(anchor, { row, col });
+      setSelectedCells(newSet);
+    } else {
+      anchor = { row, col };
+      setSelectionAnchor(anchor);
+      setSelectedCells(new Set([`${row},${col}`]));
+    }
+    setIsSelecting(true);
+    // Re-enable TipTap focus — safe now because isSelecting is shared context,
+    // so onPointerEnter on other cells will correctly detect the drag state.
+    if (cellId) focusEditor(cellId);
+  };
+
+  const handleCellMouseEnter = (row, col) => {
+    console.log('is selecting', isSelecting)
+    if (isSelecting && selectionAnchor) {
+      const newSet = getRangeSet(selectionAnchor, { row, col });
+      setSelectedCells(newSet);
+    }
+  };
+
+  const handleCellMouseUp = () => {
+    setIsSelecting(false);
+  };
+
+  // Right-click handler — opens TableActionMenu with type "cell" so
+  // the Merge / Split buttons become accessible.
+  const handleCellContextMenu = (e, blockId, rowIndex, columnIndex) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // If right-clicked cell is not already part of the selection, replace it
+    if (!selectedCells.has(`${rowIndex},${columnIndex}`)) {
+      setSelectedCells(new Set([`${rowIndex},${columnIndex}`]));
+    }
+    setTableMenu({
+      blockId,
+      type: "cell",
+      rowIndex,
+      columnIndex,
+      // Use clientX/Y as position anchor
+      anchor: { top: e.clientY, right: e.clientX - 6, left: e.clientX },
+    });
+  };
+
+  // Keyboard navigation and selection
+  const handleCellKeyDown = (e, row, col, block) => {
+    console.log('cell keying down')
+
+    const rowsData = block.content.rows;
+    if (!e.shiftKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      const dir = e.key.replace('Arrow', '').toLowerCase();
+      focusAdjacentCell({ rows: rowsData, rowIndex: row, columnIndex: col, direction: dir });
+      e.preventDefault();
+      return;
+    }
+    if (e.ctrlKey && e.key.toLowerCase() === 'a') {
+      const all = new Set();
+      rowsData.forEach((r, ri) => {
+        r.cells.forEach((c, ci) => {
+          all.add(`${ri},${ci}`);
+        });
+      });
+      setSelectedCells(all);
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    if (e.shiftKey && e.key.startsWith('Arrow')) {
+      const dir = e.key.replace('Arrow', '').toLowerCase();
+      const anchor = selectionAnchor || { row, col };
+      setSelectionAnchor(anchor);
+      let targetRow = row;
+      let targetCol = col;
+      if (dir === 'right') targetCol = Math.min(col + 1, rowsData[0].cells.length - 1);
+      if (dir === 'left') targetCol = Math.max(col - 1, 0);
+      if (dir === 'down') targetRow = Math.min(row + 1, rowsData.length - 1);
+      if (dir === 'up') targetRow = Math.max(row - 1, 0);
+      const newSet = getRangeSet(anchor, { row: targetRow, col: targetCol });
+      setSelectedCells(newSet);
+      const newCellId = rowsData[targetRow].cells[targetCol].id;
+      focusEditor(newCellId);
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
 
   const minColumnWidth = 36;
   const minRowHeight = 30;
@@ -52,7 +168,7 @@ export function useTable() {
     html: "<p></p>",
     colspan: 1,
     rowspan: 1,
-
+    hidden: false,
     width: null,
     height: null,
 
@@ -376,7 +492,7 @@ export function useTable() {
     });
   };
 
-  const handleMouseMove = (e, slideId, block) => {
+  const handleTableMouseMove = (e, slideId, block) => {
     if (tableResizeState.type === "column") {
       const delta = e.clientX - tableResizeState.startX;
 
@@ -438,7 +554,7 @@ export function useTable() {
     }
   };
 
-  const handleMouseUp = () => {
+  const handleTableMouseUp = () => {
     setTableResizeState(null);
   };
 
@@ -567,10 +683,6 @@ export function useTable() {
   };
 
   const focusAdjacentCell = ({ rows, rowIndex, columnIndex, direction }) => {
-    console.log(`rowIndex: ${rowIndex} columnIndex: ${columnIndex}`);
-
-    console.log("rows", rows);
-
     let nextRow = rowIndex;
     let nextColumn = columnIndex;
 
@@ -593,27 +705,88 @@ export function useTable() {
     }
 
     const nextCell = rows[nextRow]?.cells[nextColumn];
-
     if (!nextCell) return;
 
     focusEditor(nextCell.id);
   };
 
-  const selectCell = ({ blockId, rowIndex, columnIndex }) => {
-    setTableSelection({
-      blockId,
-      type: "cell",
-      row: rowIndex,
-      column: columnIndex,
+  const selectCell = (rowIndex, columnIndex) => {
+    setSelectedCells(prev => {
+      const newSet = new Set(prev);
+      newSet.add(`${rowIndex},${columnIndex}`);
+      return newSet;
+    });
+  };
+
+  const clearCellSelection = () => {
+    setSelectedCells(new Set());
+    setSelectionAnchor(null);
+  };
+
+  const mergeSelectedCells = (slideId, blockId) => {
+    const cellsArray = Array.from(selectedCells).map(str => {
+      const [r, c] = str.split(',').map(Number);
+      return { rowIndex: r, columnIndex: c };
+    });
+    if (cellsArray.length < 2) return;
+    const rows = cellsArray.map(c => c.rowIndex);
+    const cols = cellsArray.map(c => c.columnIndex);
+    const minRow = Math.min(...rows);
+    const maxRow = Math.max(...rows);
+    const minCol = Math.min(...cols);
+    const maxCol = Math.max(...cols);
+    const rowSpan = maxRow - minRow + 1;
+    const colSpan = maxCol - minCol + 1;
+    updateTable(slideId, blockId, block => {
+      const newRows = block.content.rows.map(row => ({ ...row, cells: [...row.cells] }));
+      // update top‑left cell
+      const topCell = newRows[minRow].cells[minCol];
+      newRows[minRow].cells[minCol] = { ...topCell, colspan: colSpan, rowspan: rowSpan, hidden: false };
+      // hide other cells in the span
+      for (let r = minRow; r <= maxRow; r++) {
+        for (let c = minCol; c <= maxCol; c++) {
+          if (r === minRow && c === minCol) continue;
+          const cell = newRows[r].cells[c];
+          newRows[r].cells[c] = { ...cell, hidden: true };
+        }
+      }
+
+      console.log('newRows', newRows)
+      return { ...block, content: { ...block.content, rows: newRows } };
+    });
+    // clear selection after merge
+    clearCellSelection();
+  };
+
+  const splitCell = (slideId, blockId, rowIndex, columnIndex) => {
+    updateTable(slideId, blockId, block => {
+
+      const target = block.content.rows[rowIndex].cells[columnIndex];
+      const { colspan, rowspan } = target;
+      if (colspan === 1 && rowspan === 1) return block;
+      const newRows = block.content.rows.map(row => ({ ...row, cells: [...row.cells] }));
+      // reset the merged cell
+      newRows[rowIndex].cells[columnIndex] = { ...target, colspan: 1, rowspan: 1, hidden: false };
+      // unhide all cells that were hidden inside the span
+      for (let r = rowIndex; r < rowIndex + rowspan; r++) {
+        for (let c = columnIndex; c < columnIndex + colspan; c++) {
+          if (r === rowIndex && c === columnIndex) continue;
+          const cell = newRows[r].cells[c];
+          newRows[r].cells[c] = { ...cell, hidden: false, colspan: 1, rowspan: 1 };
+        }
+      }
+      return { ...block, content: { ...block.content, rows: newRows } };
     });
   };
 
   return {
     createTableBlock,
+    createEmptyCell,
+    updateTable,
     updateCell,
     addRow,
-    duplicateRow,
     deleteRow,
+    duplicateRow,
     addColumn,
     duplicateColumn,
     deleteColumn,
@@ -625,8 +798,8 @@ export function useTable() {
 
     startColumnResize,
     startRowResize,
-    handleMouseMove,
-    handleMouseUp,
+    handleTableMouseMove,
+    handleTableMouseUp,
     minColumnWidth,
     minRowHeight,
 
@@ -634,6 +807,21 @@ export function useTable() {
     handleDragEnd,
 
     focusAdjacentCell,
+    // Selection utilities 
     selectCell,
+    clearCellSelection,
+    mergeSelectedCells,
+    splitCell,
+    // expose raw selected set for UI 
+    selectedCells,
+    setSelectedCells,
+    // Interaction handlers
+    handleCellMouseDown,
+    handleCellMouseEnter,
+    handleCellMouseUp,
+    handleCellKeyDown,
+    handleCellContextMenu,
+    // Expose for TableBlock to drive data-selecting attribute
+    isSelecting,
   };
 }

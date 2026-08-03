@@ -13,10 +13,14 @@ import TableBody from "./TableBody";
 const TableBlock = ({ slideId, block }) => {
   const {
     clearTableSelection,
-
-    handleMouseMove,
-    handleMouseUp,
+    handleTableMouseMove,
+    handleTableMouseUp,
+    handleCellMouseUp,
     handleDragEnd,
+    isSelecting,
+    clearCellSelection,
+    mergeSelectedCells,
+    splitCell,
   } = useTable();
   const {
     tableMenu,
@@ -24,14 +28,37 @@ const TableBlock = ({ slideId, block }) => {
     tableMenuRef,
     tableResizeState,
     tableSelection,
+    selectedCells,
   } = useEditorContext();
 
   const tableRef = useRef(null);
 
   const rows = block.content?.rows || [];
 
+  // Keyboard shortcuts for merge (Ctrl+M) and split (Ctrl+S) active on selected cells
   useEffect(() => {
-    if (tableSelection?.blockId !== block.id) return;
+    const handleGlobalKeyDown = (e) => {
+      if (!selectedCells || selectedCells.size === 0) return;
+
+      if (e.ctrlKey && e.key.toLowerCase() === "m") {
+        e.preventDefault();
+        mergeSelectedCells(slideId, block.id);
+      }
+      if (e.ctrlKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        const first = Array.from(selectedCells)[0];
+        const [r, c] = first.split(',').map(Number);
+        splitCell(slideId, block.id, r, c);
+      }
+    };
+
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [selectedCells, slideId, block.id, mergeSelectedCells, splitCell]);
+
+  useEffect(() => {
+    const isMenuForThisBlock = tableMenu?.blockId === block.id || tableSelection?.blockId === block.id;
+    if (!isMenuForThisBlock) return;
 
     const closeTableMenu = () => setTableMenu(null);
 
@@ -42,20 +69,21 @@ const TableBlock = ({ slideId, block }) => {
 
       closeTableMenu();
       clearTableSelection();
+      clearCellSelection();
     };
 
     document.addEventListener("click", handleClickOutside);
 
     return () => document.removeEventListener("click", handleClickOutside);
-  }, [tableMenu, tableSelection]);
+  }, [tableMenu, tableSelection, block.id]);
 
   useEffect(() => {
     if (!tableResizeState) return;
     const mouseMove = (e) => {
-      handleMouseMove(e, slideId, block);
+      handleTableMouseMove(e, slideId, block);
     };
     const mouseUp = () => {
-      handleMouseUp();
+      handleTableMouseUp();
     };
     document.addEventListener("mousemove", mouseMove);
     document.addEventListener("mouseup", mouseUp);
@@ -64,6 +92,15 @@ const TableBlock = ({ slideId, block }) => {
       document.removeEventListener("mouseup", mouseUp);
     };
   }, [tableResizeState, slideId, block]);
+
+  // Global mouseup — ends drag selection even if the mouse is released outside any cell.
+  // Always-on (no dependency on isSelecting) so we never miss a mouseup.
+  useEffect(() => {
+    document.addEventListener('mouseup', handleCellMouseUp);
+    return () => document.removeEventListener('mouseup', handleCellMouseUp);
+  }, []);
+
+
 
   return (
     <DndContext
@@ -76,7 +113,7 @@ const TableBlock = ({ slideId, block }) => {
         })
       }
     >
-      <table ref={tableRef} className="table-block">
+      <table ref={tableRef} className="table-block" data-selecting={isSelecting}>
         <TableHeader
           slideId={slideId}
           block={block}

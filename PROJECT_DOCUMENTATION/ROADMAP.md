@@ -1,67 +1,519 @@
 # Product & Technical Roadmap: Slide Editor
 
-## 1. Overview & Current Development Phase
+## 1. Vision
 
-The project has established a stable foundational architecture for slide deck management, block reordering, and rich text editing. The codebase is currently in **Phase 2 (Table V1+ Enhancements)** with active focus on cell selection, multi-cell interactions, and advanced tabular operations as documented in `notes.md`.
+The Slide Editor is evolving from a simple presentation authoring tool into the core rich-content editing engine of VipiClass.
 
-## 2. Detailed Milestone Goals
+The roadmap follows a progressive approach:
 
-### Phase 1: Core Foundation (Completed)
-- [x] Slide deck initialization, addition, deletion, and sidebar navigation (`useSlides`, `SlidesSidebar`).
-- [x] Block primitives (`text`, `table`, `image`, `youtube`, `callout`, `divider`, `quiz`).
-- [x] Vertical block reordering via `@dnd-kit/sortable`.
-- [x] Global Undo/Redo history stack with 50-snapshot cap (`useHistory`).
-- [x] Debounced auto-save to MongoDB via REST API (`/api/lessons/[lessonId]`).
-- [x] Slash command menu (`/`) for inline block creation and formatting.
-- [x] Basic Table V1 (Row/Column add, delete, duplicate, drag reorder, handle click context menus, live resize, keyboard cell navigation).
+1. Build a reliable editing foundation.
+2. Complete advanced content manipulation.
+3. Expand educational content capabilities.
+4. Introduce collaboration and AI-assisted creation.
+5. Transform the editor into a complete learning-content platform.
 
----
-
-### Phase 2: Table V1+ Enhancements (Active Work in Progress)
-
-1. **Cell Selection Foundation** (In Progress):
-   - [x] Expose `selectCell` in `useTable.js`.
-   - [ ] Connect `onClick` in `TableCell.jsx` to update `tableSelection` (`type: "cell"`).
-   - [ ] Highlight active cell with non-layout-shifting CSS outline.
-
-2. **Keyboard Delete Shortcuts**:
-   - [ ] Hook `Delete` and `Backspace` keys in global listener to erase content or delete selected row/column/cell.
-
-3. **Internal Table Clipboard**:
-   - [ ] Implement in-memory table clipboard object (`clipboard = { type: "row"|"column"|"cell", data: ... }`).
-   - [ ] Bind `Ctrl+C` and `Ctrl+V` when table selection is active to copy/duplicate table structures.
-
-4. **Multi-Cell Range Selection**:
-   - [ ] Support `Shift+Click` cell selection bounding rectangle (`start: {row, column}, end: {row, column}`).
-   - [ ] Render rectangular range highlight over selected cell bounding box.
-
-5. **Merge & Split Cells**:
-   - [ ] Validate rectangular selection area.
-   - [ ] Apply `rowspan` and `colspan` attributes to anchor cell; mark covered cells as hidden.
-   - [ ] Implement `Split Cell` action to reset spans to 1 and unhide covered cells.
+The objective is not only to add features, but to create a reusable editing infrastructure that can support lessons, notes, exercises, quizzes, AI-generated content, and future educational experiences.
 
 ---
 
-### Phase 3: Platform Integration & Asset Management (Upcoming)
-*Reference: `neverforgetnotes.md` pending checklist*
+# Phase 1 — Core Editor Foundation ✅ COMPLETED
 
-1. **Dynamic Lesson Management & Routing**:
-   - [ ] Replace hardcoded lesson ID in `src/app/slides/page.jsx` with dynamic route parameter `/slides/[lessonId]`.
-   - [ ] Build lesson dashboard overview page (`/lessons`) allowing users to create, search, and open lessons.
-   - [ ] Implement environment variable configuration cleanup (`MONGODB_URI` environment validation).
+## Slide System
 
-2. **Cloud Storage Asset Pipeline**:
-   - [ ] Transition `ImageBlock.jsx` from raw URL string input / local filesystem paths to a cloud storage engine (Cloudinary, AWS S3, or Vercel Blob).
-   - [ ] Implement direct drag-and-drop image file uploading within the canvas.
+* [x] Lesson loading and initialization
+* [x] Slide creation
+* [x] Slide deletion
+* [x] Slide duplication
+* [x] Slide navigation sidebar
+* [x] Slide ordering
 
 ---
 
-### Phase 4: Mobile Optimization & Type Safety (Future)
+## Block Architecture
 
-1. **Mobile & Touch UX**:
-   - [ ] Implement mobile-friendly selection controls, floating toolbars, and touch-optimized drag handles.
-   - [ ] Provide virtual control buttons for key shortcuts (`Ctrl`, `Shift`, `Delete`) on touch devices.
+* [x] Block-based content model
+* [x] Central BlockRenderer dispatcher
+* [x] Block insertion system
+* [x] Block deletion
+* [x] Block duplication
+* [x] Block selection
+* [x] Multi-block selection
+* [x] Block drag-and-drop ordering
 
-<!-- 2. **TypeScript Migration**:
-   - [ ] Populate `src/app/slides/types/` with TypeScript interfaces for `Lesson`, `Slide`, `Block`, `TableSelection`, and `EditorState`.
-   - [ ] Migrate `.js` and `.jsx` files to `.ts` and `.tsx` for strict build-time safety. -->
+Implemented block types:
+
+* [x] Text block
+* [x] Image block
+* [x] YouTube block
+* [x] Callout block
+
+  * Definition
+  * Tip
+  * Warning
+  * Example
+* [x] Divider block
+* [x] Table block foundation
+* [x] Quiz block placeholder
+
+---
+
+# Phase 2 — Rich Text Editing Infrastructure ✅ COMPLETED
+
+## Tiptap Integration
+
+* [x] Tiptap editor initialization
+* [x] Shared rich-text editor hook
+* [x] Editor registration system
+* [x] Active editor tracking
+* [x] Formatting synchronization
+
+Supported formatting:
+
+* [x] Bold
+* [x] Italic
+* [x] Underline
+* [x] Highlight
+* [x] Lists
+* [x] Basic text formatting
+
+---
+
+## Unified Toolbar
+
+* [x] Global editor toolbar
+* [x] Toolbar connected to active editor
+* [x] Shared formatting behavior across rich-text blocks
+
+Future improvements:
+
+* [ ] Floating selection toolbar
+* [ ] Context-aware toolbar actions
+* [ ] Block-specific formatting controls
+
+---
+
+## Slash Command System
+
+* [x] `/` command detection
+* [x] Block insertion from slash menu
+* [x] Dynamic block creation
+
+Future improvements:
+
+* [ ] More slash commands
+* [ ] AI commands
+* [ ] Content transformation commands
+
+---
+
+# Phase 3 — Editor Infrastructure ✅ COMPLETED
+
+## History System
+
+* [x] Undo
+* [x] Redo
+* [x] History stack
+* [x] History limit management
+* [x] Separate updates with and without history recording
+
+Future improvements:
+
+* [ ] Granular history per subsystem
+* [ ] Rich-text native undo integration
+* [ ] Version snapshots
+
+---
+
+## Persistence
+
+* [x] MongoDB integration
+* [x] Lesson API routes
+* [x] Client service layer
+* [x] Debounced autosave
+* [x] Save status indicator
+
+Future improvements:
+
+* [ ] Partial document updates
+* [ ] Better offline support
+* [ ] Conflict resolution
+
+---
+
+# Phase 4 — Table Editor V1+ 🚧 CURRENT DEVELOPMENT
+
+The table system is treated as an independent advanced editor inside the editor.
+
+---
+
+## Table Foundation ✅
+
+* [x] Table block
+* [x] Dynamic rows
+* [x] Dynamic columns
+* [x] Add row
+* [x] Delete row
+* [x] Duplicate row
+* [x] Add column
+* [x] Delete column
+* [x] Duplicate column
+* [x] Row reordering
+* [x] Column reordering
+* [x] Row resizing
+* [x] Column resizing
+* [x] Table contextual menu
+
+---
+
+## Cell Editing ✅
+
+* [x] Individual Tiptap editor per cell
+* [x] Cell editor registry
+* [x] Keyboard navigation
+* [x] Arrow navigation
+* [x] Tab navigation
+* [x] Enter navigation
+
+---
+
+## Table V1 Completion
+
+* [ ] Cell selection
+* [ ] Active cell highlighting
+* [ ] Row selection improvements
+* [ ] Column selection improvements
+* [ ] Table keyboard shortcuts
+* [ ] Delete behavior depending on selection type
+
+---
+
+## Table Advanced Features
+
+* [ ] Internal table clipboard
+
+Supported operations:
+
+* copy cell
+* copy row
+* copy column
+* paste cell
+* paste row
+* paste column
+
+---
+
+* [ ] Multi-cell selection
+
+Features:
+
+* rectangular selection
+* Shift + click selection
+* selection visualization
+* selection actions
+
+---
+
+* [ ] Merge cells
+
+Requirements:
+
+* rectangular selection validation
+* rowspan support
+* colspan support
+* hidden covered cells
+
+---
+
+* [ ] Split cells
+
+Requirements:
+
+* restore original matrix
+* remove spans
+* recreate missing cells
+
+---
+
+# Phase 5 — Block Transformation System
+
+## "Turn Into" Feature
+
+Goal:
+
+Allow users to transform blocks without losing content.
+
+Examples:
+
+Text block:
+
+```
+Text
+ ↓
+Heading
+ ↓
+Callout
+```
+
+---
+
+Implementation:
+
+* [ ] Central BLOCK_TYPES registry
+* [ ] replaceBlock utility
+* [ ] transformBlock utility
+* [ ] Preserve HTML/content during transformation
+* [ ] Transformation menu
+
+---
+
+# Phase 6 — Advanced Block System
+
+## Educational Content Blocks
+
+New block types:
+
+---
+
+## Quiz Block
+
+* [ ] Multiple choice questions
+* [ ] True/false questions
+* [ ] Answer validation
+* [ ] Student results tracking
+
+---
+
+## Exercise Block
+
+* [ ] Practical exercises
+* [ ] Student submissions
+* [ ] Teacher feedback
+
+---
+
+## Code Block
+
+* [ ] Syntax highlighting
+* [ ] Code formatting
+* [ ] Programming lessons support
+
+---
+
+## Flashcard Block
+
+* [ ] Question/answer cards
+* [ ] Study mode
+* [ ] Review tracking
+
+---
+
+## Equation / Math Block
+
+* [ ] Mathematical expressions
+* [ ] LaTeX support
+* [ ] Scientific content support
+
+---
+
+# Phase 7 — Editor Experience Improvements
+
+## Navigation
+
+* [ ] Move blocks between slides
+* [ ] Drag blocks across slides
+* [ ] Slide duplication improvements
+* [ ] Better keyboard navigation
+
+---
+
+## Content Management
+
+* [ ] Nested lists
+* [ ] Block comments
+* [ ] Mentions
+* [ ] Block references
+* [ ] Reusable blocks
+
+---
+
+## Clipboard System
+
+Current:
+
+* [x] Basic block clipboard
+
+Future:
+
+* [ ] Cross-slide copy/paste
+* [ ] Table clipboard
+* [ ] Multi-block clipboard
+* [ ] External paste support
+
+---
+
+# Phase 8 — Platform Integration
+
+## Lesson Management
+
+* [ ] Dynamic lesson routing
+
+Current:
+
+```
+/slides
+```
+
+Future:
+
+```
+/slides/[lessonId]
+```
+
+---
+
+* [ ] Lesson dashboard
+* [ ] Create lessons
+* [ ] Search lessons
+* [ ] Organize lessons
+
+---
+
+## Asset Management
+
+* [ ] Cloud image storage
+* [ ] Image uploading
+* [ ] Drag-and-drop uploads
+* [ ] Media library
+
+Possible storage:
+
+* Cloudinary
+* Vercel Blob
+* S3
+
+---
+
+# Phase 9 — AI Integration (Tafsiri AI)
+
+The editor should become AI-ready.
+
+Future capabilities:
+
+## AI Content Creation
+
+* [ ] Generate lesson sections
+* [ ] Generate explanations
+* [ ] Generate exercises
+* [ ] Generate quizzes
+* [ ] Improve teacher content
+
+---
+
+## AI Editing Assistance
+
+* [ ] Rewrite selected text
+* [ ] Summarize content
+* [ ] Change difficulty level
+* [ ] Translate content
+* [ ] Generate examples
+
+---
+
+## AI Block Generation
+
+Examples:
+
+Teacher:
+
+"Create a lesson about photosynthesis"
+
+AI:
+
+Creates:
+
+* slides
+* explanations
+* diagrams
+* exercises
+* quizzes
+
+---
+
+# Phase 10 — Collaboration & Advanced Platform Features
+
+Future long-term evolution:
+
+## Collaboration
+
+* [ ] Real-time editing
+* [ ] Multiple teachers editing
+* [ ] Student collaboration
+* [ ] Presence indicators
+
+---
+
+## Document Intelligence
+
+* [ ] Version history
+* [ ] Comments
+* [ ] Review workflow
+* [ ] Content analytics
+
+---
+
+## Mobile Experience
+
+* [ ] Touch-friendly editing
+* [ ] Mobile toolbar
+* [ ] Touch selection
+* [ ] Mobile drag-and-drop
+
+---
+
+# Development Principles
+
+Throughout every phase:
+
+1. Prefer extending existing infrastructure over creating parallel systems.
+
+2. Maintain one source of truth for editor state.
+
+3. Avoid premature abstraction.
+
+4. Implement features progressively:
+
+```
+Implementation
+      ↓
+Debugging
+      ↓
+Refactoring
+      ↓
+Optimization
+```
+
+5. Keep the editor independent from VipiClass-specific business logic whenever possible.
+
+---
+
+# Current Priority Order
+
+## Immediate
+
+1. Finish Table V1+
+2. Complete selection systems
+3. Complete merge/split preparation
+4. Stabilize editor architecture
+
+## Short Term
+
+1. Block transformation
+2. More educational blocks
+3. Asset management
+4. Lesson management
+
+## Long Term
+
+1. AI-assisted authoring
+2. Collaboration
+3. Complete VipiClass learning platform integration

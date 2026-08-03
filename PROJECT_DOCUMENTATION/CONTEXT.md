@@ -1,60 +1,230 @@
+> **This repository is the Slide Editor repository.**
+
+Its job is **not** to explain the entire VipiClass ecosystem.
+
+Its job is to explain the editor that will later be integrated into VipiClass.
+
+That's exactly how large software projects are documented. Every subsystem has its own context document.
+
+So I'd keep the document editor-focused, but I'd make one important addition:
+
+> Explain **where this editor fits** in the future.
+
+Just a few paragraphs are enough.
+
+---
+
+# What I would change
+
+Instead of saying:
+
+> Slide Editor is a web-based presentation editor...
+
+I'd say something like:
+
+> The Slide Editor is the rich content engine of VipiClass. Although it currently focuses on lesson and slide authoring, its architecture is intentionally designed to become the unified editing engine used across the platform.
+
+That sentence changes everything.
+
+---
+
+## Here's how I would rewrite `CONTEXT.md`
+
+---
+
 # Project Context: Slide Editor
 
-## 1. Overview & Vision
+## 1. Purpose
 
-**Slide Editor** is a web-based, block-structured presentation and lesson authoring application built with Next.js 16, React 19, Tiptap, and Mongoose (MongoDB). It aims to provide educators and content creators with an intuitive canvas to create, edit, reorder, and persist interactive lesson slides consisting of heterogeneous block types (rich text, tables, callouts, images, videos, dividers, and quizzes).
+The **Slide Editor** is the rich content editing engine being developed for **VipiClass**.
 
----
+Although the current implementation focuses on creating educational lessons composed of slides and blocks, the editor is intentionally designed as a reusable subsystem rather than a feature dedicated exclusively to presentations.
 
-## 2. Business Context & Primary Use Cases
+Its long-term objective is to become the standard editing engine for every rich content experience inside VipiClass.
 
-* **Educational Content Creation**: Teachers and instructors build structured lessons made up of individual sequential slides.
-* **Interactive Media & Block Editing**: Slide content is broken down into discrete blocks that can be reformatted, reordered via drag-and-drop, transformed, or duplicated.
-* **Rich Data Presentation**: Tables serve as a core data display and manipulation element within slides, supporting advanced features like cell selection, resizing, drag-and-drop row/column reordering, and keyboard navigation.
+Examples include:
 
----
+* lessons
+* lecture notes
+* assignments
+* quizzes
+* documentation
+* AI-generated educational content
+* interactive learning materials
+* future collaborative documents
 
-## 3. Core Domain Entities & Concepts
-
-| Entity | Description | Storage Model |
-| :--- | :--- | :--- |
-| **Lesson** | Top-level container representing a complete presentation deck with metadata (`title`, timestamps). | MongoDB document in `SlideLesson` collection. |
-| **Slide** | A single card/view within a lesson containing an ordered list of blocks. | Embedded array within `LessonSchema.slides`. |
-| **Block** | Primitive content unit (`text`, `table`, `image`, `youtube`, `callout`, `divider`, `quiz`). | Embedded array within `SlideSchema.blocks`. |
-| **Cell** | Content container within a Table Block, hosting an isolated rich text editor. | Nested object inside `TableBlock.content.rows[].cells[]`. |
+For that reason, architectural decisions prioritize extensibility, maintainability, and consistency over short-term implementation speed.
 
 ---
 
-## 4. Current Operational Workflows
+## 2. Current Scope
 
-1. **Lesson Loading & Initialization**:
-   * App mounts at `/slides` (`src/app/slides/page.jsx`).
-   * Passes `lessonId` to `SlideEditor` which fetches data via `lessonService.getLesson(lessonId)`.
-   * Populates `EditorContext`'s `slidesHistory.present` with slide data.
+At the current stage of development, the project focuses exclusively on building a robust block-based slide editor.
 
-2. **Slide & Block Editing Canvas**:
-   * Users select slides from `SlidesSidebar`.
-   * Active slide blocks render in `SlideCanvas` via `BlockRenderer`.
-   * Users can insert new blocks via `InsertMenuBetween` or floating `InsertMenu`, or via `/` slash menu within Tiptap text areas.
-   * Blocks can be reordered vertically using `@dnd-kit` handle dragging.
+The primary objective is **not** to complete every editor feature as quickly as possible.
 
-3. **Table Block Interactions**:
-   * Table blocks support adding/deleting/duplicating rows and columns.
-   * Mouse handlers support live column width and row height resizing.
-   * Drag handles allow reordering rows or columns using `@dnd-kit`.
-   * Keyboard shortcuts (Arrow keys, Tab, Enter, Shift+Tab) navigate focus between adjacent cell Tiptap editors.
+Instead, the goal is to establish a solid editing foundation that future platform features can safely reuse without architectural redesign.
 
-4. **State Persistence & History**:
-   * Local mutations update `slidesHistory.present` state via `useHistory`.
-   * Every structural mutation records a snapshot into `slidesHistory.past` (up to 50 history steps).
-   * Interactive inputs (typing, resizing) update `present` state without adding history steps (`setSlidesWithoutHistory`).
-   * A 2-second debounce timer triggers `handleSave()`, sending the full `slides` payload to POST `/api/lessons/[lessonId]`.
+Current development priorities include:
+
+* block rendering
+* rich text editing
+* drag-and-drop
+* history management
+* table editing
+* keyboard navigation
+* selection systems
+* reusable editor infrastructure
 
 ---
 
-## 5. Current Project Status & Known Pain Points
+## 3. Core Editing Philosophy
 
-* **Hardcoded Lesson Entry**: `src/app/slides/page.jsx` uses a hardcoded lesson ID (`lessons[0]._id`), lacking dynamic route param resolution (e.g. `/slides/[lessonId]`) or a lesson selection dashboard.
-* **Uncommitted Table WIP**: Active working changes exist in table components (`TableBlock.jsx`, `TableCell.jsx`, `useTable.js`, `table.css`) progressing toward cell-level selection and manipulation.
-* **Local Image Upload Constraints**: Image blocks rely on raw URL/local file paths without integrated cloud storage (S3/Cloudinary/Vercel Blob).
-* **Monolithic Editor Context**: `EditorContext.jsx` holds shared state for history, active editors, block selections, clipboard, slash menu, table menus, and cell editor refs in a single React context provider.
+The editor follows several architectural principles that guide every implementation decision.
+
+### Block-Based Editing
+
+Content is modeled as independent blocks rather than one large rich-text document.
+
+Each block owns its own rendering logic while sharing common editor infrastructure.
+
+This approach allows heterogeneous content such as:
+
+* text
+* callouts
+* tables
+* images
+* videos
+* quizzes
+
+to coexist naturally inside the same slide.
+
+---
+
+### Shared Editing Infrastructure
+
+Whenever multiple block types require similar behavior, the functionality is centralized instead of duplicated.
+
+Examples include:
+
+* shared formatting toolbar
+* unified rich text initialization
+* history management
+* drag-and-drop architecture
+* block insertion workflow
+
+The objective is to make new block types inherit existing capabilities instead of reimplementing them.
+
+---
+
+### Progressive Development
+
+Features generally follow the same implementation lifecycle:
+
+```text
+Make it work
+↓
+
+Debug
+
+↓
+
+Refactor
+
+↓
+
+Modularize
+```
+
+Premature abstraction is intentionally avoided until implementation details become well understood.
+
+---
+
+## 4. Core Domain Model
+
+The editor manipulates four primary entities.
+
+| Entity | Responsibility                          |
+| ------ | --------------------------------------- |
+| Lesson | Collection of slides                    |
+| Slide  | Ordered collection of blocks            |
+| Block  | Individual editable content unit        |
+| Cell   | Rich-text container inside table blocks |
+
+Blocks are embedded directly inside slides.
+
+Table cells are embedded inside table blocks.
+
+This hierarchy mirrors the editing experience and keeps rendering straightforward.
+
+---
+
+## 5. Current Functional Capabilities
+
+Implemented features currently include:
+
+### Slide Management
+
+* slide creation
+* deletion
+* duplication
+* reordering
+
+### Block System
+
+* multiple block types
+* block insertion
+* block transformation
+* drag-and-drop
+* multi-block selection
+
+### Rich Text
+
+* Tiptap integration
+* shared toolbar
+* slash menu
+* reusable editor initialization
+
+### Table
+
+* rich text cells
+* row operations
+* column operations
+* resizing
+* row reordering
+* column reordering
+* keyboard navigation
+
+### Editing Infrastructure
+
+* undo / redo
+* autosave
+* clipboard
+* history
+* active editor synchronization
+
+---
+
+## 6. Current Development Status
+
+The editor has reached a stable architectural foundation.
+
+Most ongoing work focuses on completing the Table V1 feature set before expanding the editor with additional block types and more advanced editing capabilities.
+
+Current active work includes:
+
+* cell selection
+* multi-cell selection
+* merge and split cells
+* internal clipboard improvements
+* keyboard interaction refinement
+
+---
+
+## 7. Relationship to VipiClass
+
+Although this repository develops the editor independently, the editor is intended to become shared infrastructure for the VipiClass platform.
+
+The editor should therefore be viewed as an independent subsystem whose architecture must remain reusable across multiple future products rather than tightly coupled to lesson editing alone.
+
+---

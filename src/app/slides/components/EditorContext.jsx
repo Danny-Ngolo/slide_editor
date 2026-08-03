@@ -48,6 +48,12 @@ const EditorProvider = ({ children }) => {
     row: null,
     column: null,
   });
+  // Set of selected cell IDs for multi‑cell operations
+  const [selectedCells, setSelectedCells] = useState(new Set());
+
+  // Shared drag-selection state (must live in context so all useTable() instances share it)
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionAnchor, setSelectionAnchor] = useState(null);
 
   const [tableMenu, setTableMenu] = useState(null);
 
@@ -70,6 +76,11 @@ const EditorProvider = ({ children }) => {
   const focusEditor = (cellId) => {
     cellEditors.current[cellId]?.commands?.focus();
   };
+
+  // TRIAL **********
+  useEffect(() => {
+    console.log('selectedCells', selectedCells)
+  }, [selectedCells])
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -125,6 +136,13 @@ const EditorProvider = ({ children }) => {
 
         tableSelection,
         setTableSelection,
+        selectedCells,
+        setSelectedCells,
+
+        isSelecting,
+        setIsSelecting,
+        selectionAnchor,
+        setSelectionAnchor,
 
         tableMenu,
         setTableMenu,

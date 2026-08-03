@@ -1,126 +1,383 @@
 # Architectural Decision Records (ADRs): Slide Editor
 
-This document records the key architectural and design decisions governing the **Slide Editor** codebase, providing context, rationale, and consequences for current and future maintainers.
+This document records the major architectural decisions that shape the Slide Editor.
+
+Each ADR explains:
+
+* **Context** — What problem existed?
+* **Decision** — What did we choose?
+* **Rationale** — Why did we choose it?
+* **Consequences** — What benefits and trade-offs come from that choice?
+
+The purpose is not to document every implementation detail, but to preserve the reasoning behind important decisions so future contributors understand **why** the architecture looks the way it does.
 
 ---
 
-## ADR-001: Adoption of Next.js 16 App Router & React 19
+# ADR-001: Block-Based Content Model
 
-* **Status**: Accepted
+**Status:** Accepted
 
-### Context
-The application requires a fast, modern web framework with seamless API route integration, client-side rich interactivity, and server rendering capability for lesson previews.
+## Context
 
-### Decision
-Use Next.js 16 (App Router) with React 19 Client Components (`"use client"`) for the slide editor application UI and Next.js Route Handlers (`src/app/api/`) for persistence.
+The editor needs to support heterogeneous content:
 
-### Consequences
-* **Positive**:
-  * Unified codebase for frontend editor UI and backend REST API endpoints.
-  * Native integration with modern React 19 features and Next.js routing.
-* **Negative**:
-  * Rich interactive client components require explicit `"use client"` directives throughout `src/app/slides/`.
-  * Dynamic parameters and headers in Next.js 16 Route Handlers are asynchronous (`const { lessonId } = await params`).
+* rich text
+* tables
+* images
+* videos
+* callouts
+* quizzes
+* future block types
 
----
+A single rich-text document would make many of these difficult to manage independently.
 
-## ADR-002: Modular Block-Based Architecture with BlockRenderer Dispatcher
+## Decision
 
-* **Status**: Accepted
-* **Date**: May 2026
+Represent slide content as an ordered array of blocks.
 
-### Context
-Slides consist of heterogeneous content elements (text, tables, callouts, images, videos, quizzes). The system must support extensible block types without coupling slide canvas layout code to specific block renderers.
+```text
+Slide
 
-### Decision
-Model slide content as an ordered array of polymorphic `Block` schemas (`{ id, type, content, important }`). Render blocks dynamically using a central `BlockRenderer.jsx` dispatcher component.
+↓
 
-### Consequences
-* **Positive**:
-  * Adding a new block type (e.g. Code Block or Audio Block) simply requires defining a new component in `src/app/slides/components/blocks/` and adding a case in `BlockRenderer.jsx`.
-  * Enables standardized wrapper features across all block types (selection outline, context menus, drag-and-drop handles).
-* **Negative**:
-  * `content` field uses loose schema validation (`mongoose.Schema.Types.Mixed`), shifting runtime validation responsibilities to client components.
+Blocks[]
 
----
+↓
 
-## ADR-003: Custom In-Memory Snapshot History Engine (`useHistory`)
+Text
+Table
+Image
+Video
+Callout
+Quiz
+...
+```
 
-* **Status**: Accepted
-* **Date**: May 2026
+Each block owns only its own content.
 
-### Context
-Users require Undo (`Ctrl+Z`) and Redo (`Ctrl+Y`) capabilities across slide and block editing operations.
+## Rationale
 
-### Decision
-Implement a custom 3-tuple state stack (`{ past: [], present: [], future: [] }`) within `EditorContext.jsx` capped at 50 historical steps. Expose explicit `setSlides` (records history) and `setSlidesWithoutHistory` (bypasses history) methods via `useHistory.js`.
+Blocks are naturally independent editing units.
 
-### Consequences
-* **Positive**:
-  * Simple, predictable implementation with zero external history dependencies.
-  * Direct control over which user actions create restore points (e.g. bypassing continuous typing or dragging).
-* **Negative**:
-  * Memory utilization scales with deck size due to full state snapshots.
-  * Typing inside text blocks or table cells bypasses history to prevent snapshot overload, requiring future refinement for granular text undo.
+They can be:
 
----
+* reordered
+* duplicated
+* copied
+* deleted
+* transformed
 
-## ADR-004: Micro-Editor Per Cell Table Architecture
+without affecting surrounding content.
 
-* **Status**: Accepted (Under Refinement)
-* **Date**: June 2026
+## Consequences
 
-### Context
-Tables within slides require rich text formatting (bold, italic, lists, highlights) inside individual cells, as well as keyboard navigation between cells.
+### Advantages
 
-### Decision
-Instantiate a separate Tiptap rich text editor instance (`useEditor`) inside each `TableCell.jsx`. Register active editors in a shared `cellEditors` ref map inside `EditorContext` to enable keyboard navigation via `focusEditor(cellId)`.
+* extensible
+* predictable rendering
+* reusable editor infrastructure
 
-### Consequences
-* **Positive**:
-  * Unlocks full rich text capabilities inside every table cell.
-  * Enables precise arrow key and Tab navigation between cells.
-* **Negative**:
-  * High DOM and event listener count for large tables.
-  * Requires active WIP enhancements to support multi-cell range selection, copy/paste, and cell merging.
+### Trade-offs
+
+* block relationships require explicit coordination when needed.
 
 ---
 
-## ADR-005: `@dnd-kit` for Multi-Level Drag-and-Drop Reordering
+# ADR-002: Embedded Document Structure
 
-* **Status**: Accepted
-* **Date**: June 2026
+**Status:** Accepted
 
-### Context
-Users need to reorder slides in the sidebar, reorder blocks vertically on the slide canvas, and reorder rows and columns within tables.
+## Context
 
-### Decision
-Standardize on `@dnd-kit/core` and `@dnd-kit/sortable` for all drag-and-drop interactions across the codebase.
+A lesson is fundamentally hierarchical.
 
-### Consequences
-* **Positive**:
-  * Modern, accessible, touch-supported drag-and-drop framework.
-  * Clean separation of drag sensors, collision algorithms, and sortable contexts.
-* **Negative**:
-  * Nested `DndContext` providers (canvas block sorting wrapping table row/column sorting) require explicit drag data tagging (`e.active.data.current.type`) to prevent event collisions.
+```text
+Lesson
+
+↓
+
+Slides
+
+↓
+
+Blocks
+
+↓
+
+Cells
+```
+
+## Decision
+
+Store slides inside lessons.
+
+Store blocks inside slides.
+
+Store table cells inside table blocks.
+
+Avoid normalization for the editor's primary data model.
+
+## Rationale
+
+The editor almost always loads and saves an entire lesson.
+
+Keeping the hierarchy intact mirrors how users think about their content and simplifies rendering and persistence.
+
+## Consequences
+
+### Advantages
+
+* straightforward serialization
+* simpler rendering
+* intuitive data model
+
+### Trade-offs
+
+Large lessons require transmitting larger payloads during autosave.
 
 ---
 
-## ADR-006: Debounced Client-Driven Auto-Save to MongoDB
+# ADR-003: One Owner Per State
 
-* **Status**: Accepted
-* **Date**: June 2026
+**Status:** Accepted
 
-### Context
-Edits must be saved automatically to prevent data loss without overwhelming the database with HTTP requests on every keystroke.
+## Context
 
-### Decision
-Implement a 2-second client-side debounce timer in `SlideEditor.jsx`. When `slides` state changes, schedule `lessonService.saveLesson(lessonId, { slides })` to POST updated data to MongoDB via Mongoose.
+As the editor grew, several features required access to shared state:
 
-### Consequences
-* **Positive**:
-  * Seamless user experience with visual save status indicators ("Saving", "Saved", "Error").
-  * Eliminates the need for manual save buttons during ordinary editing.
-* **Negative**:
-  * Transmits full slide deck array on each save cycle.
-  * Network interruption during active editing can leave unpersisted changes on the client.
+* selection
+* clipboard
+* history
+* active editor
+* floating menus
+
+Duplicating state quickly led to inconsistencies.
+
+## Decision
+
+Every shared piece of state has exactly one owner.
+
+Shared state lives in Context.
+
+Components consume it.
+
+Hooks manipulate it.
+
+## Rationale
+
+Single ownership eliminates synchronization problems.
+
+It also makes debugging significantly easier.
+
+## Consequences
+
+Developers should avoid introducing duplicate state unless there is a compelling architectural reason.
+
+---
+
+# ADR-004: Hooks Own Behavior
+
+**Status:** Accepted
+
+## Context
+
+As editor functionality expanded, components began accumulating business logic alongside rendering code.
+
+## Decision
+
+Business logic belongs in hooks.
+
+Components primarily render UI.
+
+Examples:
+
+* `useSlides`
+* `useHistory`
+* `useTable`
+* `useClipboard`
+* `useRichTextEditor`
+
+## Rationale
+
+Separating rendering from behavior improves readability, testing, and reuse.
+
+## Consequences
+
+Hooks may grow large, but responsibilities remain centralized instead of being scattered across many components.
+
+---
+
+# ADR-005: Shared Rich Text Engine
+
+**Status:** Accepted
+
+## Context
+
+Several block types require rich-text editing.
+
+Implementing independent editor logic for each block would duplicate behavior.
+
+## Decision
+
+All rich-text blocks share a common initialization and management layer through `useRichTextEditor`.
+
+## Rationale
+
+Formatting, keyboard shortcuts, toolbar synchronization, and editor lifecycle should behave consistently regardless of block type.
+
+## Consequences
+
+Adding a new rich-text block requires minimal editor-specific implementation.
+
+---
+
+# ADR-006: Independent Editor per Table Cell
+
+**Status:** Accepted
+
+## Context
+
+Table cells require the same rich-text capabilities as ordinary text blocks while supporting keyboard navigation between cells.
+
+## Decision
+
+Each table cell owns its own Tiptap editor instance.
+
+Editor references are registered centrally to enable programmatic focus changes.
+
+## Rationale
+
+This provides a consistent editing experience across text blocks and table cells.
+
+## Consequences
+
+### Advantages
+
+* full formatting support in every cell
+* natural keyboard navigation
+
+### Trade-offs
+
+Large tables create many editor instances and increase memory usage.
+
+---
+
+# ADR-007: Two-Tier History System
+
+**Status:** Accepted
+
+## Context
+
+Not every update should create an undo step.
+
+Typing or resizing continuously would flood the history stack.
+
+## Decision
+
+Expose two update paths:
+
+* `setSlides()`
+* `setSlidesWithoutHistory()`
+
+## Rationale
+
+Structural operations deserve history entries.
+
+Continuous interactions do not.
+
+## Consequences
+
+The editor remains responsive while preserving meaningful undo behavior.
+
+---
+
+# ADR-008: Progressive Refactoring
+
+**Status:** Accepted
+
+## Context
+
+Predicting the final abstraction before implementing a feature often leads to unnecessary complexity.
+
+## Decision
+
+Development follows this progression:
+
+```text
+Implement
+
+↓
+
+Debug
+
+↓
+
+Refactor
+
+↓
+
+Modularize
+```
+
+## Rationale
+
+Architecture should emerge from working software rather than speculation.
+
+Patterns become clearer after solving the real problem.
+
+## Consequences
+
+Temporary duplication is acceptable during exploration, provided it is removed during refactoring.
+
+---
+
+# ADR-009: Reuse Before Reinvention
+
+**Status:** Accepted
+
+## Context
+
+As the editor grows, many new features resemble existing ones.
+
+## Decision
+
+Whenever possible, new capabilities should extend existing infrastructure instead of introducing parallel implementations.
+
+Examples include:
+
+* toolbar
+* history
+* clipboard
+* drag-and-drop
+* editor initialization
+* selection
+
+## Rationale
+
+Shared infrastructure reduces maintenance cost and creates a more consistent user experience.
+
+## Consequences
+
+Before adding new architecture, contributors should first evaluate whether the existing systems can be extended.
+
+---
+
+# ADR-010: The Editor Is Infrastructure
+
+**Status:** Accepted
+
+## Context
+
+Although the current project focuses on lesson editing, the editor is intended to power many future VipiClass experiences.
+
+## Decision
+
+Architect the editor as an independent subsystem rather than coupling it to lesson-specific workflows.
+
+## Rationale
+
+The same editing engine should support lessons, documentation, assignments, AI-generated content, collaborative documents, and future features.
+
+## Consequences
+
+Architectural decisions should favor reuse and long-term extensibility, even if they introduce slightly more work during initial implementation.

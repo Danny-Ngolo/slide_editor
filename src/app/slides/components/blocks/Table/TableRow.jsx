@@ -19,8 +19,9 @@ const TableRow = ({ slideId, block, row, rowIndex }) => {
     startRowResize,
     minColumnWidth,
     minRowHeight,
+    handleCellContextMenu,
   } = useTable();
-  const { setSelectedBlock, setSelectedBlocks, setTableMenu, tableSelection } =
+  const { setSelectedBlock, setSelectedBlocks, setTableMenu, tableSelection, selectedCells } =
     useEditorContext();
 
   const { listeners, attributes, setNodeRef, style } = useEditorSortable({
@@ -35,13 +36,12 @@ const TableRow = ({ slideId, block, row, rowIndex }) => {
       style={style}
       className={`
 table-row
-  ${
-    tableSelection.blockId === block.id &&
-    tableSelection.type === "row" &&
-    tableSelection.row === rowIndex
-      ? "selected-row"
-      : ""
-  }
+  ${tableSelection.blockId === block.id &&
+          tableSelection.type === "row" &&
+          tableSelection.row === rowIndex
+          ? "selected-row"
+          : ""
+        }
   ${rowIndex === block.content?.headerRow ? "table-header-row" : ""}
 `}
     >
@@ -58,49 +58,55 @@ table-row
         />
       </td>
 
-      {row?.cells.map((cell, columnIndex) => (
-        <td
-          key={cell.id}
-          className={`
-table-cell
-  ${
-    tableSelection.blockId === block.id &&
-    tableSelection.type === "column" &&
-    tableSelection.column === columnIndex
-      ? "selected-column"
-      : ""
-  }
-  ${columnIndex === block.content?.headerColumn ? "table-header-column" : ""}
-`}
-          style={{
-            width: block.content.columnWidths?.[columnIndex] ?? minColumnWidth,
-            height: block.content.rowHeights?.[rowIndex] ?? minRowHeight,
-          }}
-        >
-          <TableCell
-            slideId={slideId}
-            blockId={block.id}
-            rowIndex={rowIndex}
-            columnIndex={columnIndex}
-            cell={cell}
-            updateCell={updateCell}
-            block={block}
-          />
+      {row?.cells.map((cell, columnIndex) => {
+        if (cell.hidden) return null;
 
-          <div
-            className="column-resize-handle"
-            onMouseDown={(e) => {
-              startColumnResize(e, block, columnIndex);
+        return (
+          <td
+            key={cell.id}
+            colSpan={cell.colspan || 1}
+            rowSpan={cell.rowspan || 1}
+            className={`
+              table-cell
+              ${tableSelection.blockId === block.id && tableSelection.type === "column" && tableSelection.column === columnIndex ? "selected-column" : ""}
+              ${columnIndex === block.content?.headerColumn ? "table-header-column" : ""}
+              ${selectedCells.has(`${rowIndex},${columnIndex}`) ? "selected-cell" : ""}
+            `}
+            style={{
+              width: block.content.columnWidths?.[columnIndex] ?? minColumnWidth,
+              height: block.content.rowHeights?.[rowIndex] ?? minRowHeight,
             }}
-          />
-          <div
-            className="row-resize-handle"
-            onMouseDown={(e) => {
-              startRowResize(e, block, rowIndex);
+            onContextMenu={(e) => {
+              setSelectedBlock({ slideId, blockId: block.id });
+              setSelectedBlocks([{ slideId, blockId: block.id }]);
+              handleCellContextMenu(e, block.id, rowIndex, columnIndex);
             }}
-          />
-        </td>
-      ))}
+          >
+            <TableCell
+              slideId={slideId}
+              blockId={block.id}
+              rowIndex={rowIndex}
+              columnIndex={columnIndex}
+              cell={cell}
+              updateCell={updateCell}
+              block={block}
+            />
+
+            <div
+              className="column-resize-handle"
+              onMouseDown={(e) => {
+                startColumnResize(e, block, columnIndex);
+              }}
+            />
+            <div
+              className="row-resize-handle"
+              onMouseDown={(e) => {
+                startRowResize(e, block, rowIndex);
+              }}
+            />
+          </td>
+        );
+      })}
     </tr>
   );
 };

@@ -1,30 +1,29 @@
 "use client";
 
-import { Plus, Copy, Trash2, Headset } from "lucide-react";
+import { Plus, Copy, Trash2, Headset, Combine, Split } from "lucide-react";
 
 import "./table.css";
 import { useTable } from "@/app/slides/hooks/useTable";
 import { useEditorContext } from "../../EditorContext";
-import { useEffect } from "react";
 
-const TableActionMenu = ({ tableMenu, /* slideId, blockId, */ closeMenu }) => {
+const TableActionMenu = ({ tableMenu, closeMenu }) => {
   const {
     addRow,
     addColumn,
-
     deleteRow,
     deleteColumn,
-
     duplicateRow,
     duplicateColumn,
-
     toggleHeaderRow,
     toggleHeaderColumn,
+    mergeSelectedCells,
+    splitCell,
+    selectedCells,
   } = useTable();
 
   const { selectedBlock, tableMenuRef } = useEditorContext();
 
-  const { blockId, slideId } = selectedBlock;
+  const { blockId, slideId } = selectedBlock || {};
 
   return (
     <div
@@ -32,16 +31,15 @@ const TableActionMenu = ({ tableMenu, /* slideId, blockId, */ closeMenu }) => {
       className="table-action-menu"
       style={{
         position: "fixed",
-        left: tableMenu?.anchor?.right + 6 || 6,
-        top: tableMenu?.anchor?.top || 0,
+        left: (tableMenu?.anchor?.right ?? tableMenu?.anchor?.left ?? 0) + 6,
+        top: tableMenu?.anchor?.top ?? 0,
       }}
       onClick={(e) => e.stopPropagation()}
     >
-      {tableMenu.type === "row" ? (
+      {tableMenu.type === "row" && (
         <>
           <button
             onClick={() => {
-              console.log(slideId, blockId);
               addRow(slideId, blockId, tableMenu.rowIndex, "before");
               closeMenu();
             }}
@@ -90,7 +88,9 @@ const TableActionMenu = ({ tableMenu, /* slideId, blockId, */ closeMenu }) => {
             <Headset size={15} /> Toggle Header
           </button>
         </>
-      ) : (
+      )}
+
+      {tableMenu.type === "column" && (
         <>
           <button
             onClick={() => {
@@ -140,6 +140,37 @@ const TableActionMenu = ({ tableMenu, /* slideId, blockId, */ closeMenu }) => {
             }}
           >
             <Headset size={15} /> Toggle Header
+          </button>
+        </>
+      )}
+
+      {/* Cell merge/split UI */}
+      {tableMenu.type === "cell" && (
+        <>
+          <button
+            disabled={!selectedCells || selectedCells.size < 2}
+            style={{
+              opacity: !selectedCells || selectedCells.size < 2 ? 0.5 : 1,
+              cursor: !selectedCells || selectedCells.size < 2 ? "not-allowed" : "pointer",
+            }}
+            onClick={() => {
+              mergeSelectedCells(slideId, blockId);
+              closeMenu();
+            }}
+          >
+            <Combine size={15} /> Merge Cells
+          </button>
+          <button
+            onClick={() => {
+              if (selectedCells && selectedCells.size) {
+                const first = Array.from(selectedCells)[0];
+                const [r, c] = first.split(',').map(Number);
+                splitCell(slideId, blockId, r, c);
+              }
+              closeMenu();
+            }}
+          >
+            <Split size={15} /> Split Cell
           </button>
         </>
       )}
