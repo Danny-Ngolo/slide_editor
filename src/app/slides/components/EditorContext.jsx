@@ -59,6 +59,10 @@ const EditorProvider = ({ children }) => {
 
   const tableMenuRef = useRef(null);
 
+  // Internal table clipboard — holds a snapshot of copied cells/rows/columns.
+  // Single owner so copy/paste works across any component and keyboard handler.
+  const [tableClipboard, setTableClipboard] = useState(null);
+
   const [tableResizeState, setTableResizeState] = useState(null);
 
   const cellEditors = useRef({});
@@ -76,11 +80,6 @@ const EditorProvider = ({ children }) => {
   const focusEditor = (cellId) => {
     cellEditors.current[cellId]?.commands?.focus();
   };
-
-  // TRIAL **********
-  useEffect(() => {
-    console.log('selectedCells', selectedCells)
-  }, [selectedCells])
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -150,6 +149,9 @@ const EditorProvider = ({ children }) => {
 
         tableResizeState,
         setTableResizeState,
+
+        tableClipboard,
+        setTableClipboard,
 
         registerEditor,
         unregisterEditor,

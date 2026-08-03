@@ -5,7 +5,7 @@ import { useEditorContext } from "../components/EditorContext";
 import { arrayMove } from "@dnd-kit/sortable";
 
 export function useTable() {
-  const { setSlides, setSlidesWithoutHistory } = useHistory();
+  const { setSlides, setSlidesWithoutHistory, slidesHistory } = useHistory();
   const {
     tableSelection,
     setTableSelection,
@@ -19,7 +19,32 @@ export function useTable() {
     selectionAnchor,
     setSelectionAnchor,
     setTableMenu,
+    tableClipboard,
+    setTableClipboard,
   } = useEditorContext();
+
+  const slides = slidesHistory.present;
+
+  // Find the block containing a given table block id, plus its slide id.
+  const findBlock = (slideId, blockId) => {
+    const slide = slides.find((s) => s.id === slideId);
+    return slide?.blocks.find((b) => b.id === blockId) || null;
+  };
+
+  const findSlideByBlockId = (blockId) => {
+    return slides.find((s) => s.blocks.some((b) => b.id === blockId));
+  };
+
+  // The clipboard always stores a 2D grid of html strings (rows of cells).
+  // This normalizes whatever was copied into that shape so paste can be shared.
+  const clipboardGrid = () => {
+    if (!tableClipboard) return [];
+    if (tableClipboard.type === "cell") return tableClipboard.grid;
+    if (tableClipboard.type === "row") return [tableClipboard.htmlCells];
+    if (tableClipboard.type === "column")
+      return tableClipboard.htmlCells.map((html) => [html]);
+    return [];
+  };
 
   // Drag selection — state is now shared via EditorContext (not local useState)
   // so every component calling useTable() reads the same values.
@@ -57,7 +82,6 @@ export function useTable() {
   };
 
   const handleCellMouseEnter = (row, col) => {
-    console.log('is selecting', isSelecting)
     if (isSelecting && selectionAnchor) {
       const newSet = getRangeSet(selectionAnchor, { row, col });
       setSelectedCells(newSet);
@@ -89,16 +113,47 @@ export function useTable() {
 
   // Keyboard navigation and selection
   const handleCellKeyDown = (e, row, col, block) => {
-    console.log('cell keying down')
-
     const rowsData = block.content.rows;
-    if (!e.shiftKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-      const dir = e.key.replace('Arrow', '').toLowerCase();
-      focusAdjacentCell({ rows: rowsData, rowIndex: row, columnIndex: col, direction: dir });
+
+    const slideId = findSlideByBlockId(block.id)?.id;
+
+    if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "c") {
+      e.preventDefault();
+      e.stopPropagation();
+      if (slideId) copyCell(slideId, block.id);
+      return;
+    }
+    if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "v") {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!slideId || !tableClipboard) return;
+      if (tableClipboard.type === "row") {
+        pasteRow(slideId, block.id, row);
+      } else if (tableClipboard.type === "column") {
+        pasteColumn(slideId, block.id, col);
+      } else {
+        pasteCell(slideId, block.id, row, col);
+      }
+      return;
+    }
+    if (
+      !e.shiftKey &&
+      (e.key === "ArrowRight" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown")
+    ) {
+      const dir = e.key.replace("Arrow", "").toLowerCase();
+      focusAdjacentCell({
+        rows: rowsData,
+        rowIndex: row,
+        columnIndex: col,
+        direction: dir,
+      });
       e.preventDefault();
       return;
     }
-    if (e.ctrlKey && e.key.toLowerCase() === 'a') {
+    if (e.ctrlKey && e.key.toLowerCase() === "a") {
       const all = new Set();
       rowsData.forEach((r, ri) => {
         r.cells.forEach((c, ci) => {
@@ -110,16 +165,17 @@ export function useTable() {
       e.stopPropagation();
       return;
     }
-    if (e.shiftKey && e.key.startsWith('Arrow')) {
-      const dir = e.key.replace('Arrow', '').toLowerCase();
+    if (e.shiftKey && e.key.startsWith("Arrow")) {
+      const dir = e.key.replace("Arrow", "").toLowerCase();
       const anchor = selectionAnchor || { row, col };
       setSelectionAnchor(anchor);
       let targetRow = row;
       let targetCol = col;
-      if (dir === 'right') targetCol = Math.min(col + 1, rowsData[0].cells.length - 1);
-      if (dir === 'left') targetCol = Math.max(col - 1, 0);
-      if (dir === 'down') targetRow = Math.min(row + 1, rowsData.length - 1);
-      if (dir === 'up') targetRow = Math.max(row - 1, 0);
+      if (dir === "right")
+        targetCol = Math.min(col + 1, rowsData[0].cells.length - 1);
+      if (dir === "left") targetCol = Math.max(col - 1, 0);
+      if (dir === "down") targetRow = Math.min(row + 1, rowsData.length - 1);
+      if (dir === "up") targetRow = Math.max(row - 1, 0);
       const newSet = getRangeSet(anchor, { row: targetRow, col: targetCol });
       setSelectedCells(newSet);
       const newCellId = rowsData[targetRow].cells[targetCol].id;
@@ -711,7 +767,7 @@ export function useTable() {
   };
 
   const selectCell = (rowIndex, columnIndex) => {
-    setSelectedCells(prev => {
+    setSelectedCells((prev) => {
       const newSet = new Set(prev);
       newSet.add(`${rowIndex},${columnIndex}`);
       return newSet;
@@ -724,24 +780,32 @@ export function useTable() {
   };
 
   const mergeSelectedCells = (slideId, blockId) => {
-    const cellsArray = Array.from(selectedCells).map(str => {
-      const [r, c] = str.split(',').map(Number);
+    const cellsArray = Array.from(selectedCells).map((str) => {
+      const [r, c] = str.split(",").map(Number);
       return { rowIndex: r, columnIndex: c };
     });
     if (cellsArray.length < 2) return;
-    const rows = cellsArray.map(c => c.rowIndex);
-    const cols = cellsArray.map(c => c.columnIndex);
+    const rows = cellsArray.map((c) => c.rowIndex);
+    const cols = cellsArray.map((c) => c.columnIndex);
     const minRow = Math.min(...rows);
     const maxRow = Math.max(...rows);
     const minCol = Math.min(...cols);
     const maxCol = Math.max(...cols);
     const rowSpan = maxRow - minRow + 1;
     const colSpan = maxCol - minCol + 1;
-    updateTable(slideId, blockId, block => {
-      const newRows = block.content.rows.map(row => ({ ...row, cells: [...row.cells] }));
+    updateTable(slideId, blockId, (block) => {
+      const newRows = block.content.rows.map((row) => ({
+        ...row,
+        cells: [...row.cells],
+      }));
       // update top‑left cell
       const topCell = newRows[minRow].cells[minCol];
-      newRows[minRow].cells[minCol] = { ...topCell, colspan: colSpan, rowspan: rowSpan, hidden: false };
+      newRows[minRow].cells[minCol] = {
+        ...topCell,
+        colspan: colSpan,
+        rowspan: rowSpan,
+        hidden: false,
+      };
       // hide other cells in the span
       for (let r = minRow; r <= maxRow; r++) {
         for (let c = minCol; c <= maxCol; c++) {
@@ -751,7 +815,7 @@ export function useTable() {
         }
       }
 
-      console.log('newRows', newRows)
+      console.log("newRows", newRows);
       return { ...block, content: { ...block.content, rows: newRows } };
     });
     // clear selection after merge
@@ -759,24 +823,289 @@ export function useTable() {
   };
 
   const splitCell = (slideId, blockId, rowIndex, columnIndex) => {
-    updateTable(slideId, blockId, block => {
-
+    updateTable(slideId, blockId, (block) => {
       const target = block.content.rows[rowIndex].cells[columnIndex];
       const { colspan, rowspan } = target;
       if (colspan === 1 && rowspan === 1) return block;
-      const newRows = block.content.rows.map(row => ({ ...row, cells: [...row.cells] }));
+      const newRows = block.content.rows.map((row) => ({
+        ...row,
+        cells: [...row.cells],
+      }));
       // reset the merged cell
-      newRows[rowIndex].cells[columnIndex] = { ...target, colspan: 1, rowspan: 1, hidden: false };
+      newRows[rowIndex].cells[columnIndex] = {
+        ...target,
+        colspan: 1,
+        rowspan: 1,
+        hidden: false,
+      };
       // unhide all cells that were hidden inside the span
       for (let r = rowIndex; r < rowIndex + rowspan; r++) {
         for (let c = columnIndex; c < columnIndex + colspan; c++) {
           if (r === rowIndex && c === columnIndex) continue;
           const cell = newRows[r].cells[c];
-          newRows[r].cells[c] = { ...cell, hidden: false, colspan: 1, rowspan: 1 };
+          newRows[r].cells[c] = {
+            ...cell,
+            hidden: false,
+            colspan: 1,
+            rowspan: 1,
+          };
         }
       }
       return { ...block, content: { ...block.content, rows: newRows } };
     });
+  };
+
+  // ---------------------------------------------------------------------------
+  // Table Clipboard (copy / paste cells, rows, columns)
+  // ---------------------------------------------------------------------------
+
+  // Copy a single cell or a rectangular multi-cell selection into the internal
+  // clipboard. The html of every cell in the selection rectangle is snapshotted.
+  const copyCell = (slideId, blockId) => {
+    const block = findBlock(slideId, blockId);
+    if (!block) return;
+
+    const coords = Array.from(selectedCells)
+      .map((s) => s.split(",").map(Number))
+      .filter((c) => Number.isInteger(c[0]) && Number.isInteger(c[1]));
+
+    if (coords.length === 0) return;
+
+    const rows = coords.map((c) => c[0]);
+    const cols = coords.map((c) => c[1]);
+    const minRow = Math.min(...rows);
+    const maxRow = Math.max(...rows);
+    const minCol = Math.min(...cols);
+    const maxCol = Math.max(...cols);
+
+    const grid = [];
+    for (let r = minRow; r <= maxRow; r++) {
+      const rowHtml = [];
+      for (let c = minCol; c <= maxCol; c++) {
+        rowHtml.push(block.content.rows[r]?.cells[c]?.html ?? "<p></p>");
+      }
+      grid.push(rowHtml);
+    }
+
+    const columnWidths = (block.content.columnWidths || []).slice(minCol, maxCol + 1);
+    const rowHeights = (block.content.rowHeights || []).slice(minRow, maxRow + 1);
+
+    setTableClipboard({ type: "cell", blockId, grid, columnWidths, rowHeights });
+  };
+
+  // Copy one full row of html content.
+  const copyRow = (slideId, blockId, rowIndex) => {
+    const block = findBlock(slideId, blockId);
+    if (!block) return;
+    const row = block.content.rows[rowIndex];
+    if (!row) return;
+
+    const htmlCells = row.cells.map((c) => c.html ?? "<p></p>");
+    const columnWidths = [...(block.content.columnWidths || [])];
+    const rowHeights = [block.content.rowHeights?.[rowIndex] ?? minRowHeight];
+    setTableClipboard({ type: "row", blockId, htmlCells, columnWidths, rowHeights });
+  };
+
+  // Copy one full column of html content.
+  const copyColumn = (slideId, blockId, columnIndex) => {
+    const block = findBlock(slideId, blockId);
+    if (!block) return;
+
+    const htmlCells = block.content.rows.map(
+      (row) => row.cells[columnIndex]?.html ?? "<p></p>",
+    );
+    const columnWidths = [block.content.columnWidths?.[columnIndex] ?? minColumnWidth];
+    const rowHeights = [...(block.content.rowHeights || [])];
+    setTableClipboard({ type: "column", blockId, htmlCells, columnWidths, rowHeights });
+  };
+
+  // Paste a 2D grid of html starting at (targetRow, targetCol).
+  // The table auto-expands with extra rows/columns when the grid overflows
+  // the current bounds.
+  const pasteCell = (slideId, blockId, targetRow, targetCol) => {
+    const grid = clipboardGrid();
+    if (!grid.length) return;
+    const block = findBlock(slideId, blockId);
+    if (!block) return;
+
+    const gridHeight = grid.length;
+    const gridWidth = grid[0].length;
+
+    updateTable(
+      slideId,
+      blockId,
+      (b) => {
+        const requiredRows = targetRow + gridHeight;
+        const requiredCols = targetCol + gridWidth;
+
+        const newRows = b.content.rows.map((row) => ({
+          ...row,
+          cells: [...row.cells],
+        }));
+
+        // Expand existing rows with empty cells to fit the pasted width.
+        newRows.forEach((row) => {
+          while (row.cells.length < requiredCols) {
+            row.cells.push(createEmptyCell());
+          }
+        });
+
+        // Add new rows below if the pasted grid extends past the last row.
+        while (newRows.length < requiredRows) {
+          newRows.push(createRow(requiredCols));
+        }
+
+        grid.forEach((rowHtml, dr) => {
+          const r = targetRow + dr;
+          const row = newRows[r];
+          row.cells = [...row.cells];
+          rowHtml.forEach((html, dc) => {
+            const c = targetCol + dc;
+            row.cells[c] = { ...row.cells[c], html };
+          });
+        });
+
+        const columnWidths = b.content.columnWidths
+          ? [...b.content.columnWidths]
+          : [];
+        while (columnWidths.length < requiredCols) columnWidths.push(minColumnWidth);
+
+        const rowHeights = b.content.rowHeights
+          ? [...b.content.rowHeights]
+          : [];
+        while (rowHeights.length < requiredRows) rowHeights.push(minRowHeight);
+
+        // Inherit the copied widths and heights onto the pasted region.
+        (tableClipboard.columnWidths || []).forEach((width, dc) => {
+          columnWidths[targetCol + dc] = width;
+        });
+        (tableClipboard.rowHeights || []).forEach((height, dr) => {
+          rowHeights[targetRow + dr] = height;
+        });
+
+        return {
+          ...b,
+          content: { ...b.content, rows: newRows, columnWidths, rowHeights },
+        };
+      },
+      { recordHistory: true },
+    );
+  };
+
+  // Paste a copied row (or a single-row cell grid) as a new row after targetRow.
+  const pasteRow = (slideId, blockId, targetRow) => {
+    const grid = clipboardGrid();
+    if (!grid.length) return;
+    const block = findBlock(slideId, blockId);
+    if (!block) return;
+
+    const sourceRow = grid[0] || [];
+    const columnCount = Math.max(
+      sourceRow.length,
+      block.content.rows[0]?.cells.length || 0,
+    );
+
+    updateTable(
+      slideId,
+      blockId,
+      (b) => {
+        // Ensure every existing row has enough cells to hold the pasted width.
+        const rows = b.content.rows.map((row) => {
+          const cells = [...row.cells];
+          while (cells.length < columnCount) cells.push(createEmptyCell());
+          return { ...row, cells };
+        });
+
+        const newRow = {
+          id: generateId(),
+          cells: Array.from({ length: columnCount }, (_, i) => ({
+            ...createEmptyCell(),
+            html: sourceRow[i] ?? "<p></p>",
+          })),
+        };
+
+        rows.splice(targetRow + 1, 0, newRow);
+
+        const columnWidths = b.content.columnWidths
+          ? [...b.content.columnWidths]
+          : [];
+        while (columnWidths.length < columnCount)
+          columnWidths.push(minColumnWidth);
+
+        // Inherit the copied row's widths onto the affected columns.
+        (tableClipboard.columnWidths || []).forEach((width, i) => {
+          if (columnWidths[i] !== undefined) columnWidths[i] = width;
+        });
+
+        const rowHeights = b.content.rowHeights
+          ? [...b.content.rowHeights]
+          : [];
+        const pastedHeight = tableClipboard.rowHeights?.[0] ?? minRowHeight;
+        rowHeights.splice(targetRow + 1, 0, pastedHeight);
+
+        return {
+          ...b,
+          content: { ...b.content, rows, columnWidths, rowHeights },
+        };
+      },
+      { recordHistory: true },
+    );
+  };
+
+  // Paste a copied column into every row after targetCol.
+  const pasteColumn = (slideId, blockId, targetCol) => {
+    const grid = clipboardGrid();
+    if (!grid.length) return;
+
+    // grid for a column is an array of rows each holding a single html string.
+    const sourceColumn = grid.map((row) => row[0]);
+
+    updateTable(
+      slideId,
+      blockId,
+      (b) => {
+        let rows = b.content.rows.map((row) => ({
+          ...row,
+          cells: [...row.cells],
+        }));
+
+        // Expand the table with new rows if the pasted column is taller.
+        while (rows.length < sourceColumn.length) {
+          const columnCount = rows[0]?.cells.length || 0;
+          rows.push(createRow(columnCount));
+        }
+
+        rows = rows.map((row, r) => {
+          const cells = [...row.cells];
+          cells.splice(targetCol + 1, 0, {
+            ...createEmptyCell(),
+            html: sourceColumn[r] ?? "<p></p>",
+          });
+          return { ...row, cells };
+        });
+
+        const columnWidths = b.content.columnWidths
+          ? [...b.content.columnWidths]
+          : [];
+        const pastedWidth = tableClipboard.columnWidths?.[0] ?? minColumnWidth;
+        columnWidths.splice(targetCol + 1, 0, pastedWidth);
+
+        const rowHeights = b.content.rowHeights
+          ? [...b.content.rowHeights]
+          : [];
+        while (rowHeights.length < rows.length) rowHeights.push(minRowHeight);
+        // Inherit the copied column's row heights onto the affected rows.
+        (tableClipboard.rowHeights || []).forEach((height, r) => {
+          if (rowHeights[r] !== undefined) rowHeights[r] = height;
+        });
+
+        return {
+          ...b,
+          content: { ...b.content, rows, columnWidths, rowHeights },
+        };
+      },
+      { recordHistory: true },
+    );
   };
 
   return {
@@ -807,12 +1136,12 @@ export function useTable() {
     handleDragEnd,
 
     focusAdjacentCell,
-    // Selection utilities 
+    // Selection utilities
     selectCell,
     clearCellSelection,
     mergeSelectedCells,
     splitCell,
-    // expose raw selected set for UI 
+    // expose raw selected set for UI
     selectedCells,
     setSelectedCells,
     // Interaction handlers
@@ -821,6 +1150,15 @@ export function useTable() {
     handleCellMouseUp,
     handleCellKeyDown,
     handleCellContextMenu,
+    // Clipboard utilities
+    copyCell,
+    copyRow,
+    copyColumn,
+    pasteCell,
+    pasteRow,
+    pasteColumn,
+    tableClipboard,
+    setTableClipboard,
     // Expose for TableBlock to drive data-selecting attribute
     isSelecting,
   };

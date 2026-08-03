@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Copy, Trash2, Headset, Combine, Split } from "lucide-react";
+import { Plus, Copy, Trash2, Headset, Combine, Split, ClipboardPaste } from "lucide-react";
 
 import "./table.css";
 import { useTable } from "@/app/slides/hooks/useTable";
@@ -18,6 +18,13 @@ const TableActionMenu = ({ tableMenu, closeMenu }) => {
     toggleHeaderColumn,
     mergeSelectedCells,
     splitCell,
+    copyCell,
+    copyRow,
+    copyColumn,
+    pasteCell,
+    pasteRow,
+    pasteColumn,
+    tableClipboard,
     selectedCells,
   } = useTable();
 
@@ -63,6 +70,29 @@ const TableActionMenu = ({ tableMenu, closeMenu }) => {
             }}
           >
             <Copy size={15} /> Duplicate row
+          </button>
+
+          <button
+            onClick={() => {
+              copyRow(slideId, blockId, tableMenu.rowIndex);
+              closeMenu();
+            }}
+          >
+            <Copy size={15} /> Copy row
+          </button>
+
+          <button
+            disabled={tableClipboard?.type !== "row"}
+            style={{
+              opacity: tableClipboard?.type !== "row" ? 0.5 : 1,
+              cursor: tableClipboard?.type !== "row" ? "not-allowed" : "pointer",
+            }}
+            onClick={() => {
+              pasteRow(slideId, blockId, tableMenu.rowIndex);
+              closeMenu();
+            }}
+          >
+            <ClipboardPaste size={15} /> Paste row
           </button>
 
           <button
@@ -120,6 +150,29 @@ const TableActionMenu = ({ tableMenu, closeMenu }) => {
           </button>
 
           <button
+            onClick={() => {
+              copyColumn(slideId, blockId, tableMenu.columnIndex);
+              closeMenu();
+            }}
+          >
+            <Copy size={15} /> Copy column
+          </button>
+
+          <button
+            disabled={tableClipboard?.type !== "column"}
+            style={{
+              opacity: tableClipboard?.type !== "column" ? 0.5 : 1,
+              cursor: tableClipboard?.type !== "column" ? "not-allowed" : "pointer",
+            }}
+            onClick={() => {
+              pasteColumn(slideId, blockId, tableMenu.columnIndex);
+              closeMenu();
+            }}
+          >
+            <ClipboardPaste size={15} /> Paste column
+          </button>
+
+          <button
             className="danger"
             onClick={() => {
               deleteColumn(slideId, blockId, tableMenu.columnIndex);
@@ -171,6 +224,27 @@ const TableActionMenu = ({ tableMenu, closeMenu }) => {
             }}
           >
             <Split size={15} /> Split Cell
+          </button>
+          <button
+            onClick={() => {
+              copyCell(slideId, blockId);
+              closeMenu();
+            }}
+          >
+            <Copy size={15} /> Copy Cells
+          </button>
+          <button
+            disabled={!tableClipboard}
+            style={{
+              opacity: !tableClipboard ? 0.5 : 1,
+              cursor: !tableClipboard ? "not-allowed" : "pointer",
+            }}
+            onClick={() => {
+              pasteCell(slideId, blockId, tableMenu.rowIndex, tableMenu.columnIndex);
+              closeMenu();
+            }}
+          >
+            <ClipboardPaste size={15} /> Paste
           </button>
         </>
       )}
