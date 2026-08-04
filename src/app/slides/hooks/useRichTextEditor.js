@@ -1,4 +1,9 @@
 import Highlight from "@tiptap/extension-highlight";
+import Subscript from "@tiptap/extension-subscript";
+import Superscript from "@tiptap/extension-superscript";
+import TaskItem from "@tiptap/extension-task-item";
+import TaskList from "@tiptap/extension-task-list";
+import TextAlign from "@tiptap/extension-text-align";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useCallback } from "react";
@@ -30,17 +35,31 @@ export function useRichTextEditor() {
   const getEditorState = useCallback((editor) => {
     if (!editor) return {};
 
+    const textAlignCenter = editor.isActive({ textAlign: "center" });
+    const textAlignRight = editor.isActive({ textAlign: "right" });
+
     return {
       bold: editor.isActive("bold"),
       italic: editor.isActive("italic"),
+      underline: editor.isActive("underline"),
+      strike: editor.isActive("strike"),
+      code: editor.isActive("code"),
+      subscript: editor.isActive("subscript"),
+      superscript: editor.isActive("superscript"),
       heading1: editor.isActive("heading", { level: 1 }),
       heading2: editor.isActive("heading", { level: 2 }),
       heading3: editor.isActive("heading", { level: 3 }),
+      paragraph: editor.isActive("paragraph"),
       blockquote: editor.isActive("blockquote"),
       bulletList: editor.isActive("bulletList"),
       orderedList: editor.isActive("orderedList"),
+      taskList: editor.isActive("taskList"),
+      codeBlock: editor.isActive("codeBlock"),
+      link: editor.isActive("link"),
       highlight: editor.isActive("highlight"),
-      underline: editor.isActive("underline"),
+      textAlignLeft: !textAlignCenter && !textAlignRight,
+      textAlignCenter,
+      textAlignRight,
     };
   }, []);
 
@@ -51,13 +70,7 @@ export function useRichTextEditor() {
     [getEditorState, setEditorState],
   );
 
-  const handleTableKeyDown = ({
-    event,
-    editor,
-    rows,
-    rowIndex,
-    columnIndex,
-  }) => {
+  const handleTableKeyDown = ({ event, rows, rowIndex, columnIndex }) => {
     switch (event.key) {
       case "ArrowLeft":
         event.preventDefault();
@@ -151,7 +164,24 @@ export function useRichTextEditor() {
     columnIndex,
   }) => {
     const editor = useEditor({
-      extensions: [StarterKit, Highlight],
+      extensions: [
+        StarterKit.configure({
+          link: {
+            openOnClick: false,
+            autolink: true,
+            HTMLAttributes: {
+              rel: "noopener noreferrer",
+              target: "_blank",
+            },
+          },
+        }),
+        Highlight,
+        TextAlign.configure({ types: ["heading", "paragraph"] }),
+        Subscript,
+        Superscript,
+        TaskList,
+        TaskItem,
+      ],
       immediatelyRender: false,
       content: content?.html || "",
       onFocus({ editor }) {

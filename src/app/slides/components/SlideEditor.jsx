@@ -5,7 +5,6 @@ import SlidesSidebar from "./SlidesSidebar";
 import SlideCanvas from "./SlideCanvas";
 import { useEditorContext } from "./EditorContext";
 import lessonService from "@/services/lessonService";
-import { Redo, Undo } from "lucide-react";
 import { useSlides } from "../hooks/useSlides";
 import { useHistory } from "../hooks/useHistory";
 import { useEditorKeyboard } from "../hooks/useEditorKeyboard";
@@ -22,7 +21,7 @@ const SlideEditor = ({ lessonId }) => {
     addSlide,
     deleteSlide,
   } = useSlides();
-  const { setSlides, slidesHistory, undo, redo } = useHistory();
+  const { setSlides, slidesHistory } = useHistory();
   const { handleKeyDown } = useEditorKeyboard();
 
   const slides = useMemo(() => slidesHistory?.present || [], [slidesHistory]);
@@ -111,21 +110,6 @@ const SlideEditor = ({ lessonId }) => {
   return currentLesson ? (
     <div>
       <div style={{ display: "flex", height: "100vh" }}>
-        <div
-          style={{
-            position: "absolute",
-            top: "10px",
-            left: "280px",
-            zIndex: 200,
-          }}
-        >
-          <button onClick={undo} disabled={slidesHistory.past.length === 0}>
-            <Undo size={16} /> Undo
-          </button>
-          <button onClick={redo} disabled={slidesHistory.future.length === 0}>
-            <Redo size={16} /> Redo
-          </button>
-        </div>
         <SlidesSidebar
           slides={slides}
           setSlides={setSlides}

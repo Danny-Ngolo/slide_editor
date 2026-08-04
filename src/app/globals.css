@@ -38,3 +38,110 @@ a {
     color-scheme: dark;
   }
 }
+
+/* ---- Editor content (TipTap ProseMirror) ---- */
+
+.ProseMirror {
+  outline: none;
+  min-width: 0;
+  padding: 4px;
+  word-break: break-word;
+}
+
+.ProseMirror > *:first-child {
+  margin-top: 0;
+}
+
+.ProseMirror > *:last-child {
+  margin-bottom: 0;
+}
+
+.ProseMirror p {
+  margin: 0.5em 0;
+}
+
+/* Lists stay inside the block border */
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 24px;
+  margin: 0.5em 0;
+}
+
+.ProseMirror li > p {
+  margin: 0.2em 0;
+}
+
+/* Task list */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 4px;
+}
+
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label {
+  margin-right: 8px;
+  user-select: none;
+  flex-shrink: 0;
+  margin-top: 0.2em;
+}
+
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Block quote */
+.ProseMirror blockquote {
+  margin: 1em 0;
+  padding: 0.5em 0.9em;
+  border-left: 4px solid #8a8a8a;
+  border-radius: 4px;
+  background: rgba(128, 128, 128, 0.15);
+  font-style: italic;
+}
+
+.ProseMirror blockquote::before {
+  content: "\201C";
+  font-size: 1.6em;
+  line-height: 0.4;
+  vertical-align: -0.3em;
+  margin-right: 0.15em;
+  color: #8a8a8a;
+  font-family: Georgia, serif;
+}
+
+.ProseMirror blockquote p {
+  display: inline;
+}
+
+/* Code blocks */
+.ProseMirror pre {
+  background: #2d2d2d;
+  color: #f8f8f2;
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+  font-family: "Courier New", monospace;
+}
+
+.ProseMirror code {
+  background: rgba(128, 128, 128, 0.25);
+  border-radius: 3px;
+  padding: 0.1em 0.35em;
+  font-family: "Courier New", monospace;
+}
+
+.ProseMirror pre code {
+  background: transparent;
+  padding: 0;
+}
+
