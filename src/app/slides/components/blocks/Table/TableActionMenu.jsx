@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Copy, Trash2, Headset, Combine, Split, ClipboardPaste } from "lucide-react";
+import { Plus, Copy, Trash2, Headset, Combine, Split, ClipboardPaste, Eraser } from "lucide-react";
 
 import "./table.css";
 import { useTable } from "@/app/slides/hooks/useTable";
@@ -18,6 +18,7 @@ const TableActionMenu = ({ tableMenu, closeMenu }) => {
     toggleHeaderColumn,
     mergeSelectedCells,
     splitCell,
+    clearSelectedCells,
     copyCell,
     copyRow,
     copyColumn,
@@ -212,6 +213,19 @@ const TableActionMenu = ({ tableMenu, closeMenu }) => {
             }}
           >
             <Combine size={15} /> Merge Cells
+          </button>
+          <button
+            disabled={!selectedCells || selectedCells.size < 2}
+            style={{
+              opacity: !selectedCells || selectedCells.size < 2 ? 0.5 : 1,
+              cursor: !selectedCells || selectedCells.size < 2 ? "not-allowed" : "pointer",
+            }}
+            onClick={() => {
+              clearSelectedCells(slideId, blockId);
+              closeMenu();
+            }}
+          >
+            <Eraser size={15} /> Clear Cells
           </button>
           <button
             onClick={() => {

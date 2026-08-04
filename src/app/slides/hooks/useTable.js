@@ -117,6 +117,17 @@ export function useTable() {
 
     const slideId = findSlideByBlockId(block.id)?.id;
 
+    // Delete / Backspace: delegate to the table deletion dispatcher so a
+    // multi-cell selection is cleared, and a selected row/column is removed.
+    // stopPropagation keeps the global block delete handler from firing.
+    if (e.key === "Delete" || e.key === "Backspace") {
+      if (slideId && deleteTableSelection(slideId, block.id)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      return;
+    }
+
     if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "c") {
       e.preventDefault();
       e.stopPropagation();
@@ -855,6 +866,58 @@ export function useTable() {
     });
   };
 
+  // Clear the content (html) of every cell in the current cell selection.
+  const clearSelectedCells = (slideId, blockId) => {
+    if (!selectedCells || selectedCells.size === 0) return;
+
+    updateTable(
+      slideId,
+      blockId,
+      (block) => {
+        const newRows = block.content.rows.map((row) => ({
+          ...row,
+          cells: [...row.cells],
+        }));
+
+        selectedCells.forEach((coord) => {
+          const [r, c] = coord.split(",").map(Number);
+          const row = newRows[r];
+          if (!row || !row.cells[c]) return;
+          row.cells[c] = { ...row.cells[c], html: "<p></p>" };
+        });
+
+        return { ...block, content: { ...block.content, rows: newRows } };
+      },
+      { recordHistory: true },
+    );
+  };
+
+  // Deletion dispatcher used by the Delete/Backspace keys and the menu:
+  // - row selected → delete the row
+  // - column selected → delete the column
+  // - multi-cell selection → clear the cells' content
+  const deleteTableSelection = (slideId, blockId) => {
+    if (tableSelection?.blockId === blockId && tableSelection.type === "row") {
+      deleteRow(slideId, blockId, tableSelection.row);
+      clearTableSelection();
+      return true;
+    }
+    if (
+      tableSelection?.blockId === blockId &&
+      tableSelection.type === "column"
+    ) {
+      deleteColumn(slideId, blockId, tableSelection.column);
+      clearTableSelection();
+      return true;
+    }
+    if (selectedCells.size > 1) {
+      clearSelectedCells(slideId, blockId);
+      clearCellSelection();
+      return true;
+    }
+    return false;
+  };
+
   // ---------------------------------------------------------------------------
   // Table Clipboard (copy / paste cells, rows, columns)
   // ---------------------------------------------------------------------------
@@ -1141,6 +1204,9 @@ export function useTable() {
     clearCellSelection,
     mergeSelectedCells,
     splitCell,
+    // Deletion utilities
+    clearSelectedCells,
+    deleteTableSelection,
     // expose raw selected set for UI
     selectedCells,
     setSelectedCells,
