@@ -101,7 +101,7 @@ const TableBlock = ({ slideId, block }) => {
     document.addEventListener("click", handleClickOutside);
 
     return () => document.removeEventListener("click", handleClickOutside);
-  }, [tableMenu, tableSelection, block.id]);
+  }, [tableMenu, tableSelection, block.id, clearCellSelection, clearTableSelection, setTableMenu, tableMenuRef]);
 
   useEffect(() => {
     if (!tableResizeState) return;
@@ -117,14 +117,14 @@ const TableBlock = ({ slideId, block }) => {
       document.removeEventListener("mousemove", mouseMove);
       document.removeEventListener("mouseup", mouseUp);
     };
-  }, [tableResizeState, slideId, block]);
+  }, [tableResizeState, slideId, block, handleTableMouseMove, handleTableMouseUp]);
 
   // Global mouseup — ends drag selection even if the mouse is released outside any cell.
   // Always-on (no dependency on isSelecting) so we never miss a mouseup.
   useEffect(() => {
     document.addEventListener('mouseup', handleCellMouseUp);
     return () => document.removeEventListener('mouseup', handleCellMouseUp);
-  }, []);
+  }, [handleCellMouseUp]);
 
 
 

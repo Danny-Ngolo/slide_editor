@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import { DndContext, closestCenter } from "@dnd-kit/core";
 
@@ -21,10 +21,9 @@ import { useHistory } from "../hooks/useHistory";
 import TableActionMenu from "./blocks/Table/TableActionMenu";
 
 const SlideCanvas = ({ slide, slides }) => {
-  if (!slide) return null;
-
   const [showInsertMenu, setShowInsertMenu] = useState(false);
   const [insertMenuPos, setInsertMenuPos] = useState(null);
+  const closeInsertMenu = useCallback(() => setShowInsertMenu(false), [setShowInsertMenu]);
   const {
     setSelectedBlock,
     editorToolBarRef,
@@ -80,49 +79,7 @@ const SlideCanvas = ({ slide, slides }) => {
     );
   };
 
-  // useEffect(() => {
-  //   const closeTableMenu = () => setTableMenu(null);
-
-  //   const clearTableSelection = () => {
-  //     setTableSelection({
-  //       blockId: null,
-  //       type: null,
-  //       row: null,
-  //       column: null,
-  //     });
-  //   };
-
-  //   const handleClickOutside = (e) => {
-  //     const insideTable = tableRef.current?.contains(e.target);
-  //     const insideMenu = tableMenuRef.current?.contains(e.target);
-
-  //     console.log("insideMenu", insideMenu);
-  //     console.log("insideTable", insideTable);
-
-  //     if (insideMenu) {
-  //       console.log("inside menu");
-
-  //       return;
-  //     }
-
-  //     if (insideTable) {
-  //       console.log("inside table");
-  //       closeTableMenu();
-  //       return;
-  //     }
-
-  //     console.log("Inside nothing");
-
-  //     console.log("menu before close", tableMenu);
-
-  //     closeTableMenu();
-  //     clearTableSelection();
-  //   };
-
-  //   document.addEventListener("click", handleClickOutside);
-
-  //   return () => document.removeEventListener("click", handleClickOutside);
-  // }, [tableMenu]);
+  if (!slide) return null;
 
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -202,7 +159,7 @@ const SlideCanvas = ({ slide, slides }) => {
                 onSelect={(type, variant = undefined) => {
                   addBlock(slide.id, type, null, { variant });
                 }}
-                onClose={() => setShowInsertMenu(false)}
+                onClose={closeInsertMenu}
               />
             )}
 

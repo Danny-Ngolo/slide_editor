@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback } from "react";
 import { useEditorContext } from "../components/EditorContext";
 import { generateId } from "../utils/generateId";
 import { useHistory } from "./useHistory";
@@ -11,13 +11,16 @@ export function useSlides() {
   const { createTableBlock } = useTable();
   const slides = slidesHistory.present;
 
-  const initializeSlides = (slides) => {
-    setSlidesHistory((prev) => ({
-      past: [],
-      present: slides,
-      future: [],
-    }));
-  };
+  const initializeSlides = useCallback(
+    (slides) => {
+      setSlidesHistory((prev) => ({
+        past: [],
+        present: slides,
+        future: [],
+      }));
+    },
+    [setSlidesHistory],
+  );
 
   const addSlide = () => {
     const newSlide = {
@@ -37,13 +40,14 @@ export function useSlides() {
     }
   };
 
-  const recordActiveSlideId = (newActiveSlideId) => {
-    setRecordedActiveSlideId(newActiveSlideId);
-  };
+  const recordActiveSlideId = useCallback(
+    (newActiveSlideId) => {
+      setRecordedActiveSlideId(newActiveSlideId);
+    },
+    [setRecordedActiveSlideId],
+  );
 
   const addBlock = (slideId, type, index = null, initialContent) => {
-    console.log("adding a block...");
-
     const newBlock =
       type === "table"
         ? createTableBlock()
@@ -57,8 +61,6 @@ export function useSlides() {
     if (type === "callout" || (type === "text" && !newBlock.content.html)) {
       newBlock.content.html = "<p></p>";
     }
-
-    console.log("newBlock", newBlock);
 
     const updatedSlides = slides.map((slide) => {
       if (slide.id === slideId) {
@@ -82,36 +84,39 @@ export function useSlides() {
     setSlides(updatedSlides);
   };
 
-  const updateBlock = (slideId, blockId, newContent, options = {}) => {
-    const updatedSlides = slides.map((slide) => {
-      if (slide.id === slideId) {
-        const updatedBlocks = slide.blocks.map((block) => {
-          if (block.id === blockId)
-            return {
-              ...block,
-              content: newContent,
-            };
+  const updateBlock = useCallback(
+    (slideId, blockId, newContent, options = {}) => {
+      const updatedSlides = slides.map((slide) => {
+        if (slide.id === slideId) {
+          const updatedBlocks = slide.blocks.map((block) => {
+            if (block.id === blockId)
+              return {
+                ...block,
+                content: newContent,
+              };
 
-          return block;
-        });
+            return block;
+          });
 
-        return {
-          ...slide,
-          blocks: updatedBlocks,
-        };
+          return {
+            ...slide,
+            blocks: updatedBlocks,
+          };
+        }
+
+        return slide;
+      });
+
+      const { recordHistory } = options;
+
+      if (recordHistory) {
+        setSlides(updatedSlides);
+      } else {
+        setSlidesWithoutHistory(updatedSlides);
       }
-
-      return slide;
-    });
-
-    const { recordHistory } = options;
-
-    if (recordHistory) {
-      setSlides(updatedSlides);
-    } else {
-      setSlidesWithoutHistory(updatedSlides);
-    }
-  };
+    },
+    [slides, setSlides, setSlidesWithoutHistory],
+  );
 
   const replaceBlock = (slideId, blockId, newBlock) => {
     const updatedSlides = slides.map((slide) => {

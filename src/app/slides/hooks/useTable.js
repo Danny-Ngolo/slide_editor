@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { generateId } from "../utils/generateId";
 
 import { useHistory } from "./useHistory";
@@ -88,9 +89,9 @@ export function useTable() {
     }
   };
 
-  const handleCellMouseUp = () => {
+  const handleCellMouseUp = useCallback(() => {
     setIsSelecting(false);
-  };
+  }, [setIsSelecting]);
 
   // Right-click handler — opens TableActionMenu with type "cell" so
   // the Merge / Split buttons become accessible.
@@ -249,31 +250,29 @@ export function useTable() {
     return { id: generateId(), cells };
   };
 
-  const updateTable = (
-    slideId,
-    blockId,
-    updater,
-    { recordHistory = true } = {},
-  ) => {
-    const update = recordHistory ? setSlides : setSlidesWithoutHistory;
+  const updateTable = useCallback(
+    (slideId, blockId, updater, { recordHistory = true } = {}) => {
+      const update = recordHistory ? setSlides : setSlidesWithoutHistory;
 
-    update((slides) =>
-      slides.map((slide) => {
-        if (slide.id !== slideId) return slide;
+      update((slides) =>
+        slides.map((slide) => {
+          if (slide.id !== slideId) return slide;
 
-        return {
-          ...slide,
-          blocks: slide.blocks.map((block) => {
-            if (block.id !== blockId) return block;
+          return {
+            ...slide,
+            blocks: slide.blocks.map((block) => {
+              if (block.id !== blockId) return block;
 
-            const updatedBlock = updater(block);
+              const updatedBlock = updater(block);
 
-            return { ...updatedBlock };
-          }),
-        };
-      }),
-    );
-  };
+              return { ...updatedBlock };
+            }),
+          };
+        }),
+      );
+    },
+    [setSlides, setSlidesWithoutHistory],
+  );
 
   const updateCell = (slideId, blockId, rowIndex, columnIndex, newContent) => {
     updateTable(
@@ -504,14 +503,14 @@ export function useTable() {
     }
   };
 
-  const clearTableSelection = () => {
+  const clearTableSelection = useCallback(() => {
     setTableSelection({
       blockId: null,
       type: null,
       row: null,
       column: null,
     });
-  };
+  }, [setTableSelection]);
 
   const toggleHeaderColumn = ({ slideId, blockId, columnIndex }) => {
     updateTable(slideId, blockId, (block) => ({
@@ -559,8 +558,9 @@ export function useTable() {
     });
   };
 
-  const handleTableMouseMove = (e, slideId, block) => {
-    if (tableResizeState.type === "column") {
+  const handleTableMouseMove = useCallback(
+    (e, slideId, block) => {
+      if (tableResizeState.type === "column") {
       const delta = e.clientX - tableResizeState.startX;
 
       const newWidth = Math.max(
@@ -619,11 +619,13 @@ export function useTable() {
         },
       );
     }
-  };
+  },
+  [tableResizeState, updateTable, minColumnWidth, minRowHeight],
+);
 
-  const handleTableMouseUp = () => {
+  const handleTableMouseUp = useCallback(() => {
     setTableResizeState(null);
-  };
+  }, [setTableResizeState]);
 
   const moveRow = (slideId, blockId, fromIndex, toIndex) => {
     updateTable(
@@ -785,10 +787,10 @@ export function useTable() {
     });
   };
 
-  const clearCellSelection = () => {
+  const clearCellSelection = useCallback(() => {
     setSelectedCells(new Set());
     setSelectionAnchor(null);
-  };
+  }, [setSelectedCells, setSelectionAnchor]);
 
   const mergeSelectedCells = (slideId, blockId) => {
     const cellsArray = Array.from(selectedCells).map((str) => {

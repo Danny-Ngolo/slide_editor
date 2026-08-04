@@ -16,14 +16,14 @@ const TableCell = ({
   updateCell,
   block,
 }) => {
-  const { updateEditorState, initEditor, updateEditorUI } = useRichTextEditor();
+  const { updateEditorState, useInitEditor, updateEditorUI } = useRichTextEditor();
 
   const { registerEditor, unregisterEditor, focusEditor, tableSelection } =
     useEditorContext();
 
   const { handleCellMouseDown, handleCellMouseEnter, handleCellMouseUp, handleCellKeyDown } = useTable();
 
-  const editor = initEditor({
+  const editor = useInitEditor({
     slideId,
     blockId,
     content: {
@@ -55,7 +55,7 @@ const TableCell = ({
     return () => {
       editor.off("selectionUpdate", editorHandler);
     };
-  }, [editor]);
+  }, [editor, updateEditorState]);
 
   useEffect(() => {
     if (!editor) return;
@@ -65,11 +65,11 @@ const TableCell = ({
     return () => {
       unregisterEditor(cell.id);
     };
-  }, [editor, cell.id]);
+  }, [editor, cell.id, registerEditor, unregisterEditor]);
 
   useEffect(() => {
     updateEditorUI(editor, { html: cell?.html });
-  }, [editor, cell.html]);
+  }, [editor, cell.html, updateEditorUI]);
 
   if (!editor) return null;
 

@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useEditorContext } from "../components/EditorContext";
 import { cloneBlock } from "../utils/cloneBlock";
 import { generateId } from "../utils/generateId";
@@ -88,7 +89,7 @@ export function useClipboard() {
     });
   };
 
-  const deleteSelectedBlocks = () => {
+  const deleteSelectedBlocks = useCallback(() => {
     if (selectedBlocks.length === 0) return;
 
     if (confirm("Do you really want to delete the selected blocks ?")) {
@@ -108,9 +109,9 @@ export function useClipboard() {
 
       setSelectedBlocks([]);
     }
-  };
+  }, [selectedBlocks, setSlides, setSelectedBlocks]);
 
-  const copySelectedBlocks = () => {
+  const copySelectedBlocks = useCallback(() => {
     const blocksToCopy = [];
 
     slides.forEach((slide) => {
@@ -126,21 +127,14 @@ export function useClipboard() {
     });
 
     setCopiedBlocks(blocksToCopy);
-  };
+  }, [slides, selectedBlocks, setCopiedBlocks]);
 
-  const pasteBlocks = () => {
+  const pasteBlocks = useCallback(() => {
     if (copiedBlocks.length === 0) return;
 
     setSlides((prev) =>
       prev.map((slide) => {
-        console.log(
-          slide.id,
-          recordedActiveSlideId,
-          slide.id === recordedActiveSlideId,
-        );
         if (slide.id !== recordedActiveSlideId) return slide;
-
-        console.log("found match");
 
         return {
           ...slide,
@@ -154,9 +148,9 @@ export function useClipboard() {
         };
       }),
     );
-  };
+  }, [copiedBlocks, recordedActiveSlideId, setSlides]);
 
-  const duplicateSelectedBlocks = () => {
+  const duplicateSelectedBlocks = useCallback(() => {
     const blocksToDuplicate = [];
 
     slides.forEach((slide) => {
@@ -189,7 +183,7 @@ export function useClipboard() {
         };
       }),
     );
-  };
+  }, [slides, selectedBlocks, setSlides]);
 
   return {
     copyBlock,

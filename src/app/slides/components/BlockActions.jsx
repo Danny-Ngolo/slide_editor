@@ -34,7 +34,7 @@ const BlockActions = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [setShowActions]);
 
   return (
     <div

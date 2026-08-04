@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SlidesSidebar from "./SlidesSidebar";
 import SlideCanvas from "./SlideCanvas";
 import { useEditorContext } from "./EditorContext";
@@ -9,7 +9,6 @@ import { Redo, Undo } from "lucide-react";
 import { useSlides } from "../hooks/useSlides";
 import { useHistory } from "../hooks/useHistory";
 import { useClipboard } from "../hooks/useClipboard";
-import { generateId } from "../utils/generateId";
 
 const SlideEditor = ({ lessonId }) => {
   const [isDataAlreadyFetched, setIsDataAlreadyFetched] = useState(false);
@@ -19,7 +18,7 @@ const SlideEditor = ({ lessonId }) => {
     activeEditor,
     selectedBlocks,
     copiedBlocks,
-    isUndoRedo,
+    isUndoRedoRef,
   } = useEditorContext();
 
   const {
@@ -37,12 +36,13 @@ const SlideEditor = ({ lessonId }) => {
     pasteBlocks,
   } = useClipboard();
 
-  let slides = slidesHistory?.present || [];
-  const [activeSlideId, setActiveSlideId] = useState(slides[0]?.id);
+  const slides = useMemo(() => slidesHistory?.present || [], [slidesHistory]);
+  const [activeSlideId, setActiveSlideId] = useState(null);
+  const effectiveActiveSlideId = activeSlideId ?? slides[0]?.id;
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
   const saveTimeoutRef = useRef(null);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       setSaveStatus("saving");
 
@@ -57,7 +57,7 @@ const SlideEditor = ({ lessonId }) => {
       console.error(err);
       setSaveStatus("error");
     }
-  };
+  }, [slides, lessonId]);
 
   const handleManualSave = async () => {
     if (saveTimeoutRef.current) {
@@ -78,13 +78,13 @@ const SlideEditor = ({ lessonId }) => {
       if (e.ctrlKey && key === "z") {
         e.preventDefault();
 
-        undo(isUndoRedo);
+        undo(isUndoRedoRef);
       }
 
       if (e.ctrlKey && key === "y") {
         e.preventDefault();
 
-        redo(isUndoRedo);
+        redo(isUndoRedoRef);
       }
 
       // NEW IMPLEMENTATION
@@ -114,7 +114,20 @@ const SlideEditor = ({ lessonId }) => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activeEditor, selectedBlock, selectedBlocks, copiedBlocks, slides]);
+  }, [
+    activeEditor,
+    selectedBlock,
+    selectedBlocks,
+    copiedBlocks,
+    slides,
+    copySelectedBlocks,
+    deleteSelectedBlocks,
+    duplicateSelectedBlocks,
+    isUndoRedoRef,
+    pasteBlocks,
+    redo,
+    undo,
+  ]);
 
   useEffect(() => {
     const loadLesson = async () => {
@@ -130,19 +143,13 @@ const SlideEditor = ({ lessonId }) => {
     };
 
     loadLesson();
-  }, [lessonId]);
+  }, [lessonId, initializeSlides]);
 
   useEffect(() => {
     if (!isDataAlreadyFetched) return;
 
-    // initialize the active slideId so that we don't get empty at the start
-
-    if (slides.length && !activeSlideId) {
-      setActiveSlideId(slides[0].id);
-    }
-
-    if (isUndoRedo.current === true) {
-      isUndoRedo.current = false;
+    if (isUndoRedoRef.current === true) {
+      isUndoRedoRef.current = false;
 
       return;
     }
@@ -156,13 +163,15 @@ const SlideEditor = ({ lessonId }) => {
     }, 2000);
 
     return () => clearTimeout(saveTimeoutRef);
-  }, [slides]);
+  }, [slides, handleSave, isDataAlreadyFetched, isUndoRedoRef]);
 
   useEffect(() => {
-    recordActiveSlideId(activeSlideId);
-  }, [activeSlideId]);
+    recordActiveSlideId(effectiveActiveSlideId);
+  }, [effectiveActiveSlideId, recordActiveSlideId]);
 
-  const activeSlide = slides.find((slide) => slide.id === activeSlideId);
+  const activeSlide = slides.find(
+    (slide) => slide.id === effectiveActiveSlideId,
+  );
 
   return currentLesson ? (
     <div>
@@ -185,7 +194,7 @@ const SlideEditor = ({ lessonId }) => {
         <SlidesSidebar
           slides={slides}
           setSlides={setSlides}
-          activeSlideId={activeSlideId}
+          activeSlideId={effectiveActiveSlideId}
           setActiveSlideId={setActiveSlideId}
           addSlide={addSlide}
           deleteSlide={deleteSlide}

@@ -35,7 +35,7 @@ const InsertMenu = ({ onSelect, onClose }) => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscapeKey);
     };
-  }, []);
+  }, [onClose]);
 
   useEffect(() => {
     const prev = prevIndexRef.current;

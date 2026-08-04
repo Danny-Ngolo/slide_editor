@@ -1,7 +1,7 @@
 import Highlight from "@tiptap/extension-highlight";
-import Underline from "@tiptap/extension-underline";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { useCallback } from "react";
 import { useEditorContext } from "../components/EditorContext";
 import { useSlides } from "./useSlides";
 import { useSlashMenu } from "./useSlashMenu";
@@ -27,7 +27,7 @@ export function useRichTextEditor() {
 
   const { focusAdjacentCell } = useTable();
 
-  const getEditorState = (editor) => {
+  const getEditorState = useCallback((editor) => {
     if (!editor) return {};
 
     return {
@@ -42,11 +42,14 @@ export function useRichTextEditor() {
       highlight: editor.isActive("highlight"),
       underline: editor.isActive("underline"),
     };
-  };
+  }, []);
 
-  const updateEditorState = (editor) => {
-    setEditorState(getEditorState(editor));
-  };
+  const updateEditorState = useCallback(
+    (editor) => {
+      setEditorState(getEditorState(editor));
+    },
+    [getEditorState, setEditorState],
+  );
 
   const handleTableKeyDown = ({
     event,
@@ -137,7 +140,7 @@ export function useRichTextEditor() {
     }
   };
 
-  const initEditor = ({
+  const useInitEditor = ({
     slideId,
     blockId,
     blockType,
@@ -148,7 +151,7 @@ export function useRichTextEditor() {
     columnIndex,
   }) => {
     const editor = useEditor({
-      extensions: [StarterKit, Underline, Highlight],
+      extensions: [StarterKit, Highlight],
       immediatelyRender: false,
       content: content?.html || "",
       onFocus({ editor }) {
@@ -268,7 +271,7 @@ export function useRichTextEditor() {
     return editor;
   };
 
-  const updateEditorUI = (editor, content = {}) => {
+  const updateEditorUI = useCallback((editor, content = {}) => {
     if (!editor) return;
 
     const blockHtml = content?.html;
@@ -277,12 +280,12 @@ export function useRichTextEditor() {
     if (blockHtml !== currentHtml) {
       editor.commands.setContent(content?.html);
     }
-  };
+  }, []);
 
   return {
     getEditorState,
     updateEditorState,
-    initEditor,
+    useInitEditor,
     updateEditorUI,
   };
 }

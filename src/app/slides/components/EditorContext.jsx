@@ -1,5 +1,6 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -38,7 +39,7 @@ const EditorProvider = ({ children }) => {
   });
   const [selectedBlockIndex, setSelectedBlockIndex] = useState(0);
   const [slashRange, setSlashRange] = useState(null);
-  const isUndoRedo = useRef(false);
+  const isUndoRedoRef = useRef(false);
 
   const [filteredItems, setFilteredItems] = useState([]);
 
@@ -67,19 +68,19 @@ const EditorProvider = ({ children }) => {
 
   const cellEditors = useRef({});
 
-  const registerEditor = (cellId, editor) => {
+  const registerEditor = useCallback((cellId, editor) => {
     if (!cellId || !editor) return;
 
     cellEditors.current[cellId] = editor;
-  };
+  }, []);
 
-  const unregisterEditor = (cellId) => {
+  const unregisterEditor = useCallback((cellId) => {
     delete cellEditors.current[cellId];
-  };
+  }, []);
 
-  const focusEditor = (cellId) => {
+  const focusEditor = useCallback((cellId) => {
     cellEditors.current[cellId]?.commands?.focus();
-  };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -121,7 +122,7 @@ const EditorProvider = ({ children }) => {
         setCopiedBlock,
         activeEditorRef,
         editorToolBarRef,
-        isUndoRedo,
+        isUndoRedoRef,
         showSlashMenu,
         setShowSlashMenu,
         slashQuery,

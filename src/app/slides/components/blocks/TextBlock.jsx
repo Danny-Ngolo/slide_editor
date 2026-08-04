@@ -1,7 +1,7 @@
 "use client";
 
 import InsertMenu from "../InsertMenu";
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { EditorContent } from "@tiptap/react";
 
 import { useEditorContext } from "../EditorContext";
@@ -25,11 +25,16 @@ const TextBlock = ({ block, slideId }) => {
     setFilteredItems,
   } = useEditorContext();
 
-  const { updateEditorState, initEditor, updateEditorUI } = useRichTextEditor();
+  const { updateEditorState, useInitEditor, updateEditorUI } = useRichTextEditor();
 
   const { handleDirectionKey, handleSlashSelect } = useSlashMenu();
 
-  const editor = initEditor({
+  const closeSlashMenu = useCallback(
+    () => setShowSlashMenu(false),
+    [setShowSlashMenu],
+  );
+
+  const editor = useInitEditor({
     slideId,
     blockId: block.id,
     content: block.content,
@@ -45,18 +50,18 @@ const TextBlock = ({ block, slideId }) => {
     return () => {
       editor.off("selectionUpdate", editorHandler);
     };
-  }, [editor]);
+  }, [editor, updateEditorState]);
 
   useEffect(() => {
     updateEditorUI(editor, block?.content);
-  }, [editor, block.content]);
+  }, [editor, block.content, updateEditorUI]);
 
   useEffect(() => {
     const filteredBlocks = filterBlocks(blocks_groups, slashQuery);
     const filtered = flattenBlocks(filteredBlocks);
 
     setFilteredItems(filtered);
-  }, [showSlashMenu, slashQuery]);
+  }, [showSlashMenu, slashQuery, setFilteredItems]);
 
   useEffect(() => {
     document.addEventListener("keydown", handleDirectionKey);
@@ -64,7 +69,7 @@ const TextBlock = ({ block, slideId }) => {
     return () => {
       document.removeEventListener("keydown", handleDirectionKey);
     };
-  }, [showSlashMenu, filteredItems, selectedBlockIndex]);
+  }, [showSlashMenu, filteredItems, selectedBlockIndex, handleDirectionKey]);
 
   if (!editor) return null;
 
@@ -78,7 +83,7 @@ const TextBlock = ({ block, slideId }) => {
             onSelect={(type, variant = undefined) => {
               handleSlashSelect(editor, slideId, slashRange, type, variant);
             }}
-            onClose={() => setShowSlashMenu(false)}
+            onClose={closeSlashMenu}
           />
         </div>
       )}

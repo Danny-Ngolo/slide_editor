@@ -1,7 +1,7 @@
 "use client";
 
 import { Trash } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSlides } from "../../hooks/useSlides";
 
 const ImageBlock = ({ block, slideId }) => {
@@ -27,7 +27,7 @@ const ImageBlock = ({ block, slideId }) => {
     isResizing.current = true;
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = useCallback((e) => {
     if (!isResizing.current) return;
 
     const rect = e.target.parentElement.getBoundingClientRect();
@@ -35,18 +35,21 @@ const ImageBlock = ({ block, slideId }) => {
     const newWidth = e.clientX - rect.left;
 
     setImageWith(newWidth);
-  };
+  }, []);
 
-  const handleMouseUp = (e) => {
-    if (isResizing.current) {
-      isResizing.current = false;
+  const handleMouseUp = useCallback(
+    (e) => {
+      if (isResizing.current) {
+        isResizing.current = false;
 
-      updateBlock(slideId, block.id, {
-        ...block.content,
-        width: imageWidth,
-      });
-    }
-  };
+        updateBlock(slideId, block.id, {
+          ...block.content,
+          width: imageWidth,
+        });
+      }
+    },
+    [imageWidth, updateBlock, slideId, block.id, block.content],
+  );
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -86,7 +89,7 @@ const ImageBlock = ({ block, slideId }) => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [imageWidth]);
+  }, [imageWidth, handleMouseMove, handleMouseUp]);
 
   return (
     <div

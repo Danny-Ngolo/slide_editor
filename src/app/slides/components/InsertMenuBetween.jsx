@@ -1,11 +1,12 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import InsertMenu from "./InsertMenu";
 
 const InsertMenuBetween = ({ onInsert }) => {
   const [showInsertMenu, setShowInsertMenu] = useState(false);
+  const handleClose = useCallback(() => setShowInsertMenu(false), [setShowInsertMenu]);
 
   return (
     <div
@@ -56,7 +57,7 @@ const InsertMenuBetween = ({ onInsert }) => {
             onInsert(type, variant);
             setShowInsertMenu(false);
           }}
-          onClose={() => setShowInsertMenu(false)}
+          onClose={handleClose}
         />
       )}
     </div>

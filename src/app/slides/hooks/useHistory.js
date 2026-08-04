@@ -1,69 +1,82 @@
+import { useCallback } from "react";
 import { useEditorContext } from "../components/EditorContext";
 
 export function useHistory() {
   const { slidesHistory, setSlidesHistory } = useEditorContext();
 
-  const setSlides = (value) => {
-    const MAX_HISTORY = 50;
+  const setSlides = useCallback(
+    (value) => {
+      const MAX_HISTORY = 50;
 
-    setSlidesHistory((prev) => {
-      const newSlides =
-        typeof value === "function" ? value(prev.present) : value;
+      setSlidesHistory((prev) => {
+        const newSlides =
+          typeof value === "function" ? value(prev.present) : value;
 
-      // Avoid duplication of history or unnecessary updates
+        // Avoid duplication of history or unnecessary updates
 
-      if (JSON.stringify(prev.present) === JSON.stringify(newSlides)) {
-        return prev;
-      }
+        if (JSON.stringify(prev.present) === JSON.stringify(newSlides)) {
+          return prev;
+        }
 
-      return {
-        past: [...prev.past, prev.present].slice(-MAX_HISTORY), // takes the 50 newest updates,
-        present: newSlides,
-        future: [], // clear redo stack
-      };
-    });
-  };
+        return {
+          past: [...prev.past, prev.present].slice(-MAX_HISTORY), // takes the 50 newest updates,
+          present: newSlides,
+          future: [], // clear redo stack
+        };
+      });
+    },
+    [setSlidesHistory],
+  );
 
-  const setSlidesWithoutHistory = (value) => {
-    setSlidesHistory((prev) => ({
-      ...prev,
-      present: typeof value === "function" ? value(prev.present) : value,
-    }));
-  };
+  const setSlidesWithoutHistory = useCallback(
+    (value) => {
+      setSlidesHistory((prev) => ({
+        ...prev,
+        present: typeof value === "function" ? value(prev.present) : value,
+      }));
+    },
+    [setSlidesHistory],
+  );
 
-  const undo = (isUndoRedo) => {
-    isUndoRedo.current = true;
+  const undo = useCallback(
+    (isUndoRedoRef) => {
+      isUndoRedoRef.current = true;
 
-    setSlidesHistory((prev) => {
-      if (prev?.past?.length === 0) return prev;
+      setSlidesHistory((prev) => {
+        if (prev?.past?.length === 0) return prev;
 
-      // the last set in past goes to present and the present set goes to the future
+        // the last set in past goes to present and the present set goes to the future
 
-      const previous = prev.past[prev.past.length - 1];
+        const previous = prev.past[prev.past.length - 1];
 
-      return {
-        past: prev.past.slice(0, -1),
-        present: previous,
-        future: [prev.present, ...prev.future],
-      };
-    });
-  };
+        return {
+          past: prev.past.slice(0, -1),
+          present: previous,
+          future: [prev.present, ...prev.future],
+        };
+      });
+    },
+    [setSlidesHistory],
+  );
 
-  const redo = (isUndoRedo) => {
-    isUndoRedo.current = true;
+  const redo = useCallback(
+    (isUndoRedoRef) => {
+      isUndoRedoRef.current = true;
 
-    setSlidesHistory((prev) => {
-      if (prev.future.length === 0) return prev;
+      setSlidesHistory((prev) => {
+        if (prev.future.length === 0) return prev;
 
-      const next = prev.future[0];
+        const next = prev.future[0];
 
-      return {
-        past: [...prev.past, prev.present],
-        present: next,
-        future: prev.future.slice(1),
-      };
-    });
-  };
+        return {
+          past: [...prev.past, prev.present],
+          present: next,
+          future: prev.future.slice(1),
+        };
+      });
+    },
+    [setSlidesHistory],
+  );
 
   return { setSlides, slidesHistory, setSlidesWithoutHistory, undo, redo };
 }
