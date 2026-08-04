@@ -20,40 +20,40 @@ The objective is not only to add features, but to create a reusable editing infr
 
 ## Slide System
 
-* [x] Lesson loading and initialization
-* [x] Slide creation
-* [x] Slide deletion
-* [x] Slide duplication
-* [x] Slide navigation sidebar
-* [x] Slide ordering
+- [x] Lesson loading and initialization
+- [x] Slide creation
+- [x] Slide deletion
+- [x] Slide duplication
+- [x] Slide navigation sidebar
+- [x] Slide ordering
 
 ---
 
 ## Block Architecture
 
-* [x] Block-based content model
-* [x] Central BlockRenderer dispatcher
-* [x] Block insertion system
-* [x] Block deletion
-* [x] Block duplication
-* [x] Block selection
-* [x] Multi-block selection
-* [x] Block drag-and-drop ordering
+- [x] Block-based content model
+- [x] Central BlockRenderer dispatcher
+- [x] Block insertion system
+- [x] Block deletion
+- [x] Block duplication
+- [x] Block selection
+- [x] Multi-block selection
+- [x] Block drag-and-drop ordering
 
 Implemented block types:
 
-* [x] Text block
-* [x] Image block
-* [x] YouTube block
-* [x] Callout block
+- [x] Text block
+- [x] Image block
+- [x] YouTube block
+- [x] Callout block
+  - Definition
+  - Tip
+  - Warning
+  - Example
 
-  * Definition
-  * Tip
-  * Warning
-  * Example
-* [x] Divider block
-* [x] Table block foundation
-* [x] Quiz block placeholder
+- [x] Divider block
+- [x] Table block foundation
+- [x] Quiz block placeholder
 
 ---
 
@@ -61,48 +61,48 @@ Implemented block types:
 
 ## Tiptap Integration
 
-* [x] Tiptap editor initialization
-* [x] Shared rich-text editor hook
-* [x] Editor registration system
-* [x] Active editor tracking
-* [x] Formatting synchronization
+- [x] Tiptap editor initialization
+- [x] Shared rich-text editor hook
+- [x] Editor registration system
+- [x] Active editor tracking
+- [x] Formatting synchronization
 
 Supported formatting:
 
-* [x] Bold
-* [x] Italic
-* [x] Underline
-* [x] Highlight
-* [x] Lists
-* [x] Basic text formatting
+- [x] Bold
+- [x] Italic
+- [x] Underline
+- [x] Highlight
+- [x] Lists
+- [x] Basic text formatting
 
 ---
 
 ## Unified Toolbar
 
-* [x] Global editor toolbar
-* [x] Toolbar connected to active editor
-* [x] Shared formatting behavior across rich-text blocks
+- [x] Global editor toolbar
+- [x] Toolbar connected to active editor
+- [x] Shared formatting behavior across rich-text blocks
 
 Future improvements:
 
-* [ ] Floating selection toolbar
-* [ ] Context-aware toolbar actions
-* [ ] Block-specific formatting controls
+- [ ] Floating selection toolbar
+- [ ] Context-aware toolbar actions
+- [ ] Block-specific formatting controls
 
 ---
 
 ## Slash Command System
 
-* [x] `/` command detection
-* [x] Block insertion from slash menu
-* [x] Dynamic block creation
+- [x] `/` command detection
+- [x] Block insertion from slash menu
+- [x] Dynamic block creation
 
 Future improvements:
 
-* [ ] More slash commands
-* [ ] AI commands
-* [ ] Content transformation commands
+- [ ] More slash commands
+- [ ] AI commands
+- [ ] Content transformation commands
 
 ---
 
@@ -110,37 +110,37 @@ Future improvements:
 
 ## History System
 
-* [x] Undo
-* [x] Redo
-* [x] History stack
-* [x] History limit management
-* [x] Separate updates with and without history recording
+- [x] Undo
+- [x] Redo
+- [x] History stack
+- [x] History limit management
+- [x] Separate updates with and without history recording
 
 Future improvements:
 
-* [ ] Granular history per subsystem
-* [ ] Rich-text native undo integration
-* [ ] Version snapshots
+- [ ] Granular history per subsystem
+- [ ] Rich-text native undo integration
+- [ ] Version snapshots
 
 ---
 
 ## Persistence
 
-* [x] MongoDB integration
-* [x] Lesson API routes
-* [x] Client service layer
-* [x] Debounced autosave
-* [x] Save status indicator
+- [x] MongoDB integration
+- [x] Lesson API routes
+- [x] Client service layer
+- [x] Debounced autosave
+- [x] Save status indicator
 
 Future improvements:
 
-* [ ] Partial document updates
-* [ ] Better offline support
-* [ ] Conflict resolution
+- [ ] Partial document updates
+- [ ] Better offline support
+- [ ] Conflict resolution
 
 ---
 
-# Phase 4 — Table Editor V1+ 🚧 CURRENT DEVELOPMENT
+# Phase 4 — Table Editor V1+ ✅
 
 The table system is treated as an independent advanced editor inside the editor.
 
@@ -148,93 +148,93 @@ The table system is treated as an independent advanced editor inside the editor.
 
 ## Table Foundation ✅
 
-* [x] Table block
-* [x] Dynamic rows
-* [x] Dynamic columns
-* [x] Add row
-* [x] Delete row
-* [x] Duplicate row
-* [x] Add column
-* [x] Delete column
-* [x] Duplicate column
-* [x] Row reordering
-* [x] Column reordering
-* [x] Row resizing
-* [x] Column resizing
-* [x] Table contextual menu
+- [x] Table block
+- [x] Dynamic rows
+- [x] Dynamic columns
+- [x] Add row
+- [x] Delete row
+- [x] Duplicate row
+- [x] Add column
+- [x] Delete column
+- [x] Duplicate column
+- [x] Row reordering
+- [x] Column reordering
+- [x] Row resizing
+- [x] Column resizing
+- [x] Table contextual menu
 
 ---
 
 ## Cell Editing ✅
 
-* [x] Individual Tiptap editor per cell
-* [x] Cell editor registry
-* [x] Keyboard navigation
-* [x] Arrow navigation
-* [x] Tab navigation
-* [x] Enter navigation
+- [x] Individual Tiptap editor per cell
+- [x] Cell editor registry
+- [x] Keyboard navigation
+- [x] Arrow navigation
+- [x] Tab navigation
+- [x] Enter navigation
 
 ---
 
-## Table V1 Completion
+## Table V1 Completion ✅
 
-* [ ] Cell selection
-* [ ] Active cell highlighting
-* [ ] Row selection improvements
-* [ ] Column selection improvements
-* [ ] Table keyboard shortcuts
-* [ ] Delete behavior depending on selection type
+- [ ] Cell selection
+- [ ] Active cell highlighting
+- [ ] Row selection improvements
+- [ ] Column selection improvements
+- [ ] Table keyboard shortcuts
+- [ ] Delete behavior depending on selection type
 
 ---
 
-## Table Advanced Features
+## Table Advanced Features ✅
 
-* [ ] Internal table clipboard
+- [ ] Internal table clipboard
 
 Supported operations:
 
-* copy cell
-* copy row
-* copy column
-* paste cell
-* paste row
-* paste column
+- copy cell
+- copy row
+- copy column
+- paste cell
+- paste row
+- paste column
 
 ---
 
-* [ ] Multi-cell selection
+- [ ] Multi-cell selection
 
 Features:
 
-* rectangular selection
-* Shift + click selection
-* selection visualization
-* selection actions
+- rectangular selection
+- Shift + click selection
+- selection visualization
+- selection actions
 
 ---
 
-* [ ] Merge cells
+- [ ] Merge cells
 
 Requirements:
 
-* rectangular selection validation
-* rowspan support
-* colspan support
-* hidden covered cells
+- rectangular selection validation
+- rowspan support
+- colspan support
+- hidden covered cells
 
 ---
 
-* [ ] Split cells
+- [ ] Split cells
 
 Requirements:
 
-* restore original matrix
-* remove spans
-* recreate missing cells
+- restore original matrix
+- remove spans
+- recreate missing cells
 
 ---
 
-# Phase 5 — Block Transformation System
+# Phase 5 — Block Transformation System ✅
 
 ## "Turn Into" Feature
 
@@ -258,15 +258,15 @@ Callout
 
 Implementation:
 
-* [ ] Central BLOCK_TYPES registry
-* [ ] replaceBlock utility
-* [ ] transformBlock utility
-* [ ] Preserve HTML/content during transformation
-* [ ] Transformation menu
+- [ ] Central BLOCK_TYPES registry
+- [ ] replaceBlock utility
+- [ ] transformBlock utility
+- [ ] Preserve HTML/content during transformation
+- [ ] Transformation menu
 
 ---
 
-# Phase 6 — Advanced Block System
+# Phase 6 — Advanced Block System 🚧 CURRENT MILESTONE
 
 ## Educational Content Blocks
 
@@ -276,42 +276,42 @@ New block types:
 
 ## Quiz Block
 
-* [ ] Multiple choice questions
-* [ ] True/false questions
-* [ ] Answer validation
-* [ ] Student results tracking
+- [ ] Multiple choice questions
+- [ ] True/false questions
+- [ ] Answer validation
+- [ ] Student results tracking
 
 ---
 
 ## Exercise Block
 
-* [ ] Practical exercises
-* [ ] Student submissions
-* [ ] Teacher feedback
+- [ ] Practical exercises
+- [ ] Student submissions
+- [ ] Teacher feedback
 
 ---
 
 ## Code Block
 
-* [ ] Syntax highlighting
-* [ ] Code formatting
-* [ ] Programming lessons support
+- [ ] Syntax highlighting
+- [ ] Code formatting
+- [ ] Programming lessons support
 
 ---
 
 ## Flashcard Block
 
-* [ ] Question/answer cards
-* [ ] Study mode
-* [ ] Review tracking
+- [ ] Question/answer cards
+- [ ] Study mode
+- [ ] Review tracking
 
 ---
 
 ## Equation / Math Block
 
-* [ ] Mathematical expressions
-* [ ] LaTeX support
-* [ ] Scientific content support
+- [ ] Mathematical expressions
+- [ ] LaTeX support
+- [ ] Scientific content support
 
 ---
 
@@ -319,20 +319,20 @@ New block types:
 
 ## Navigation
 
-* [ ] Move blocks between slides
-* [ ] Drag blocks across slides
-* [ ] Slide duplication improvements
-* [ ] Better keyboard navigation
+- [ ] Move blocks between slides
+- [ ] Drag blocks across slides
+- [ ] Slide duplication improvements
+- [ ] Better keyboard navigation
 
 ---
 
 ## Content Management
 
-* [ ] Nested lists
-* [ ] Block comments
-* [ ] Mentions
-* [ ] Block references
-* [ ] Reusable blocks
+- [ ] Nested lists
+- [ ] Block comments
+- [ ] Mentions
+- [ ] Block references
+- [ ] Reusable blocks
 
 ---
 
@@ -340,14 +340,14 @@ New block types:
 
 Current:
 
-* [x] Basic block clipboard
+- [x] Basic block clipboard
 
 Future:
 
-* [ ] Cross-slide copy/paste
-* [ ] Table clipboard
-* [ ] Multi-block clipboard
-* [ ] External paste support
+- [ ] Cross-slide copy/paste
+- [ ] Table clipboard
+- [ ] Multi-block clipboard
+- [ ] External paste support
 
 ---
 
@@ -355,7 +355,7 @@ Future:
 
 ## Lesson Management
 
-* [ ] Dynamic lesson routing
+- [ ] Dynamic lesson routing
 
 Current:
 
@@ -371,25 +371,25 @@ Future:
 
 ---
 
-* [ ] Lesson dashboard
-* [ ] Create lessons
-* [ ] Search lessons
-* [ ] Organize lessons
+- [ ] Lesson dashboard
+- [ ] Create lessons
+- [ ] Search lessons
+- [ ] Organize lessons
 
 ---
 
 ## Asset Management
 
-* [ ] Cloud image storage
-* [ ] Image uploading
-* [ ] Drag-and-drop uploads
-* [ ] Media library
+- [ ] Cloud image storage
+- [ ] Image uploading
+- [ ] Drag-and-drop uploads
+- [ ] Media library
 
 Possible storage:
 
-* Cloudinary
-* Vercel Blob
-* S3
+- Cloudinary
+- Vercel Blob
+- S3
 
 ---
 
@@ -401,21 +401,21 @@ Future capabilities:
 
 ## AI Content Creation
 
-* [ ] Generate lesson sections
-* [ ] Generate explanations
-* [ ] Generate exercises
-* [ ] Generate quizzes
-* [ ] Improve teacher content
+- [ ] Generate lesson sections
+- [ ] Generate explanations
+- [ ] Generate exercises
+- [ ] Generate quizzes
+- [ ] Improve teacher content
 
 ---
 
 ## AI Editing Assistance
 
-* [ ] Rewrite selected text
-* [ ] Summarize content
-* [ ] Change difficulty level
-* [ ] Translate content
-* [ ] Generate examples
+- [ ] Rewrite selected text
+- [ ] Summarize content
+- [ ] Change difficulty level
+- [ ] Translate content
+- [ ] Generate examples
 
 ---
 
@@ -431,11 +431,11 @@ AI:
 
 Creates:
 
-* slides
-* explanations
-* diagrams
-* exercises
-* quizzes
+- slides
+- explanations
+- diagrams
+- exercises
+- quizzes
 
 ---
 
@@ -445,28 +445,28 @@ Future long-term evolution:
 
 ## Collaboration
 
-* [ ] Real-time editing
-* [ ] Multiple teachers editing
-* [ ] Student collaboration
-* [ ] Presence indicators
+- [ ] Real-time editing
+- [ ] Multiple teachers editing
+- [ ] Student collaboration
+- [ ] Presence indicators
 
 ---
 
 ## Document Intelligence
 
-* [ ] Version history
-* [ ] Comments
-* [ ] Review workflow
-* [ ] Content analytics
+- [ ] Version history
+- [ ] Comments
+- [ ] Review workflow
+- [ ] Content analytics
 
 ---
 
 ## Mobile Experience
 
-* [ ] Touch-friendly editing
-* [ ] Mobile toolbar
-* [ ] Touch selection
-* [ ] Mobile drag-and-drop
+- [ ] Touch-friendly editing
+- [ ] Mobile toolbar
+- [ ] Touch selection
+- [ ] Mobile drag-and-drop
 
 ---
 

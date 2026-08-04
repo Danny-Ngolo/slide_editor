@@ -40,6 +40,14 @@ export function useSlides() {
     }
   };
 
+  const updateSlideTitle = (slideId, newTitle) => {
+    setSlides(
+      slides.map((slide) =>
+        slide.id === slideId ? { ...slide, title: newTitle } : slide,
+      ),
+    );
+  };
+
   const recordActiveSlideId = useCallback(
     (newActiveSlideId) => {
       setRecordedActiveSlideId(newActiveSlideId);
@@ -198,6 +206,7 @@ export function useSlides() {
     initializeSlides,
     addSlide,
     deleteSlide,
+    updateSlideTitle,
     addBlock,
     updateBlock,
     deleteBlock,

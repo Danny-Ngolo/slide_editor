@@ -1,10 +1,13 @@
 import { useEditorContext } from "../components/EditorContext";
 
 export function useSelection() {
-  const { setSelectedBlock, setSelectedBlocks } = useEditorContext();
+  const { setSelectedBlock, setSelectedBlocks, setSelectedSlides } =
+    useEditorContext();
 
   const handleSelectBlock = (e, slideId, blockId) => {
     e.stopPropagation();
+
+    setSelectedSlides([]);
 
     // set multiple selectedBlocks with ctrlKey
 
@@ -42,5 +45,9 @@ export function useSelection() {
     );
   };
 
-  return { handleSelectBlock, isBlockSelected };
+  const isSlideSelected = (slideId, selectedSlides) => {
+    return selectedSlides.includes(slideId);
+  };
+
+  return { handleSelectBlock, isBlockSelected, isSlideSelected };
 }

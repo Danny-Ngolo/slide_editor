@@ -3,13 +3,18 @@ import { useClipboard } from "./useClipboard";
 import { useHistory } from "./useHistory";
 
 export function useEditorKeyboard() {
-  const { selectedBlocks } = useEditorContext();
+  const { activeEditor, selectedBlocks, selectedSlides, isUndoRedoRef } =
+    useEditorContext();
   const { undo, redo } = useHistory();
   const {
     deleteSelectedBlocks,
     copySelectedBlocks,
     duplicateSelectedBlocks,
     pasteBlocks,
+    copySelectedSlides,
+    pasteSlides,
+    duplicateSelectedSlides,
+    deleteSelectedSlides,
   } = useClipboard();
 
   const handleKeyDown = (e) => {
@@ -22,34 +27,55 @@ export function useEditorKeyboard() {
     if (e.ctrlKey && key === "z") {
       e.preventDefault();
 
-      undo();
+      undo(isUndoRedoRef);
+      return;
     }
 
     if (e.ctrlKey && key === "y") {
       e.preventDefault();
 
-      redo();
+      redo(isUndoRedoRef);
+      return;
     }
 
-    // NEW IMPLEMENTATION
+    if (selectedBlocks.length) {
+      if (key === "delete") {
+        deleteSelectedBlocks();
+      }
 
-    if (!selectedBlocks?.length) return;
+      if (e.ctrlKey && key === "c") {
+        copySelectedBlocks();
+      }
 
-    if (key === "delete") {
-      deleteSelectedBlocks();
+      if (e.ctrlKey && key === "v") {
+        pasteBlocks();
+      }
+
+      if (e.ctrlKey && key === "d") {
+        e.preventDefault();
+        duplicateSelectedBlocks();
+      }
+
+      return;
     }
 
-    if (e.ctrlKey && key === "c") {
-      copySelectedBlocks();
-    }
+    if (selectedSlides.length) {
+      if (key === "delete") {
+        deleteSelectedSlides();
+      }
 
-    if (e.ctrlKey && key === "v") {
-      pasteBlocks();
-    }
+      if (e.ctrlKey && key === "c") {
+        copySelectedSlides();
+      }
 
-    if (e.ctrlKey && key === "d") {
-      e.preventDefault();
-      duplicateSelectedBlocks();
+      if (e.ctrlKey && key === "v") {
+        pasteSlides();
+      }
+
+      if (e.ctrlKey && key === "d") {
+        e.preventDefault();
+        duplicateSelectedSlides();
+      }
     }
   };
 

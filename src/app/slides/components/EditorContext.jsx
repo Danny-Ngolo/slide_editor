@@ -30,6 +30,8 @@ const EditorProvider = ({ children }) => {
   const [selectedBlocks, setSelectedBlocks] = useState([]);
   const [copiedBlocks, setCopiedBlocks] = useState([]);
   const [copiedBlock, setCopiedBlock] = useState(null);
+  const [selectedSlides, setSelectedSlides] = useState([]);
+  const [copiedSlides, setCopiedSlides] = useState([]);
 
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
@@ -120,6 +122,10 @@ const EditorProvider = ({ children }) => {
         setCopiedBlocks,
         copiedBlock,
         setCopiedBlock,
+        selectedSlides,
+        setSelectedSlides,
+        copiedSlides,
+        setCopiedSlides,
         activeEditorRef,
         editorToolBarRef,
         isUndoRedoRef,

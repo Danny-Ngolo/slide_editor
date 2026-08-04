@@ -19,6 +19,7 @@ import { useEditorContext } from "./EditorContext";
 import { useSlides } from "../hooks/useSlides";
 import { useHistory } from "../hooks/useHistory";
 import TableActionMenu from "./blocks/Table/TableActionMenu";
+import EditableTitle from "./EditableTitle";
 
 const SlideCanvas = ({ slide, slides }) => {
   const [showInsertMenu, setShowInsertMenu] = useState(false);
@@ -33,7 +34,7 @@ const SlideCanvas = ({ slide, slides }) => {
     tableMenuRef,
     setTableSelection,
   } = useEditorContext();
-  const { addBlock } = useSlides();
+  const { addBlock, updateSlideTitle } = useSlides();
   const { setSlides } = useHistory();
 
   const handleClickAddBlock = (e) => {
@@ -104,7 +105,16 @@ const SlideCanvas = ({ slide, slides }) => {
           >
             <EditorToolBar useRef={editorToolBarRef} />
 
-            <h2>{slide.title}</h2>
+            <EditableTitle
+              value={slide.title}
+              onChange={(t) => updateSlideTitle(slide.id, t)}
+              style={{
+                fontSize: "2em",
+                fontWeight: "bold",
+                margin: "0 0 0.5em",
+                display: "block",
+              }}
+            />
 
             {/* BLOCKS */}
 

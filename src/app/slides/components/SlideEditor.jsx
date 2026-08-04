@@ -8,18 +8,12 @@ import lessonService from "@/services/lessonService";
 import { Redo, Undo } from "lucide-react";
 import { useSlides } from "../hooks/useSlides";
 import { useHistory } from "../hooks/useHistory";
-import { useClipboard } from "../hooks/useClipboard";
+import { useEditorKeyboard } from "../hooks/useEditorKeyboard";
 
 const SlideEditor = ({ lessonId }) => {
   const [isDataAlreadyFetched, setIsDataAlreadyFetched] = useState(false);
   const [currentLesson, setCurrentLesson] = useState(null);
-  const {
-    selectedBlock,
-    activeEditor,
-    selectedBlocks,
-    copiedBlocks,
-    isUndoRedoRef,
-  } = useEditorContext();
+  const { isUndoRedoRef } = useEditorContext();
 
   const {
     recordActiveSlideId,
@@ -29,12 +23,7 @@ const SlideEditor = ({ lessonId }) => {
     deleteSlide,
   } = useSlides();
   const { setSlides, slidesHistory, undo, redo } = useHistory();
-  const {
-    deleteSelectedBlocks,
-    copySelectedBlocks,
-    duplicateSelectedBlocks,
-    pasteBlocks,
-  } = useClipboard();
+  const { handleKeyDown } = useEditorKeyboard();
 
   const slides = useMemo(() => slidesHistory?.present || [], [slidesHistory]);
   const [activeSlideId, setActiveSlideId] = useState(null);
@@ -68,66 +57,12 @@ const SlideEditor = ({ lessonId }) => {
   };
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      const isEditingText = !!activeEditor;
-
-      if (isEditingText) return;
-
-      const key = e.key.toLowerCase();
-
-      if (e.ctrlKey && key === "z") {
-        e.preventDefault();
-
-        undo(isUndoRedoRef);
-      }
-
-      if (e.ctrlKey && key === "y") {
-        e.preventDefault();
-
-        redo(isUndoRedoRef);
-      }
-
-      // NEW IMPLEMENTATION
-
-      if (!selectedBlocks.length) return;
-
-      if (key === "delete") {
-        deleteSelectedBlocks();
-      }
-
-      if (e.ctrlKey && key === "c") {
-        copySelectedBlocks();
-      }
-
-      if (e.ctrlKey && key === "v") {
-        pasteBlocks();
-      }
-
-      if (e.ctrlKey && key === "d") {
-        e.preventDefault();
-        duplicateSelectedBlocks();
-      }
-    };
-
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [
-    activeEditor,
-    selectedBlock,
-    selectedBlocks,
-    copiedBlocks,
-    slides,
-    copySelectedBlocks,
-    deleteSelectedBlocks,
-    duplicateSelectedBlocks,
-    isUndoRedoRef,
-    pasteBlocks,
-    redo,
-    undo,
-  ]);
+  }, [handleKeyDown]);
 
   useEffect(() => {
     const loadLesson = async () => {
