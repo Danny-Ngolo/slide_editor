@@ -7,6 +7,7 @@ import {
   Lightbulb,
   Minus,
   AlertTriangle,
+  ClipboardCheck,
   FlaskConical,
   Table2,
 } from "lucide-react";
@@ -72,6 +73,12 @@ export const blocks_groups = [
         label: "Example",
         desc: "Show a practical case",
         icon: FlaskConical,
+      },
+      {
+        type: "exercise",
+        label: "Exercise",
+        desc: "Ask students to perform a task",
+        icon: ClipboardCheck,
       },
     ],
   },

@@ -381,3 +381,33 @@ The same editing engine should support lessons, documentation, assignments, AI-g
 ## Consequences
 
 Architectural decisions should favor reuse and long-term extensibility, even if they introduce slightly more work during initial implementation.
+
+---
+
+# ADR-011: Exercise Block (multi-field rich text via the existing onContentChange)
+
+**Status:** Accepted
+
+## Context
+
+The Exercise Block needs three rich-text fields on a single block: instructions, hint, and teacher notes. The shared rich-text pipeline (`useInitEditor` + `updateEditorUI` in `useRichTextEditor`) stores content as `{ html }` and routes changes through an `onContentChange` callback that writes the whole block `content`.
+
+## Decision
+
+The Exercise Block implements multi-field rich text with **no changes to shared infrastructure**:
+
+- Each field gets its own Tiptap editor via `useInitEditor`, receiving a **per-field** payload (`{ html: <field html> }`), never the whole `block.content`.
+- Every field passes a mandatory `onContentChange` that routes the new HTML into the correct content field via a functional `updateField(field, { html })` state update.
+- All mutations go through functional `setSlides`/`setSlidesWithoutHistory` updates in `useExercise`, mirroring `useTableCore.updateTable`. The default `updateBlock` path is never used for these fields — it would replace the whole `block.content` and wipe sibling fields.
+
+## Rationale
+
+- A `field` parameter or slash-menu flag on the shared hook would duplicate existing escape hatches (`onContentChange`, functional updates) for exactly one consumer — premature generalization (violates ADR-008).
+- Keeps the shared pipeline untouched, so every existing block inherits the same behavior for free.
+- Lazy-mounting hint/teacher-notes editors keeps the typical visible editor count at one per block.
+
+## Consequences
+
+- `onContentChange` is mandatory at every exercise field call site; omitting it is a data-wipe trap.
+- The block reads content through `withDefaults()` (read-time normalization), so old documents render complete and future fields merge in without migration.
+- "Turn into" is hidden for exercise blocks (`hideTransform`) because `transformBlock` flattens content to `{ html }` and would destroy exercise data.

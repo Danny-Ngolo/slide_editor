@@ -3,6 +3,7 @@ import { useEditorContext } from "../components/EditorContext";
 import { generateId } from "../utils/generateId";
 import { useHistory } from "./useHistory";
 import { useTable } from "./useTable";
+import { createExerciseBlock } from "./exerciseUtils";
 
 export function useSlides() {
   const { setSlides, slidesHistory, setSlidesWithoutHistory } = useHistory();
@@ -59,12 +60,14 @@ export function useSlides() {
     const newBlock =
       type === "table"
         ? createTableBlock()
-        : {
-            id: generateId(),
-            type: type,
-            content: initialContent || {},
-            important: false,
-          };
+        : type === "exercise"
+          ? createExerciseBlock()
+          : {
+              id: generateId(),
+              type: type,
+              content: initialContent || {},
+              important: false,
+            };
 
     if (type === "callout" || (type === "text" && !newBlock.content.html)) {
       newBlock.content.html = "<p></p>";

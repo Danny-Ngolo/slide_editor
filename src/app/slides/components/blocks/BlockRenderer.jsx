@@ -7,6 +7,7 @@ import DividerBlock from "./DividerBlock";
 import ImageBlock from "./ImageBlock";
 import YoutubeBlock from "./YoutubeBlock";
 import CalloutBlock from "./CalloutBlock";
+import ExerciseBlock from "./ExerciseBlock";
 import BlockActions from "../BlockActions";
 import { MoreVertical } from "lucide-react";
 import { useEditorContext } from "../EditorContext";
@@ -84,6 +85,7 @@ const BlockRenderer = ({ block, slideId }) => {
           }}
           setShowActions={setShowActions}
           important={block.important}
+          hideTransform={block.type === "exercise"}
         />
       )}
 
@@ -97,6 +99,9 @@ const BlockRenderer = ({ block, slideId }) => {
       )}
       {block.type === "callout" && (
         <CalloutBlock slideId={slideId} block={block} />
+      )}
+      {block.type === "exercise" && (
+        <ExerciseBlock slideId={slideId} block={block} />
       )}
       {block.type === "quiz" && <QuizBlock />}
     </div>

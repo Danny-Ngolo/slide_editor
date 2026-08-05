@@ -285,7 +285,13 @@ New block types:
 
 ## Exercise Block
 
-- [ ] Practical exercises
+V1 authoring (shipped): see `QUIZ_PLAN.md` M1–M3.
+
+- [x] Insert via `+` menu, Insert-Menu-Between, and slash menu (`/exercise`)
+- [x] Editable title + rich-text instructions/hint/teacher notes (shared toolbar)
+- [x] Difficulty and estimated time metadata
+- [x] Resources: upload file/image/video, external URL, rename, reorder, remove
+- [x] Two-tier history, autosave, clipboard/duplicate integration
 - [ ] Student submissions
 - [ ] Teacher feedback
 

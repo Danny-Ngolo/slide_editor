@@ -15,10 +15,10 @@ const BlockActions = ({
   onTransform,
   important = false,
   setShowActions,
+  hideTransform = false,
 }) => {
   const { copiedBlock } = useEditorContext();
   const actionsRef = useRef(null);
-  const { transformBlock } = useSlides();
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -69,15 +69,19 @@ const BlockActions = ({
       </>
 
       <hr />
-      <p style={{ textAlign: "center", fontSize: "inherit" }}>Turn into</p>
-      {transformOptions.map((option, index) => (
-        <ActionButton
-          isSubOption={true}
-          key={index}
-          label={option.label}
-          onClick={() => onTransform(option)}
-        />
-      ))}
+      {!hideTransform && (
+        <>
+          <p style={{ textAlign: "center", fontSize: "inherit" }}>Turn into</p>
+          {transformOptions.map((option, index) => (
+            <ActionButton
+              isSubOption={true}
+              key={index}
+              label={option.label}
+              onClick={() => onTransform(option)}
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 };
