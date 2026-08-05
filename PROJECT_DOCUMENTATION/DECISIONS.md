@@ -411,3 +411,51 @@ The Exercise Block implements multi-field rich text with **no changes to shared 
 - `onContentChange` is mandatory at every exercise field call site; omitting it is a data-wipe trap.
 - The block reads content through `withDefaults()` (read-time normalization), so old documents render complete and future fields merge in without migration.
 - "Turn into" is hidden for exercise blocks (`hideTransform`) because `transformBlock` flattens content to `{ html }` and would destroy exercise data.
+
+---
+
+# ADR-012: Quiz Block (multi-question, per-field rich text)
+
+**Status:** Accepted
+
+## Context
+
+The Quiz Block needs an unbounded list of questions on a single block, each with several rich-text
+fields (prompt, option labels, model answer, explanation). Questions come in two shapes that share
+fields but differ structurally: **choice** (options + correctness) and **open** (free-text model
+answer). ADR-011 already established the per-field `onContentChange` pattern on `ExerciseBlock`, but
+quiz multiplies the same pattern by an arbitrary number of questions.
+
+## Decision
+
+Model quiz content as an ordered array of questions with a `type` discriminator:
+
+- `content = { title, questions: [{ id, type: "choice" | "open", prompt, options[], multipleCorrect,
+  modelAnswer, explanation }] }`.
+- A new block starts with one `open` question; switching a question to `choice` seeds two default
+  options.
+- Rich text is shared via a reusable `RichTextField` component (extracted from `ExerciseBlock`) that
+  takes `content` (`{ html }`) and `onChange` directly, so the same pipeline (`useInitEditor` +
+  `updateEditorUI`) serves nested fields like option labels — not just top-level block fields.
+- All mutations are functional (`setSlides`/`setSlidesWithoutHistory`) through `useQuiz`, never the
+  whole-content `updateBlock` path.
+- Correctness is stored per option (`isCorrect`) with a `multipleCorrect` flag; when `multipleCorrect`
+  is false, marking one option correct clears the others.
+
+## Rationale
+
+- The `type` discriminator lets choice and open questions share prompt/explanation while branching only
+  the field that differs (options vs model answer) — no duplicated question shapes.
+- Reusing one `RichTextField` avoids three copies of the slash-menu/toolbar wiring and keeps every
+  field consistent (ADR-005, ADR-009).
+- Functional updates mirror `useExercise`/`useTableCore` and avoid the stale-closure data-wipe trap
+  that whole-content updates would cause with nested question arrays.
+
+## Consequences
+
+- Rich-text field call sites pass `content`/`onChange`; omitting `onChange` is a data-wipe trap.
+- "Turn into" is hidden for quiz blocks (`hideTransform`), same reason as exercise.
+- Each visible question mounts several editors (prompt, model answer, option labels); count stays low
+  because explanation is lazy via an accordion (ADR-006 trade-off, same answer as ADR-011).
+- Grading/attempts are out of scope for V1; the schema already carries `modelAnswer` and correctness
+  so those features can be added without a data migration.

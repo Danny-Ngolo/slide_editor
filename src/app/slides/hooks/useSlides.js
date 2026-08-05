@@ -4,6 +4,7 @@ import { generateId } from "../utils/generateId";
 import { useHistory } from "./useHistory";
 import { useTable } from "./useTable";
 import { createExerciseBlock } from "./exerciseUtils";
+import { createQuizBlock } from "./quizUtils";
 
 export function useSlides() {
   const { setSlides, slidesHistory, setSlidesWithoutHistory } = useHistory();
@@ -62,12 +63,14 @@ export function useSlides() {
         ? createTableBlock()
         : type === "exercise"
           ? createExerciseBlock()
-          : {
-              id: generateId(),
-              type: type,
-              content: initialContent || {},
-              important: false,
-            };
+          : type === "quiz"
+            ? createQuizBlock()
+            : {
+                id: generateId(),
+                type: type,
+                content: initialContent || {},
+                important: false,
+              };
 
     if (type === "callout" || (type === "text" && !newBlock.content.html)) {
       newBlock.content.html = "<p></p>";

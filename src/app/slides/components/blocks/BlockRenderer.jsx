@@ -92,7 +92,9 @@ const BlockRenderer = ({ block, slideId }) => {
           }}
           setShowActions={setShowActions}
           important={block.important}
-          hideTransform={block.type === "exercise"}
+          hideTransform={
+            block.type === "exercise" || block.type === "quiz"
+          }
         />
       )}
 
@@ -110,7 +112,9 @@ const BlockRenderer = ({ block, slideId }) => {
       {block.type === "exercise" && (
         <ExerciseBlock slideId={slideId} block={block} />
       )}
-      {block.type === "quiz" && <QuizBlock />}
+      {block.type === "quiz" && (
+        <QuizBlock slideId={slideId} block={block} />
+      )}
     </div>
   );
 };

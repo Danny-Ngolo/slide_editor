@@ -276,16 +276,24 @@ New block types:
 
 ## Quiz Block
 
-- [ ] Multiple choice questions
-- [ ] True/false questions
-- [ ] Answer validation
+V1 authoring (shipped): see `QUIZ_BLOCK_PLAN.md` M1–M3.
+
+- [x] Insert via `+` menu, Insert-Menu-Between, and slash menu (`/quiz`)
+- [x] Editable title + per-question rich text (prompt, model answer, explanation) with shared toolbar
+- [x] Choice questions: options, add/remove/reorder, single/multiple correct answers
+- [x] Open questions: free-text model answer
+- [x] Question CRUD, reordering, and type switching (choice ↔ open)
+- [x] Two-tier history, autosave, clipboard/duplicate integration
+- [x] No "Turn into" (content is not a single `{html}` field)
+- [ ] True/false question variant
+- [ ] Answer validation / grading
 - [ ] Student results tracking
 
 ---
 
 ## Exercise Block
 
-V1 authoring (shipped): see `QUIZ_PLAN.md` M1–M3.
+V1 authoring (shipped): see `EXCERCISE_BLOCK_PLAN.md` M1–M3.
 
 - [x] Insert via `+` menu, Insert-Menu-Between, and slash menu (`/exercise`)
 - [x] Editable title + rich-text instructions/hint/teacher notes (shared toolbar)

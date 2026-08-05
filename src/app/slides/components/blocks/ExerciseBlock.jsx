@@ -1,19 +1,10 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { EditorContent } from "@tiptap/react";
+import React, { useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Link, Plus, Trash, Upload, X } from "lucide-react";
 import EditableTitle from "../EditableTitle";
-import InsertMenu from "../InsertMenu";
-import { useEditorContext } from "../EditorContext";
-import {
-  blocks_groups,
-  filterBlocks,
-  flattenBlocks,
-} from "../../editor/blocks";
 import { useExercise } from "../../hooks/useExercise";
-import { useRichTextEditor } from "../../hooks/useRichTextEditor";
-import { useSlashMenu } from "../../hooks/useSlashMenu";
+import RichTextField from "./RichTextField";
 import {
   RESOURCE_TYPES,
   withDefaults,
@@ -51,98 +42,6 @@ const INPUT_STYLE = {
   borderRadius: "4px",
   background: COLORS.inputBg,
   color: COLORS.text,
-};
-
-const EditorBox = ({ children }) => (
-  <div
-    style={{
-      border: `1px solid ${COLORS.fieldBorder}`,
-      borderRadius: "6px",
-      padding: "4px 8px",
-      minHeight: "60px",
-      background: COLORS.fieldBg,
-      color: COLORS.text,
-    }}
-  >
-    {children}
-  </div>
-);
-
-const RichTextField = ({ field, block, slideId, onUpdateField }) => {
-  const {
-    showSlashMenu,
-    setShowSlashMenu,
-    slashQuery,
-    slashRange,
-    selectedBlockIndex,
-    slashMenuPosition,
-    filteredItems,
-    setFilteredItems,
-  } = useEditorContext();
-  const { updateEditorState, useInitEditor, updateEditorUI } =
-    useRichTextEditor();
-  const { handleDirectionKey, handleSlashSelect } = useSlashMenu();
-
-  const closeSlashMenu = useCallback(
-    () => setShowSlashMenu(false),
-    [setShowSlashMenu],
-  );
-
-  const fieldContent = useMemo(
-    () => withDefaults(block.content)[field] || { html: "" },
-    [block.content, field],
-  );
-
-  const editor = useInitEditor({
-    slideId,
-    blockId: block.id,
-    blockType: "exercise",
-    content: fieldContent,
-    onContentChange: (newContent) =>
-      onUpdateField(field, { html: newContent.html }),
-  });
-
-  useEffect(() => {
-    if (!editor) return;
-    const editorHandler = () => updateEditorState(editor);
-    editor.on("selectionUpdate", editorHandler);
-    return () => {
-      editor.off("selectionUpdate", editorHandler);
-    };
-  }, [editor, updateEditorState]);
-
-  useEffect(() => {
-    updateEditorUI(editor, fieldContent);
-  }, [editor, fieldContent, updateEditorUI]);
-
-  useEffect(() => {
-    const filteredBlocks = filterBlocks(blocks_groups, slashQuery);
-    const filtered = flattenBlocks(filteredBlocks);
-    setFilteredItems(filtered);
-  }, [showSlashMenu, slashQuery, setFilteredItems]);
-
-  useEffect(() => {
-    document.addEventListener("keydown", handleDirectionKey);
-    return () => {
-      document.removeEventListener("keydown", handleDirectionKey);
-    };
-  }, [showSlashMenu, filteredItems, selectedBlockIndex, handleDirectionKey]);
-
-  if (!editor) return null;
-
-  return (
-    <EditorBox>
-      <EditorContent editor={editor} />
-      {showSlashMenu && slashMenuPosition && (
-        <InsertMenu
-          onSelect={(type, variant = undefined) => {
-            handleSlashSelect(editor, slideId, slashRange, type, variant);
-          }}
-          onClose={closeSlashMenu}
-        />
-      )}
-    </EditorBox>
-  );
 };
 
 const Accordion = ({ label, children }) => {
@@ -614,10 +513,11 @@ const ExerciseBlock = ({ block, slideId }) => {
       <div style={{ marginTop: "16px" }}>
         <div style={LABEL_STYLE}>Instructions</div>
         <RichTextField
-          field="instructions"
-          block={block}
+          blockId={block.id}
           slideId={slideId}
-          onUpdateField={updateField}
+          blockType="exercise"
+          content={withDefaults(block.content).instructions || { html: "" }}
+          onChange={(next) => updateField("instructions", next)}
         />
       </div>
 
@@ -627,19 +527,21 @@ const ExerciseBlock = ({ block, slideId }) => {
 
       <Accordion label="Hint">
         <RichTextField
-          field="hint"
-          block={block}
+          blockId={block.id}
           slideId={slideId}
-          onUpdateField={updateField}
+          blockType="exercise"
+          content={withDefaults(block.content).hint || { html: "" }}
+          onChange={(next) => updateField("hint", next)}
         />
       </Accordion>
 
       <Accordion label="Teacher notes">
         <RichTextField
-          field="teacherNotes"
-          block={block}
+          blockId={block.id}
           slideId={slideId}
-          onUpdateField={updateField}
+          blockType="exercise"
+          content={withDefaults(block.content).teacherNotes || { html: "" }}
+          onChange={(next) => updateField("teacherNotes", next)}
         />
       </Accordion>
     </div>

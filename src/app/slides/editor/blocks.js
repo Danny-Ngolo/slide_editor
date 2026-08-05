@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   ClipboardCheck,
   FlaskConical,
+  ListChecks,
   Table2,
 } from "lucide-react";
 
@@ -79,6 +80,12 @@ export const blocks_groups = [
         label: "Exercise",
         desc: "Ask students to perform a task",
         icon: ClipboardCheck,
+      },
+      {
+        type: "quiz",
+        label: "Quiz",
+        desc: "Assess with a set of questions",
+        icon: ListChecks,
       },
     ],
   },
