@@ -54,7 +54,7 @@ const InsertMenu = ({ onSelect, onClose }) => {
 
       el.scrollIntoView({
         behavior: "smooth",
-        block: "center",
+        block: "nearest",
       });
     }
 
@@ -100,6 +100,7 @@ const InsertMenu = ({ onSelect, onClose }) => {
 
           {group.items.map((item) => {
             const Icon = item.icon;
+            const itemIndex = currentBlockIndex;
             const isSelected = currentBlockIndex === selectedBlockIndex;
             currentBlockIndex++;
 
@@ -107,7 +108,7 @@ const InsertMenu = ({ onSelect, onClose }) => {
               <div
                 data-slash-item
                 key={item.variant || item.type}
-                ref={(el) => (itemRefs.current[selectedBlockIndex] = el)}
+                ref={(el) => (itemRefs.current[itemIndex] = el)}
                 onClick={() => {
                   onSelect(item.type, item.variant);
                   onClose();
