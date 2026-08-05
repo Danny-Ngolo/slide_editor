@@ -46,7 +46,7 @@ const QuestionCard = ({
         background: COLORS.fieldBg,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
         <span
           style={{
             fontSize: "13px",
@@ -170,7 +170,7 @@ const ExerciseBlock = ({ block, slideId }) => {
           updateField("title", title, { recordHistory: true })
         }
         style={{
-          fontSize: "1.25em",
+          fontSize: "clamp(1.1em, 3vw, 1.25em)",
           fontWeight: "bold",
           color: COLORS.text,
           marginBottom: "4px",
@@ -181,6 +181,7 @@ const ExerciseBlock = ({ block, slideId }) => {
         style={{
           display: "flex",
           alignItems: "center",
+          flexWrap: "wrap",
           gap: "16px",
           marginTop: "12px",
           fontSize: "13px",

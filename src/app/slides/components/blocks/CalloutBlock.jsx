@@ -15,6 +15,7 @@ import { useSlides } from "../../hooks/useSlides";
 import { useRichTextEditor } from "../../hooks/useRichTextEditor";
 import { EditorContent } from "@tiptap/react";
 import { useEditorContext } from "../EditorContext";
+import { COLORS, INPUT_STYLE, RADIUS } from "./shared/styles";
 
 const CalloutBlock = ({ block, slideId }) => {
   const { updateBlock } = useSlides();
@@ -85,52 +86,102 @@ const CalloutBlock = ({ block, slideId }) => {
     <div
       style={{
         display: "flex",
-        flexDirection: "column",
-        gap: "8px",
-        minHeight: "50px",
-        padding: "12px",
-        borderRadius: "8px",
-        margin: "10px 0",
-        ...config.style,
         position: "relative",
-        color: "black",
+        margin: "10px 0",
+        borderRadius: "10px",
+        border: `1px solid ${config.border}`,
+        background: config.bg,
+        color: COLORS.text,
+        overflow: "hidden",
       }}
     >
-      <div>
-        <span>{config.icon}</span>
+      {/* Accent bar */}
+      <div
+        style={{
+          width: "4px",
+          flexShrink: 0,
+          background: config.accent,
+          alignSelf: "stretch",
+        }}
+      />
 
-        {/* TYPE SELECTOR */}
-        <select
-          value={variant}
-          onChange={(e) => {
-            updateBlock(slideId, block.id, {
-              ...block.content,
-              variant: e.target.value,
-            });
+      <div style={{ flex: 1, minWidth: 0, padding: "10px 12px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "6px",
           }}
         >
-          {Object.keys(calloutTypes).map((key) => {
-            return (
-              <option key={key} value={key}>
-                {calloutTypes[key].label}
-              </option>
-            );
-          })}
-        </select>
-      </div>
-
-      <EditorContent editor={editor} />
-
-      {showSlashMenu && slashMenuPosition && (
-        <div>
-          <InsertMenu
-            onSelect={(type, variant = undefined) => {
-              handleSlashSelect(editor, slideId, slashRange, type, variant);
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "30px",
+              height: "30px",
+              borderRadius: "8px",
+              background: config.bg,
+              border: `1px solid ${config.border}`,
+              fontSize: "16px",
+              flexShrink: 0,
             }}
-            onClose={closeSlashMenu}
-          />
+          >
+            {config.icon}
+          </span>
+
+          <span
+            style={{
+              fontWeight: "bold",
+              fontSize: "12px",
+              textTransform: "uppercase",
+              letterSpacing: "0.6px",
+              color: config.headerColor,
+            }}
+          >
+            {config.label}
+          </span>
+
+          {/* TYPE SELECTOR */}
+          <select
+            value={variant}
+            onChange={(e) => {
+              updateBlock(slideId, block.id, {
+                ...block.content,
+                variant: e.target.value,
+              });
+            }}
+            style={{
+              ...INPUT_STYLE,
+              marginLeft: "auto",
+              fontSize: "12px",
+              borderRadius: RADIUS.md,
+            }}
+          >
+            {Object.keys(calloutTypes).map((key) => {
+              return (
+                <option key={key} value={key}>
+                  {calloutTypes[key].label}
+                </option>
+              );
+            })}
+          </select>
         </div>
-      )}
+
+        <EditorContent editor={editor} />
+
+        {showSlashMenu && slashMenuPosition && (
+          <div>
+            <InsertMenu
+              onSelect={(type, variant = undefined) => {
+                handleSlashSelect(editor, slideId, slashRange, type, variant);
+              }}
+              onClose={closeSlashMenu}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

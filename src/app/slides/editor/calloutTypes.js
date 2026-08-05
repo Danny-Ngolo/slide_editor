@@ -1,24 +1,36 @@
-const definitionTypes = {
+const calloutTypes = {
   definition: {
     label: "Definition",
     icon: "📘",
-    style: { background: "#e1feeb", borderLeft: "4px solid #56db13" },
+    accent: "#16a34a",
+    bg: "#f0fdf4",
+    border: "#bbe7cb",
+    headerColor: "#15803d",
   },
   tip: {
     label: "Tip",
     icon: "💡",
-    style: { background: "#e6f7ff", borderLeft: "4px solid #1890ff" },
+    accent: "#2563eb",
+    bg: "#eff6ff",
+    border: "#c2d6fb",
+    headerColor: "#1d4ed8",
   },
   warning: {
     label: "Warning",
     icon: "⚠️",
-    style: { background: "#ffede9", borderLeft: "4px solid #ff4d4f" },
+    accent: "#dc2626",
+    bg: "#fef2f2",
+    border: "#f6c5c5",
+    headerColor: "#b91c1c",
   },
   example: {
     label: "Example",
     icon: "🧪",
-    style: { background: "#fffbe6", borderLeft: "4px solid #faad14" },
+    accent: "#d97706",
+    bg: "#fffbeb",
+    border: "#f4e08d",
+    headerColor: "#b45309",
   },
 };
 
-export default definitionTypes;
+export default calloutTypes;

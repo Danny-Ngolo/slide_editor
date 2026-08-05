@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import { blocks_groups, filterBlocks } from "../editor/blocks";
 import { useEditorContext } from "./EditorContext";
+import { COLORS, RADIUS, SHADOWS } from "./blocks/shared/styles";
 
 const InsertMenu = ({ onSelect, onClose }) => {
   const { showSlashMenu, slashQuery, selectedBlockIndex, slashMenuPosition } =
@@ -70,29 +71,32 @@ const InsertMenu = ({ onSelect, onClose }) => {
   return (
     <div
       ref={menuRef}
+      className="rich-scroll"
       style={{
         position: "fixed",
         top: slashMenuPosition?.top,
         left: slashMenuPosition?.left,
-        maxHeight: "250px",
+        maxHeight: "280px",
         overflowY: "auto",
-        background: "white",
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        padding: "8px",
-        width: "220px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+        background: COLORS.card,
+        border: `1px solid ${COLORS.border}`,
+        borderRadius: RADIUS.lg,
+        padding: "6px",
+        width: "min(240px, calc(100vw - 24px))",
+        boxShadow: SHADOWS.pop,
         zIndex: 1000,
       }}
     >
       {filteredGroups.map((group) => (
-        <div key={group.title} style={{ marginBottom: "10px" }}>
+        <div key={group.title} style={{ marginBottom: "6px" }}>
           <div
             style={{
-              fontSize: "12px",
+              fontSize: "11px",
               fontWeight: "bold",
-              color: "#666",
-              marginBottom: "6px",
+              color: COLORS.placeholder,
+              textTransform: "uppercase",
+              letterSpacing: "0.6px",
+              margin: "6px 8px",
             }}
           >
             {group.title}
@@ -114,10 +118,12 @@ const InsertMenu = ({ onSelect, onClose }) => {
                   onClose();
                 }}
                 onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "#eee")
+                  (e.currentTarget.style.background = COLORS.accentSoft)
                 }
                 onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "transparent")
+                  (e.currentTarget.style.background = isSelected
+                    ? COLORS.accentSoft
+                    : "transparent")
                 }
                 style={{
                   display: "flex",
@@ -125,18 +131,46 @@ const InsertMenu = ({ onSelect, onClose }) => {
                   gap: "10px",
                   padding: "8px",
                   cursor: "pointer",
-                  borderRadius: "6px",
-                  color: "#111",
-                  background: isSelected ? "#eee" : "transparent",
-                  transition: "background ease 0.15s",
+                  borderRadius: RADIUS.md,
+                  color: COLORS.text,
+                  background: isSelected ? COLORS.accentSoft : "transparent",
+                  transition: "background 0.12s ease",
                 }}
               >
-                <Icon size={18} />
-                <div>
-                  <div style={{ fontSize: "14px", fontWeight: "500" }}>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "30px",
+                    height: "30px",
+                    borderRadius: RADIUS.md,
+                    background: isSelected ? COLORS.accent : COLORS.fieldBg,
+                    color: isSelected ? "#fff" : COLORS.label,
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={16} />
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: COLORS.text,
+                    }}
+                  >
                     {item.label}
                   </div>
-                  <div style={{ fontSize: "12px", color: "#777" }}>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: COLORS.placeholder,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
                     {item.desc}
                   </div>
                 </div>
@@ -144,11 +178,11 @@ const InsertMenu = ({ onSelect, onClose }) => {
             );
           })}
 
-          <hr
+          <div
             style={{
-              border: "none",
-              borderTop: "1px solid #d1d1d1",
-              margin: "8px 0",
+              height: "1px",
+              background: COLORS.border,
+              margin: "6px 4px",
             }}
           />
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import "./editor.css";
 import SlideEditor from "./components/SlideEditor";
 import EditorProvider from "./components/EditorContext";
 

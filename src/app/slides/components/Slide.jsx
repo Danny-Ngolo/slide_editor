@@ -9,6 +9,7 @@ import { useSlides } from "../hooks/useSlides";
 import { useLongPress, consumeLongPressFired } from "../hooks/useLongPress";
 import SlideActions from "./SlideActions";
 import EditableTitle from "./EditableTitle";
+import { COLORS, RADIUS, SHADOWS } from "./blocks/shared/styles";
 
 const Slide = ({ slide, activeSlideId, setActiveSlideId, deleteSlide }) => {
   const [showActions, setShowActions] = useState(false);
@@ -49,15 +50,18 @@ const Slide = ({ slide, activeSlideId, setActiveSlideId, deleteSlide }) => {
   return (
     <div
       style={{
-        marginBottom: "5px",
-        padding: "10px",
-        color: isActive ? "#fff" : "#111",
-        background: isActive ? "#6a6afb" : "#9898ff",
+        padding: "9px 12px",
+        color: isActive ? COLORS.accentText : COLORS.text,
+        background: isActive ? COLORS.accentSoft : COLORS.card,
+        border: `1px solid ${isActive ? COLORS.accent : COLORS.border}`,
+        borderRadius: RADIUS.lg,
         boxShadow: isSlideSelected(slide.id, selectedSlides)
-          ? "0 0 0 2px #fff"
-          : "none",
+          ? `0 0 0 2px ${COLORS.accent}`
+          : SHADOWS.card,
         cursor: "pointer",
         position: "relative",
+        fontWeight: isActive ? 600 : 400,
+        fontSize: "13px",
       }}
       onClick={handleClick}
       {...longPressHandlers}
@@ -70,7 +74,9 @@ const Slide = ({ slide, activeSlideId, setActiveSlideId, deleteSlide }) => {
           onBlur={() => setIsRenaming(false)}
         />
       ) : (
-        slide.title
+        <span style={{ paddingRight: "22px", display: "block" }}>
+          {slide.title}
+        </span>
       )}
 
       <div
@@ -81,18 +87,20 @@ const Slide = ({ slide, activeSlideId, setActiveSlideId, deleteSlide }) => {
         onMouseDown={(e) => e.stopPropagation()}
         style={{
           position: "absolute",
-          top: "10px",
-          right: "5px",
+          top: "50%",
+          transform: "translateY(-50%)",
+          right: "6px",
           zIndex: 1000,
-          fontSize: "18px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "4px",
+          borderRadius: RADIUS.sm,
           cursor: "pointer",
-          background: "#222",
-          color: "white",
-          textShadow: "1px 2px 3px black",
-          borderRadius: "2px",
+          color: COLORS.placeholder,
         }}
       >
-        <MoreVertical size={18} />
+        <MoreVertical size={15} />
       </div>
 
       {showActions && (

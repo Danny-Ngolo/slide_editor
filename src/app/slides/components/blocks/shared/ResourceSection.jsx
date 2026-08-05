@@ -41,6 +41,7 @@ const ResourceItem = ({
       style={{
         display: "flex",
         alignItems: "center",
+        flexWrap: "wrap",
         gap: "8px",
         padding: "6px 8px",
         border: `1px solid ${COLORS.fieldBorder}`,
@@ -240,7 +241,7 @@ const ResourceSection = ({ block, slideId }) => {
       )}
 
       {!addType && (
-        <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "8px" }}>
           <button
             type="button"
             onClick={(e) => {

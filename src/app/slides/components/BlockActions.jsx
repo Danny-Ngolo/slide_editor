@@ -1,10 +1,18 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import {
+  ClipboardPaste,
+  Copy,
+  CopyPlus,
+  Star,
+  Trash,
+} from "lucide-react";
 import ActionButton from "./ActionButton";
 import { useEditorContext } from "./EditorContext";
 import { transformOptions } from "../editor/transformBlockOptions";
 import { useSlides } from "../hooks/useSlides";
+import { COLORS, LABEL_STYLE, menuStyle } from "./blocks/shared/styles";
 
 const BlockActions = ({
   onDuplicate,
@@ -40,38 +48,59 @@ const BlockActions = ({
     <div
       ref={actionsRef}
       style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "150px",
+        ...menuStyle,
+        width: "180px",
         marginTop: "8px",
         position: "absolute",
-        top: "10px",
-        left: "10px",
-        background: "white",
-        color: "black",
-        boxShadow: "2px 4px 8px #00000080",
+        top: "24px",
+        left: "0",
         zIndex: 200,
       }}
     >
       <>
-        <ActionButton label={"Duplicate"} onClick={onDuplicate} />
-        <ActionButton label={"Copy Block"} onClick={onCopyBlock} />
+        <ActionButton
+          icon={CopyPlus}
+          label={"Duplicate"}
+          onClick={onDuplicate}
+        />
+        <ActionButton icon={Copy} label={"Copy Block"} onClick={onCopyBlock} />
         <ActionButton
           disabled={!copiedBlock}
+          icon={ClipboardPaste}
           label={"Paste below"}
           onClick={onPasteBlock}
         />
         <ActionButton
+          icon={Star}
           label={important ? "Unmark important" : "Mark Important"}
           onClick={onToggleImportant}
         />
-        <ActionButton label={"Delete"} onClick={onDelete} />
+        <ActionButton
+          icon={Trash}
+          variant="danger"
+          label={"Delete"}
+          onClick={onDelete}
+        />
       </>
 
-      <hr />
       {!hideTransform && (
         <>
-          <p style={{ textAlign: "center", fontSize: "inherit" }}>Turn into</p>
+          <div
+            style={{
+              height: "1px",
+              background: COLORS.border,
+              margin: "6px 4px",
+            }}
+          />
+          <div
+            style={{
+              ...LABEL_STYLE,
+              margin: "0 0 4px 12px",
+              paddingTop: "2px",
+            }}
+          >
+            Turn into
+          </div>
           {transformOptions.map((option, index) => (
             <ActionButton
               isSubOption={true}

@@ -76,12 +76,12 @@ const RichTextField = ({ blockId, slideId, blockType, content, onChange }) => {
 
   return (
     <div
+      className="rtf-field"
       style={{
         border: `1px solid ${COLORS.fieldBorder}`,
         borderRadius: "6px",
-        padding: "4px 8px",
-        minHeight: "60px",
-        background: COLORS.fieldBg,
+        padding: "8px 10px",
+        background: COLORS.inputBg,
         color: COLORS.text,
       }}
     >

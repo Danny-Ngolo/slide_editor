@@ -82,7 +82,16 @@ const SlideCanvas = ({ slide, slides }) => {
         items={slide.blocks.map((b) => b.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div style={{ padding: "40px", flex: "1", position: "relative" }}>
+        <div
+          style={{
+            padding: "clamp(12px, 3vw, 40px)",
+            flex: "1",
+            minWidth: 0,
+            height: "100%",
+            overflowY: "auto",
+            position: "relative",
+          }}
+        >
           <div
             onClick={() =>
               setSelectedBlock({
@@ -90,11 +99,13 @@ const SlideCanvas = ({ slide, slides }) => {
                 blockId: null,
               })
             }
-            styles={{
-              maxWidth: "800px",
+            style={{
+              maxWidth: "min(800px, 100%)",
               margin: "auto",
-              padding: "30px",
-              border: "1px solid #ccc",
+              padding: "clamp(16px, 4vw, 30px)",
+              border: "1px solid #e2e5ea",
+              borderRadius: "8px",
+              background: "#ffffff",
             }}
           >
             <EditorToolBar useRef={editorToolBarRef} />
@@ -103,7 +114,7 @@ const SlideCanvas = ({ slide, slides }) => {
               value={slide.title}
               onChange={(t) => updateSlideTitle(slide.id, t)}
               style={{
-                fontSize: "2em",
+                fontSize: "clamp(1.4em, 5vw, 2em)",
                 fontWeight: "bold",
                 margin: "0 0 0.5em",
                 display: "block",

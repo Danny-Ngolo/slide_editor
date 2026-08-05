@@ -1,0 +1,51 @@
+/* Rich-text field (shared/RichTextField) */
+.rtf-field {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.rtf-field:focus-within {
+  border-color: #4f6ef7;
+  box-shadow: 0 0 0 3px #eef1ff;
+}
+
+/* Inline editor cards (TextBlock) */
+.editor-card {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.editor-card:focus-within {
+  border-color: #4f6ef7;
+  box-shadow: 0 0 0 3px #eef1ff;
+}
+
+.editor-card .ProseMirror {
+  outline: none;
+  min-height: 24px;
+}
+.rtf-field .ProseMirror {
+  outline: none;
+  min-height: 40px;
+}
+
+/* Dropdown scrollbars */
+.rich-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.rich-scroll::-webkit-scrollbar-thumb {
+  background: #d0d7de;
+  border-radius: 999px;
+}
+.rich-scroll::-webkit-scrollbar-thumb:hover {
+  background: #b6bdc7;
+}
+.rich-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Saving spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: spin 0.9s linear infinite;
+}

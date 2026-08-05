@@ -101,13 +101,18 @@ th {
 
 .table-drag-handle {
   cursor: grab;
+  touch-action: none;
   border: none;
   background: transparent;
-  color: #888;
+  color: #6b7280;
   padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.table-drag-handle:hover {
+  color: #4f6ef7;
 }
 
 .table-drag-handle:active {

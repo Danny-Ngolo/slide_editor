@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import React, { useCallback, useState } from "react";
 import InsertMenu from "./InsertMenu";
+import { COLORS, RADIUS, SHADOWS } from "./blocks/shared/styles";
 
 const InsertMenuBetween = ({ onInsert }) => {
   const [showInsertMenu, setShowInsertMenu] = useState(false);
@@ -12,43 +13,41 @@ const InsertMenuBetween = ({ onInsert }) => {
     <div
       style={{
         position: "relative",
-        height: "20px",
+        height: "24px",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
       }}
-      onMouseEnter={(e) =>
-        (e.currentTarget.querySelector("button").style.opacity = 1)
-      }
-      onMouseLeave={(e) =>
-        (e.currentTarget.querySelector("button").style.opacity = 0)
-      }
     >
       <div
         style={{
           position: "absolute",
           width: "100%",
-          height: "2px",
-          background: "#ddd",
+          height: "1px",
+          background: COLORS.border,
         }}
       />
       <button
         onClick={() => {
           setShowInsertMenu((prev) => !prev);
         }}
+        title="Insert block"
         style={{
           position: "relative",
           zIndex: 1,
-          background: "white",
-          border: "1px solid #ccc",
-          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: COLORS.card,
+          border: `1px solid ${COLORS.border}`,
+          borderRadius: RADIUS.pill,
           padding: "4px",
           cursor: "pointer",
-          opacity: 0,
-          transition: "0.2s",
+          color: COLORS.accent,
+          boxShadow: SHADOWS.card,
         }}
       >
-        <Plus size={14} color="black" />
+        <Plus size={15} />
       </button>
 
       {showInsertMenu && (

@@ -12,6 +12,7 @@ import {
 } from "../../editor/blocks";
 import { useRichTextEditor } from "../../hooks/useRichTextEditor";
 import { useSlashMenu } from "../../hooks/useSlashMenu";
+import { cardStyle } from "./shared/styles";
 
 const TextBlock = ({ block, slideId }) => {
   const {
@@ -74,7 +75,7 @@ const TextBlock = ({ block, slideId }) => {
   if (!editor) return null;
 
   return (
-    <div style={{ color: "white", background: "black" }}>
+    <div className="editor-card" style={cardStyle}>
       <EditorContent editor={editor} />
 
       {showSlashMenu && slashMenuPosition && (

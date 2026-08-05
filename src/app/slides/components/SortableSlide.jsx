@@ -1,5 +1,7 @@
+import { GripVertical } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { dragHandleStyle } from "./blocks/shared/styles";
 
 export default function SortableSlide({ slide, children }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -12,9 +14,12 @@ export default function SortableSlide({ slide, children }) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
-      {/* Drag handle */}
-      <div {...listeners} style={{ cursor: "grab" }}>
-        ☰ Slide
+      <div
+        {...listeners}
+        title="Drag to reorder"
+        style={{ ...dragHandleStyle, width: "fit-content", padding: "2px 4px" }}
+      >
+        <GripVertical size={14} />
       </div>
 
       {children}

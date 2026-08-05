@@ -10,12 +10,13 @@ const BUTTON_STYLE = {
   alignItems: "center",
   gap: "6px",
   padding: "8px 12px",
-  background: "#3b3b3b",
+  background: "rgba(255, 255, 255, 0.08)",
   color: "#fff",
   border: "none",
-  borderRadius: "6px",
+  borderRadius: "8px",
   fontSize: "13px",
   cursor: "pointer",
+  transition: "background 0.15s ease",
 };
 
 const SelectionActionsBar = () => {
@@ -73,12 +74,16 @@ const SelectionActionsBar = () => {
         display: "flex",
         alignItems: "center",
         gap: "8px",
-        background: "#222",
+        background: "rgba(17, 24, 39, 0.92)",
         color: "#fff",
-        padding: "8px 12px",
-        borderRadius: "10px",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
+        padding: "10px 14px",
+        borderRadius: "12px",
+        boxShadow: "0 8px 28px rgba(0,0,0,0.35)",
+        backdropFilter: "blur(6px)",
         zIndex: 2000,
+        maxWidth: "calc(100vw - 32px)",
+        flexWrap: "wrap",
+        justifyContent: "center",
       }}
     >
       <span
@@ -87,13 +92,21 @@ const SelectionActionsBar = () => {
         {count} selected
       </span>
 
-      <button type="button" onClick={handleCopy} style={BUTTON_STYLE}>
+      <button
+        type="button"
+        onClick={handleCopy}
+        style={BUTTON_STYLE}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.18)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+      >
         <Copy size={15} /> Copy
       </button>
       <button
         type="button"
         onClick={handleDuplicate}
         style={BUTTON_STYLE}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.18)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
       >
         <Plus size={15} /> Duplicate
       </button>
@@ -109,7 +122,13 @@ const SelectionActionsBar = () => {
       >
         <ClipboardPaste size={15} /> Paste
       </button>
-      <button type="button" onClick={handleDelete} style={BUTTON_STYLE}>
+      <button
+        type="button"
+        onClick={handleDelete}
+        style={{ ...BUTTON_STYLE, background: "rgba(220, 38, 38, 0.25)" }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(220,38,38,0.45)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(220,38,38,0.25)")}
+      >
         <Trash size={15} /> Delete
       </button>
 
@@ -124,9 +143,11 @@ const SelectionActionsBar = () => {
           background: "transparent",
           color: "#fff",
           border: "none",
-          borderRadius: "6px",
+          borderRadius: "8px",
           cursor: "pointer",
         }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.18)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
         <X size={16} />
       </button>

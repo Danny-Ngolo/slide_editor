@@ -46,6 +46,9 @@ const EditorToolBar = () => {
     useEditorContext();
   const { undo, redo, slidesHistory } = useHistory();
   const [isCompact, setIsCompact] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth : 1200,
+  );
   const [showMore, setShowMore] = useState(false);
   const moreRef = useRef(null);
 
@@ -55,6 +58,12 @@ const EditorToolBar = () => {
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -68,6 +77,9 @@ const EditorToolBar = () => {
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const iconSize =
+    viewportWidth < 480 ? 15 : viewportWidth < 768 ? 17 : viewportWidth < 1100 ? 18 : 20;
 
   if (!activeEditor) {
     return (
@@ -85,14 +97,12 @@ const EditorToolBar = () => {
           zIndex: 10,
         }}
       >
-        <UndoRedoGroup undo={undo} redo={redo} isUndoRedoRef={isUndoRedoRef} slidesHistory={slidesHistory} isCompact={isCompact} />
+        <UndoRedoGroup undo={undo} redo={redo} isUndoRedoRef={isUndoRedoRef} slidesHistory={slidesHistory} size={iconSize} />
         <div style={{ ...DIVIDER }} />
         <p style={{ color: "#111" }}>Select a block to show edit options.</p>
       </div>
     );
   }
-
-  const iconSize = isCompact ? 16 : 20;
 
   const handleLink = () => {
     const previousUrl = activeEditor.getAttributes("link").href || "";
@@ -192,7 +202,7 @@ const EditorToolBar = () => {
         zIndex: 10,
       }}
     >
-      <UndoRedoGroup undo={undo} redo={redo} isUndoRedoRef={isUndoRedoRef} slidesHistory={slidesHistory} isCompact={isCompact} />
+      <UndoRedoGroup undo={undo} redo={redo} isUndoRedoRef={isUndoRedoRef} slidesHistory={slidesHistory} size={iconSize} />
 
       {sections.map((section, i) => {
         const visibleIds = isCompact
@@ -258,7 +268,7 @@ const EditorToolBar = () => {
                     fontSize: "0.9em",
                   }}
                 >
-                  <tool.Icon size={16} />
+                  <tool.Icon size={iconSize} />
                   {tool.label}
                 </button>
               ))}
@@ -270,9 +280,7 @@ const EditorToolBar = () => {
   );
 };
 
-function UndoRedoGroup({ undo, redo, isUndoRedoRef, slidesHistory, isCompact }) {
-  const size = isCompact ? 16 : 20;
-
+function UndoRedoGroup({ undo, redo, isUndoRedoRef, slidesHistory, size }) {
   return (
     <>
       <ToolbarButton

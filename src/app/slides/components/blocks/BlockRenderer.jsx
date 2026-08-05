@@ -16,6 +16,7 @@ import { useLongPress } from "../../hooks/useLongPress";
 import { useSlides } from "../../hooks/useSlides";
 import { useClipboard } from "../../hooks/useClipboard";
 import TableBlock from "./Table/TableBlock";
+import { COLORS, RADIUS } from "./shared/styles";
 
 const BlockRenderer = ({ block, slideId }) => {
   const [showActions, setShowActions] = useState(false);
@@ -52,18 +53,22 @@ const BlockRenderer = ({ block, slideId }) => {
         onClick={() => setShowActions((prev) => !prev)}
         style={{
           position: "absolute",
-          top: "15px",
-          right: "20px",
+          top: "10px",
+          right: "10px",
           zIndex: 1000,
-          fontSize: "18px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "5px",
+          borderRadius: RADIUS.sm,
           cursor: "pointer",
-          background: "#222",
-          color: "white",
-          textShadow: "1px 2px 3px black",
-          borderRadius: "2px",
+          background: COLORS.card,
+          border: `1px solid ${COLORS.border}`,
+          color: COLORS.placeholder,
+          boxShadow: "0 1px 2px rgba(16,24,40,0.08)",
         }}
       >
-        <MoreVertical size={18} />
+        <MoreVertical size={15} />
       </div>
 
       {showActions && (
