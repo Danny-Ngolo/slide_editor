@@ -6,7 +6,7 @@ import TaskList from "@tiptap/extension-task-list";
 import TextAlign from "@tiptap/extension-text-align";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useEditorContext } from "../components/EditorContext";
 import { useSlides } from "./useSlides";
 import { useSlashMenu } from "./useSlashMenu";
@@ -163,6 +163,12 @@ export function useRichTextEditor() {
     rowIndex,
     columnIndex,
   }) => {
+    const contentRef = useRef(content);
+
+    useEffect(() => {
+      contentRef.current = content;
+    }, [content]);
+
     const editor = useEditor({
       extensions: [
         StarterKit.configure({
@@ -238,7 +244,7 @@ export function useRichTextEditor() {
         }
 
         const newContent = {
-          ...content,
+          ...contentRef.current,
           html: editor.getHTML(),
         };
 
