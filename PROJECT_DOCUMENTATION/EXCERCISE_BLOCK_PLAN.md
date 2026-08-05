@@ -7,6 +7,12 @@
 > This revision incorporates the design review. Every change vs. v1 is listed in §1 with
 > justification, so reviewers can approve the deltas quickly.
 
+> **Addendum (multi-question authoring, shipped):** Exercise now supports multiple questions per block,
+> matching Quiz. `content.questions: [{ id, prompt, hint, teacherNotes }]` replaces the single top-level
+> `instructions`; legacy flat blocks are auto-migrated into `questions[0]` by `withDefaults`. Difficulty
+> and estimated time stay block-level; resources stay block-level and are shared with Quiz via
+> `components/blocks/shared/` (see ADR-013).
+
 ---
 
 ## 1. Design Review Outcomes (deltas vs. v1)

@@ -2,21 +2,16 @@
 
 import React, { useCallback, useEffect, useMemo } from "react";
 import { EditorContent } from "@tiptap/react";
-import InsertMenu from "../InsertMenu";
-import { useEditorContext } from "../EditorContext";
+import InsertMenu from "../../InsertMenu";
+import { useEditorContext } from "../../EditorContext";
 import {
   blocks_groups,
   filterBlocks,
   flattenBlocks,
-} from "../../editor/blocks";
-import { useRichTextEditor } from "../../hooks/useRichTextEditor";
-import { useSlashMenu } from "../../hooks/useSlashMenu";
-
-const COLORS = {
-  text: "#1f2328",
-  fieldBg: "#f6f8fa",
-  fieldBorder: "#d0d7de",
-};
+} from "../../../editor/blocks";
+import { useRichTextEditor } from "../../../hooks/useRichTextEditor";
+import { useSlashMenu } from "../../../hooks/useSlashMenu";
+import { COLORS } from "./styles";
 
 const RichTextField = ({ blockId, slideId, blockType, content, onChange }) => {
   const {

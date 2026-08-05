@@ -7,7 +7,10 @@ export const QUESTION_TYPES = {
 
 const DEFAULT_CONTENT = {
   title: "Quiz",
+  difficulty: "medium",
+  estimatedTime: null,
   questions: [],
+  resources: [],
 };
 
 export const createOption = () => ({
@@ -60,9 +63,12 @@ const normalizeQuestion = (question = {}) => {
 
 export const withDefaults = (content = {}) => ({
   title: content.title || DEFAULT_CONTENT.title,
+  difficulty: content.difficulty || DEFAULT_CONTENT.difficulty,
+  estimatedTime: content.estimatedTime ?? null,
   questions: Array.isArray(content.questions)
     ? content.questions.map(normalizeQuestion)
     : [],
+  resources: Array.isArray(content.resources) ? content.resources : [],
 });
 
 export const stripHtml = (html = "") =>

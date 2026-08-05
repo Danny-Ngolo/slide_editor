@@ -283,6 +283,8 @@ V1 authoring (shipped): see `QUIZ_BLOCK_PLAN.md` M1–M3.
 - [x] Choice questions: options, add/remove/reorder, single/multiple correct answers
 - [x] Open questions: free-text model answer
 - [x] Question CRUD, reordering, and type switching (choice ↔ open)
+- [x] Difficulty and estimated time metadata
+- [x] Resources: upload file/image/video, external URL, rename, reorder, remove (shared with Exercise)
 - [x] Two-tier history, autosave, clipboard/duplicate integration
 - [x] No "Turn into" (content is not a single `{html}` field)
 - [ ] True/false question variant
@@ -296,9 +298,11 @@ V1 authoring (shipped): see `QUIZ_BLOCK_PLAN.md` M1–M3.
 V1 authoring (shipped): see `EXCERCISE_BLOCK_PLAN.md` M1–M3.
 
 - [x] Insert via `+` menu, Insert-Menu-Between, and slash menu (`/exercise`)
-- [x] Editable title + rich-text instructions/hint/teacher notes (shared toolbar)
-- [x] Difficulty and estimated time metadata
-- [x] Resources: upload file/image/video, external URL, rename, reorder, remove
+- [x] Editable title + difficulty/estimated time metadata
+- [x] Multi-question exercises: question CRUD, reordering, duplication
+- [x] Per-question rich text: prompt + hint + teacher notes (shared toolbar)
+- [x] Resources: upload file/image/video, external URL, rename, reorder, remove (shared with Quiz)
+- [x] Shared block building blocks (`components/blocks/shared/`): RichTextField, ResourceSection, Accordion, styles, useResources
 - [x] Two-tier history, autosave, clipboard/duplicate integration
 - [ ] Student submissions
 - [ ] Teacher feedback

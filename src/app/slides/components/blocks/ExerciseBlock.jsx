@@ -1,452 +1,158 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Link, Plus, Trash, Upload, X } from "lucide-react";
+import React from "react";
+import { ArrowDown, ArrowUp, Copy, Plus, Trash } from "lucide-react";
 import EditableTitle from "../EditableTitle";
 import { useExercise } from "../../hooks/useExercise";
-import RichTextField from "./RichTextField";
 import {
-  RESOURCE_TYPES,
-  withDefaults,
-} from "../../hooks/exerciseUtils";
+  COLORS,
+  INPUT_STYLE,
+  LABEL_STYLE,
+  addButtonStyle,
+  rowButtonStyle,
+} from "./shared/styles";
+import { DIFFICULTY_OPTIONS } from "./shared/constants";
+import { Accordion } from "./shared/Accordion";
+import { TimeInput } from "./shared/TimeInput";
+import { withDefaults } from "../../hooks/exerciseUtils";
+import RichTextField from "./shared/RichTextField";
+import ResourceSection from "./shared/ResourceSection";
 
-const COLORS = {
-  card: "#ffffff",
-  text: "#1f2328",
-  label: "#374151",
-  fieldBg: "#f6f8fa",
-  fieldBorder: "#d0d7de",
-  inputBg: "#ffffff",
-  border: "#e2e5ea",
-  placeholder: "#6b7280",
-};
-
-const DIFFICULTY_OPTIONS = [
-  { value: "easy", label: "Easy" },
-  { value: "medium", label: "Medium" },
-  { value: "hard", label: "Hard" },
-];
-
-const LABEL_STYLE = {
-  fontSize: "11px",
-  fontWeight: "bold",
-  color: COLORS.label,
-  textTransform: "uppercase",
-  letterSpacing: "0.6px",
-  marginBottom: "6px",
-};
-
-const INPUT_STYLE = {
-  padding: "4px 6px",
-  border: `1px solid ${COLORS.fieldBorder}`,
-  borderRadius: "4px",
-  background: COLORS.inputBg,
-  color: COLORS.text,
-};
-
-const Accordion = ({ label, children }) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div style={{ marginTop: "16px" }}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          padding: 0,
-          ...LABEL_STYLE,
-          marginBottom: 0,
-        }}
-      >
-        <span>{open ? "▾" : "▸"}</span>
-        {label}
-      </button>
-      {open && <div style={{ marginTop: "6px" }}>{children}</div>}
-    </div>
-  );
-};
-
-const TimeInput = ({ value, onChange }) => {
-  const commit = (e) => {
-    const next = e.target.value === "" ? null : Number(e.target.value);
-    if ((value ?? null) !== next) onChange(next);
-  };
-
-  return (
-    <input
-      type="number"
-      min="0"
-      placeholder="--"
-      defaultValue={value ?? ""}
-      onBlur={commit}
-      onKeyDown={(e) => {
-        e.stopPropagation();
-        if (e.key === "Enter") e.currentTarget.blur();
-      }}
-      style={{ ...INPUT_STYLE, width: "70px" }}
-    />
-  );
-};
-
-const ResourceItem = ({
-  resource,
-  onRename,
+const QuestionCard = ({
+  question,
+  index,
+  count,
+  blockId,
+  slideId,
   onRemove,
+  onDuplicate,
   onMoveUp,
   onMoveDown,
-  isFirst,
-  isLast,
 }) => {
-  const { type, title, src } = resource;
-  const Icon = RESOURCE_TYPES[type]?.icon || Link;
+  const { updateQuestionField } = useExercise({ slideId, blockId });
 
   const stop = (e) => e.stopPropagation();
+  const isFirst = index === 0;
+  const isLast = index === count - 1;
 
   return (
     <div
       onClick={stop}
       onMouseDown={stop}
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "6px 8px",
         border: `1px solid ${COLORS.fieldBorder}`,
         borderRadius: "6px",
+        padding: "8px 10px",
         background: COLORS.fieldBg,
-        fontSize: "13px",
-        color: COLORS.text,
       }}
     >
-      <Icon size={16} color={COLORS.label} />
-
-      {type === "image" ? (
-        <img
-          src={src}
-          alt={title}
-          style={{
-            width: "36px",
-            height: "36px",
-            objectFit: "cover",
-            borderRadius: "4px",
-            flexShrink: 0,
-          }}
-        />
-      ) : (
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
         <span
           style={{
-            maxWidth: "160px",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            color: COLORS.placeholder,
-            flexShrink: 0,
-          }}
-          title={src}
-        >
-          {src}
-        </span>
-      )}
-
-      <EditableTitle
-        value={title}
-        onChange={onRename}
-        style={{ fontSize: "13px", color: COLORS.text, flex: 1 }}
-      />
-
-      <button
-        type="button"
-        onClick={(e) => {
-          stop(e);
-          onMoveUp();
-        }}
-        disabled={isFirst}
-        title="Move up"
-        style={rowButtonStyle(isFirst)}
-      >
-        <ArrowUp size={14} />
-      </button>
-      <button
-        type="button"
-        onClick={(e) => {
-          stop(e);
-          onMoveDown();
-        }}
-        disabled={isLast}
-        title="Move down"
-        style={rowButtonStyle(isLast)}
-      >
-        <ArrowDown size={14} />
-      </button>
-      <button
-        type="button"
-        onClick={(e) => {
-          stop(e);
-          onRemove();
-        }}
-        title="Remove resource"
-        style={rowButtonStyle(false)}
-      >
-        <Trash size={14} />
-      </button>
-    </div>
-  );
-};
-
-const rowButtonStyle = (disabled) => ({
-  display: "flex",
-  alignItems: "center",
-  background: "transparent",
-  border: "none",
-  cursor: disabled ? "default" : "pointer",
-  color: disabled ? COLORS.placeholder : COLORS.label,
-  padding: "2px",
-  borderRadius: "4px",
-  flexShrink: 0,
-});
-
-const ResourceSection = ({ block, slideId }) => {
-  const content = withDefaults(block.content);
-  const { addResource, removeResource, updateResource, moveResource } =
-    useExercise({ slideId, blockId: block.id });
-  const fileInputRef = useRef(null);
-  const [addType, setAddType] = useState(null);
-  const [draftUrl, setDraftUrl] = useState("");
-
-  const stop = (e) => e.stopPropagation();
-
-  const handleFile = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const type = file.type.startsWith("image/")
-      ? "image"
-      : file.type.startsWith("video/")
-        ? "video"
-        : "file";
-
-    addResource(type, {
-      src: URL.createObjectURL(file),
-      title: file.name,
-      mimeType: file.type || null,
-      size: file.size,
-    });
-    e.target.value = "";
-  };
-
-  const handleDrop = (e) => {
-    stop(e);
-    const file = e.dataTransfer.files[0];
-    if (!file) return;
-    const type = file.type.startsWith("image/")
-      ? "image"
-      : file.type.startsWith("video/")
-        ? "video"
-        : "file";
-    addResource(type, {
-      src: URL.createObjectURL(file),
-      title: file.name,
-      mimeType: file.type || null,
-      size: file.size,
-    });
-  };
-
-  const submitUrl = () => {
-    const src = draftUrl.trim();
-    if (!src) return;
-    addResource(addType, { src, title: src });
-    setDraftUrl("");
-    setAddType(null);
-  };
-
-  const resources = content.resources;
-
-  return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <div style={LABEL_STYLE}>Resources</div>
-        <span style={{ ...LABEL_STYLE, color: COLORS.placeholder }}>
-          ({resources.length})
-        </span>
-      </div>
-
-      <div
-        onClick={stop}
-        onMouseDown={stop}
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        onDrop={handleDrop}
-        style={{
-          marginTop: "8px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "6px",
-        }}
-      >
-        {resources.map((resource, index) => (
-          <ResourceItem
-            key={resource.id}
-            resource={resource}
-            isFirst={index === 0}
-            isLast={index === resources.length - 1}
-            onRename={(title) =>
-              updateResource(resource.id, { title })
-            }
-            onRemove={() => removeResource(resource.id)}
-            onMoveUp={() => moveResource(resource.id, -1)}
-            onMoveDown={() => moveResource(resource.id, 1)}
-          />
-        ))}
-      </div>
-
-      {resources.length === 0 && !addType && (
-        <div
-          onClick={stop}
-          style={{
-            border: `1px dashed ${COLORS.fieldBorder}`,
-            borderRadius: "6px",
-            padding: "16px",
-            color: COLORS.placeholder,
             fontSize: "13px",
-            textAlign: "center",
+            fontWeight: "bold",
+            color: COLORS.text,
           }}
         >
-          No resources yet.
-        </div>
-      )}
-
-      {!addType && (
-        <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+          Question {index + 1}
+        </span>
+        <div style={{ marginLeft: "auto", display: "flex", gap: "8px" }}>
           <button
             type="button"
             onClick={(e) => {
               stop(e);
-              fileInputRef.current?.click();
+              onMoveUp();
             }}
-            style={addButtonStyle}
+            disabled={isFirst}
+            title="Move up"
+            style={rowButtonStyle(isFirst)}
           >
-            <Upload size={14} /> File
+            <ArrowUp size={14} />
           </button>
           <button
             type="button"
             onClick={(e) => {
               stop(e);
-              setAddType("url");
+              onMoveDown();
             }}
-            style={addButtonStyle}
+            disabled={isLast}
+            title="Move down"
+            style={rowButtonStyle(isLast)}
           >
-            <Link size={14} /> URL
+            <ArrowDown size={14} />
           </button>
           <button
             type="button"
             onClick={(e) => {
               stop(e);
-              setAddType("video");
+              onDuplicate();
             }}
-            style={addButtonStyle}
-          >
-            <Plus size={14} /> Video
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="*/*"
-            onChange={handleFile}
-            style={{ display: "none" }}
-          />
-        </div>
-      )}
-
-      {addType && (
-        <div
-          onClick={stop}
-          onMouseDown={stop}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            marginTop: "8px",
-            padding: "6px",
-            border: `1px solid ${COLORS.fieldBorder}`,
-            borderRadius: "6px",
-            background: COLORS.fieldBg,
-          }}
-        >
-          <input
-            type="text"
-            autoFocus
-            value={draftUrl}
-            placeholder={
-              addType === "video"
-                ? "Paste a video URL (YouTube, etc.)"
-                : "Paste a URL"
-            }
-            onChange={(e) => setDraftUrl(e.target.value)}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === "Enter") submitUrl();
-              if (e.key === "Escape") setAddType(null);
-            }}
-            style={{
-              flex: 1,
-              border: "none",
-              outline: "none",
-              background: "transparent",
-              fontSize: "13px",
-              color: COLORS.text,
-            }}
-          />
-          <button
-            type="button"
-            onClick={(e) => {
-              stop(e);
-              submitUrl();
-            }}
-            style={addButtonStyle}
-          >
-            Add
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              stop(e);
-              setAddType(null);
-            }}
+            title="Duplicate question"
             style={rowButtonStyle(false)}
-            title="Cancel"
           >
-            <X size={14} />
+            <Copy size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              stop(e);
+              onRemove();
+            }}
+            title="Remove question"
+            style={rowButtonStyle(false)}
+          >
+            <Trash size={14} />
           </button>
         </div>
-      )}
+      </div>
+
+      <div style={{ marginTop: "10px" }}>
+        <div style={LABEL_STYLE}>Prompt</div>
+        <RichTextField
+          blockId={blockId}
+          slideId={slideId}
+          blockType="exercise"
+          content={question.prompt}
+          onChange={(next) => updateQuestionField(question.id, "prompt", next)}
+        />
+      </div>
+
+      <Accordion label="Hint">
+        <RichTextField
+          blockId={blockId}
+          slideId={slideId}
+          blockType="exercise"
+          content={question.hint}
+          onChange={(next) => updateQuestionField(question.id, "hint", next)}
+        />
+      </Accordion>
+
+      <Accordion label="Teacher notes">
+        <RichTextField
+          blockId={blockId}
+          slideId={slideId}
+          blockType="exercise"
+          content={question.teacherNotes}
+          onChange={(next) =>
+            updateQuestionField(question.id, "teacherNotes", next)
+          }
+        />
+      </Accordion>
     </div>
   );
-};
-
-const addButtonStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "4px",
-  padding: "4px 10px",
-  border: `1px solid ${COLORS.fieldBorder}`,
-  borderRadius: "4px",
-  background: COLORS.inputBg,
-  color: COLORS.text,
-  fontSize: "12px",
-  cursor: "pointer",
 };
 
 const ExerciseBlock = ({ block, slideId }) => {
   const content = withDefaults(block.content);
-  const { updateField } = useExercise({ slideId, blockId: block.id });
+  const {
+    updateField,
+    addQuestion,
+    removeQuestion,
+    duplicateQuestion,
+    moveQuestion,
+  } = useExercise({ slideId, blockId: block.id });
+
+  const stop = (e) => e.stopPropagation();
 
   return (
     <div
@@ -511,39 +217,67 @@ const ExerciseBlock = ({ block, slideId }) => {
       </div>
 
       <div style={{ marginTop: "16px" }}>
-        <div style={LABEL_STYLE}>Instructions</div>
-        <RichTextField
-          blockId={block.id}
-          slideId={slideId}
-          blockType="exercise"
-          content={withDefaults(block.content).instructions || { html: "" }}
-          onChange={(next) => updateField("instructions", next)}
-        />
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={LABEL_STYLE}>Questions</div>
+          <span style={{ ...LABEL_STYLE, color: COLORS.placeholder }}>
+            ({content.questions.length})
+          </span>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "6px",
+            marginTop: "8px",
+          }}
+        >
+          {content.questions.length === 0 && (
+            <div
+              style={{
+                border: `1px dashed ${COLORS.fieldBorder}`,
+                borderRadius: "6px",
+                padding: "16px",
+                color: COLORS.placeholder,
+                fontSize: "13px",
+                textAlign: "center",
+              }}
+            >
+              No questions yet.
+            </div>
+          )}
+
+          {content.questions.map((question, index) => (
+            <QuestionCard
+              key={question.id}
+              question={question}
+              index={index}
+              count={content.questions.length}
+              blockId={block.id}
+              slideId={slideId}
+              onRemove={() => removeQuestion(question.id)}
+              onDuplicate={() => duplicateQuestion(question.id)}
+              onMoveUp={() => moveQuestion(question.id, -1)}
+              onMoveDown={() => moveQuestion(question.id, 1)}
+            />
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            stop(e);
+            addQuestion();
+          }}
+          style={{ ...addButtonStyle, marginTop: "8px" }}
+        >
+          <Plus size={14} /> Add question
+        </button>
       </div>
 
       <div style={{ marginTop: "16px" }}>
         <ResourceSection block={block} slideId={slideId} />
       </div>
-
-      <Accordion label="Hint">
-        <RichTextField
-          blockId={block.id}
-          slideId={slideId}
-          blockType="exercise"
-          content={withDefaults(block.content).hint || { html: "" }}
-          onChange={(next) => updateField("hint", next)}
-        />
-      </Accordion>
-
-      <Accordion label="Teacher notes">
-        <RichTextField
-          blockId={block.id}
-          slideId={slideId}
-          blockType="exercise"
-          content={withDefaults(block.content).teacherNotes || { html: "" }}
-          onChange={(next) => updateField("teacherNotes", next)}
-        />
-      </Accordion>
     </div>
   );
 };

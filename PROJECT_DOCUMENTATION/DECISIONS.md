@@ -390,7 +390,7 @@ Architectural decisions should favor reuse and long-term extensibility, even if 
 
 ## Context
 
-The Exercise Block needs three rich-text fields on a single block: instructions, hint, and teacher notes. The shared rich-text pipeline (`useInitEditor` + `updateEditorUI` in `useRichTextEditor`) stores content as `{ html }` and routes changes through an `onContentChange` callback that writes the whole block `content`.
+The Exercise Block needs three rich-text fields on a single block: instructions, hint, and teacher notes. The shared rich-text pipeline (`useInitEditor` + `updateEditorUI` in `useRichTextEditor`) stores content as `{ html }` and routes changes through an `onContentChange` callback that writes the whole block `content`. The per-field mechanism was later generalized into a shared `RichTextField` component and multi-question authoring (ADR-013).
 
 ## Decision
 
@@ -459,3 +459,53 @@ Model quiz content as an ordered array of questions with a `type` discriminator:
   because explanation is lazy via an accordion (ADR-006 trade-off, same answer as ADR-011).
 - Grading/attempts are out of scope for V1; the schema already carries `modelAnswer` and correctness
   so those features can be added without a data migration.
+
+---
+
+# ADR-013: Shared Block Building Blocks and Multi-Question Exercise
+
+**Status:** Accepted
+
+## Context
+
+Exercise and Quiz evolved into the same shape: an editable title, block-level metadata, a list of
+questions with per-question rich text, and resources. Before the refactor they duplicated nearly all of
+that (styles, accordion, time input, resource list, rich-text wiring). A proposal to merge the two into a
+single "Activity" block with a quiz/exercise toggle was considered and rejected: quiz questions carry
+correctness/options/modelAnswer and auto-grading lifecycles, exercise questions are open-ended tasks with
+hint/teacher notes — different student-side behavior. The commonality is in the *building blocks*, not
+the block type.
+
+## Decision
+
+- Keep `exercise` and `quiz` as distinct block types.
+- Extract the shared pieces into `components/blocks/shared/` (mirroring the `Table/` folder pattern):
+  `styles.js`, `constants.js` (difficulty options), `Accordion.jsx`, `TimeInput.jsx`,
+  `RichTextField.jsx`, `ResourceSection.jsx`. General hooks live in `hooks/`: `useResources`,
+  `resourceUtils`.
+- Exercise adopts the same multi-question model as Quiz: `content = { title, difficulty,
+  estimatedTime, questions: [{ id, prompt, hint, teacherNotes }], resources }`. Difficulty/estimated
+  time and resources stay **block-level** (shared across all questions).
+- `withDefaults` lazily migrates legacy flat exercises (top-level `instructions`/`hint`/`teacherNotes`)
+  into a single `questions[0]`.
+- Both blocks use `useResources`/`ResourceSection` for block-level resources, and `shared/Accordion` +
+  `TimeInput` + `DIFFICULTY_OPTIONS` for metadata, so Quiz also gains resources and difficulty/time.
+
+## Rationale
+
+- The folder/name scoping avoids the ambiguity of a generic `ui.js`: files are named by what they are
+  (`styles`, `Accordion`, `ResourceSection`) and grouped by purpose (`shared/`), not by current
+  consumers.
+- Merging shared components keeps one source of truth: fixing resource rename/reorder or accordion
+  behavior once fixes both blocks (ADR-009).
+- Keeping block types distinct preserves their diverging futures (quiz grading vs exercise submissions).
+
+## Consequences
+
+- `components/blocks/` top level stays flat and scannable (block components + `BlockRenderer`);
+  reusable pieces live under `shared/`.
+- New blocks can adopt the same building blocks (resources, rich text, accordion, card styles) without
+  forking them.
+- Legacy exercise documents render unchanged through the read-time migration; saving writes the new
+  `questions[]` shape.
+- "Turn into" remains hidden for both blocks (`hideTransform`).

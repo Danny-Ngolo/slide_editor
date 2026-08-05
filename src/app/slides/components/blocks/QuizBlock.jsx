@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -13,91 +13,18 @@ import {
 import EditableTitle from "../EditableTitle";
 import { useQuiz } from "../../hooks/useQuiz";
 import { QUESTION_TYPES, withDefaults } from "../../hooks/quizUtils";
-import RichTextField from "./RichTextField";
-
-const COLORS = {
-  card: "#ffffff",
-  text: "#1f2328",
-  label: "#374151",
-  fieldBg: "#f6f8fa",
-  fieldBorder: "#d0d7de",
-  inputBg: "#ffffff",
-  border: "#e2e5ea",
-  placeholder: "#6b7280",
-};
-
-const LABEL_STYLE = {
-  fontSize: "11px",
-  fontWeight: "bold",
-  color: COLORS.label,
-  textTransform: "uppercase",
-  letterSpacing: "0.6px",
-  marginBottom: "6px",
-};
-
-const INPUT_STYLE = {
-  padding: "4px 6px",
-  border: `1px solid ${COLORS.fieldBorder}`,
-  borderRadius: "4px",
-  background: COLORS.inputBg,
-  color: COLORS.text,
-};
-
-const rowButtonStyle = (disabled) => ({
-  display: "flex",
-  alignItems: "center",
-  background: "transparent",
-  border: "none",
-  cursor: disabled ? "default" : "pointer",
-  color: disabled ? COLORS.placeholder : COLORS.label,
-  padding: "2px",
-  borderRadius: "4px",
-  flexShrink: 0,
-});
-
-const addButtonStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "4px",
-  padding: "4px 10px",
-  border: `1px solid ${COLORS.fieldBorder}`,
-  borderRadius: "4px",
-  background: COLORS.inputBg,
-  color: COLORS.text,
-  fontSize: "12px",
-  cursor: "pointer",
-};
-
-const Accordion = ({ label, children }) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div style={{ marginTop: "12px" }}>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen((o) => !o);
-        }}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          padding: 0,
-          ...LABEL_STYLE,
-          marginBottom: 0,
-        }}
-      >
-        <span>{open ? "▾" : "▸"}</span>
-        {label}
-      </button>
-      {open && <div style={{ marginTop: "6px" }}>{children}</div>}
-    </div>
-  );
-};
+import {
+  COLORS,
+  INPUT_STYLE,
+  LABEL_STYLE,
+  addButtonStyle,
+  rowButtonStyle,
+} from "./shared/styles";
+import { DIFFICULTY_OPTIONS } from "./shared/constants";
+import { Accordion } from "./shared/Accordion";
+import { TimeInput } from "./shared/TimeInput";
+import RichTextField from "./shared/RichTextField";
+import ResourceSection from "./shared/ResourceSection";
 
 const OptionRow = ({
   option,
@@ -430,8 +357,14 @@ const QuestionCard = ({
 
 const QuizBlock = ({ block, slideId }) => {
   const content = withDefaults(block.content);
-  const { updateField, addQuestion, removeQuestion, duplicateQuestion, setQuestionType, moveQuestion } =
-    useQuiz({ slideId, blockId: block.id });
+  const {
+    updateField,
+    addQuestion,
+    removeQuestion,
+    duplicateQuestion,
+    setQuestionType,
+    moveQuestion,
+  } = useQuiz({ slideId, blockId: block.id });
 
   const stop = (e) => e.stopPropagation();
 
@@ -455,6 +388,45 @@ const QuizBlock = ({ block, slideId }) => {
           marginBottom: "4px",
         }}
       />
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "16px",
+          marginTop: "12px",
+          fontSize: "13px",
+          color: COLORS.text,
+        }}
+      >
+        <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          Difficulty
+          <select
+            value={content.difficulty}
+            onChange={(e) =>
+              updateField("difficulty", e.target.value, {
+                recordHistory: true,
+              })
+            }
+            style={INPUT_STYLE}
+          >
+            {DIFFICULTY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          Time (min)
+          <TimeInput
+            value={content.estimatedTime}
+            onChange={(v) =>
+              updateField("estimatedTime", v, { recordHistory: true })
+            }
+          />
+        </label>
+      </div>
 
       <div
         style={{
@@ -520,6 +492,10 @@ const QuizBlock = ({ block, slideId }) => {
       >
         <Plus size={14} /> Add question
       </button>
+
+      <div style={{ marginTop: "16px" }}>
+        <ResourceSection block={block} slideId={slideId} />
+      </div>
     </div>
   );
 };
