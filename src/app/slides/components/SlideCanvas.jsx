@@ -18,6 +18,7 @@ import SortableBlock from "./SortableBlock";
 import { useEditorContext } from "./EditorContext";
 import { useSlides } from "../hooks/useSlides";
 import { useHistory } from "../hooks/useHistory";
+import { computeFixedMenuPosition } from "../utils/menuPosition";
 import TableActionMenu from "./blocks/Table/TableActionMenu";
 import EditableTitle from "./EditableTitle";
 
@@ -40,22 +41,15 @@ const SlideCanvas = ({ slide, slides }) => {
   const handleClickAddBlock = (e) => {
     const clickY = e.clientY;
     const clickX = e.clientX;
-    const menuHeight = 250;
-    const menuWidth = 200;
 
-    const spaceBelow = window.innerHeight - clickY;
-    const spaceAbove = clickY;
-
-    let top =
-      spaceBelow < menuHeight && spaceAbove > menuHeight
-        ? clickY - menuHeight
-        : clickY + 8;
-    let left =
-      clickX + menuWidth > window.innerWidth
-        ? window.innerWidth - menuWidth - 10
-        : clickX;
-
-    setInsertMenuPos({ top, left });
+    setInsertMenuPos(
+      computeFixedMenuPosition({
+        anchorTop: clickY,
+        anchorLeft: clickX,
+        menuWidth: 220,
+        menuHeight: 250,
+      }),
+    );
 
     setShowInsertMenu(true);
   };

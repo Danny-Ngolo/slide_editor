@@ -7,6 +7,7 @@ import TextAlign from "@tiptap/extension-text-align";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useCallback, useEffect, useRef } from "react";
+import { computeFixedMenuPosition } from "../utils/menuPosition";
 import { useEditorContext } from "../components/EditorContext";
 import { useSlides } from "./useSlides";
 import { useSlashMenu } from "./useSlashMenu";
@@ -234,10 +235,14 @@ export function useRichTextEditor() {
             setShowSlashMenu(true);
           }
 
-          setSlashMenuPosition({
-            top: coords.bottom + window.scrollY + 5,
-            left: coords.left + window.scrollX,
-          });
+          setSlashMenuPosition(
+            computeFixedMenuPosition({
+              anchorTop: coords.bottom,
+              anchorLeft: coords.left,
+              menuWidth: 220,
+              menuHeight: 250,
+            }),
+          );
 
           setShowSlashMenu(true);
           setSelectedBlockIndex(0);
