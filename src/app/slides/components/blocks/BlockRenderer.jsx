@@ -12,23 +12,30 @@ import BlockActions from "../BlockActions";
 import { MoreVertical } from "lucide-react";
 import { useEditorContext } from "../EditorContext";
 import { useSelection } from "../../hooks/useSelection";
+import { useLongPress } from "../../hooks/useLongPress";
 import { useSlides } from "../../hooks/useSlides";
 import { useClipboard } from "../../hooks/useClipboard";
 import TableBlock from "./Table/TableBlock";
 
 const BlockRenderer = ({ block, slideId }) => {
   const [showActions, setShowActions] = useState(false);
-  const { handleSelectBlock, isBlockSelected } = useSelection();
+  const { handleSelectBlock, isBlockSelected, toggleBlockSelection } =
+    useSelection();
   const { selectedBlocks } = useEditorContext();
   const { deleteBlock, transformBlock, toggleImportant } = useSlides();
 
   const { copyBlock, pasteBlock, duplicateBlock } = useClipboard();
+
+  const longPressHandlers = useLongPress({
+    onLongPress: () => toggleBlockSelection(slideId, block.id),
+  });
 
   return (
     <div
       onClick={(e) => {
         handleSelectBlock(e, slideId, block.id);
       }}
+      {...longPressHandlers}
       style={{
         marginBottom: "15px",
         padding: "10px",

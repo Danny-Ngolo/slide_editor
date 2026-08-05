@@ -6,6 +6,7 @@ import { useEditorContext } from "./EditorContext";
 import { useSelection } from "../hooks/useSelection";
 import { useClipboard } from "../hooks/useClipboard";
 import { useSlides } from "../hooks/useSlides";
+import { useLongPress, consumeLongPressFired } from "../hooks/useLongPress";
 import SlideActions from "./SlideActions";
 import EditableTitle from "./EditableTitle";
 
@@ -14,11 +15,17 @@ const Slide = ({ slide, activeSlideId, setActiveSlideId, deleteSlide }) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const { selectedSlides, setSelectedSlides, setSelectedBlocks } =
     useEditorContext();
-  const { isSlideSelected } = useSelection();
+  const { isSlideSelected, toggleSlideSelection } = useSelection();
   const { copySlide, pasteSlide, duplicateSlide } = useClipboard();
   const { updateSlideTitle } = useSlides();
 
+  const longPressHandlers = useLongPress({
+    onLongPress: () => toggleSlideSelection(slide.id),
+  });
+
   const handleClick = (e) => {
+    if (consumeLongPressFired()) return;
+
     setActiveSlideId(slide.id);
     setSelectedBlocks([]);
 
@@ -53,6 +60,7 @@ const Slide = ({ slide, activeSlideId, setActiveSlideId, deleteSlide }) => {
         position: "relative",
       }}
       onClick={handleClick}
+      {...longPressHandlers}
     >
       {isRenaming ? (
         <EditableTitle

@@ -1,4 +1,5 @@
 import { useEditorContext } from "../components/EditorContext";
+import { consumeLongPressFired } from "./useLongPress";
 
 export function useSelection() {
   const { setSelectedBlock, setSelectedBlocks, setSelectedSlides } =
@@ -6,6 +7,8 @@ export function useSelection() {
 
   const handleSelectBlock = (e, slideId, blockId) => {
     e.stopPropagation();
+
+    if (consumeLongPressFired()) return;
 
     setSelectedSlides([]);
 
@@ -49,5 +52,41 @@ export function useSelection() {
     return selectedSlides.includes(slideId);
   };
 
-  return { handleSelectBlock, isBlockSelected, isSlideSelected };
+  const toggleBlockSelection = (slideId, blockId) => {
+    setSelectedSlides([]);
+
+    setSelectedBlocks((prev) => {
+      const exists = prev.some(
+        (block) => block.slideId === slideId && block.blockId === blockId,
+      );
+
+      if (exists) {
+        return prev.filter(
+          (block) => !(block.slideId === slideId && block.blockId === blockId),
+        );
+      }
+
+      return [...prev, { slideId, blockId }];
+    });
+  };
+
+  const toggleSlideSelection = (slideId) => {
+    setSelectedBlocks([]);
+
+    setSelectedSlides((prev) => {
+      if (prev.includes(slideId)) {
+        return prev.filter((id) => id !== slideId);
+      }
+
+      return [...prev, slideId];
+    });
+  };
+
+  return {
+    handleSelectBlock,
+    isBlockSelected,
+    isSlideSelected,
+    toggleBlockSelection,
+    toggleSlideSelection,
+  };
 }

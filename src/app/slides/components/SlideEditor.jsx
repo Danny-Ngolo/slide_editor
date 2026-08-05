@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import SlidesSidebar from "./SlidesSidebar";
 import SlideCanvas from "./SlideCanvas";
 import { useEditorContext } from "./EditorContext";
+import SelectionActionsBar from "./SelectionActionsBar";
 import lessonService from "@/services/lessonService";
 import { useSlides } from "../hooks/useSlides";
 import { useHistory } from "../hooks/useHistory";
@@ -121,6 +122,7 @@ const SlideEditor = ({ lessonId }) => {
 
         <SlideCanvas slide={activeSlide} slides={slides} />
       </div>
+      <SelectionActionsBar />
       <button
         onClick={handleManualSave}
         style={{
