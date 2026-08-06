@@ -268,6 +268,13 @@ Implementation:
 
 # Phase 6 — Advanced Block System 🚧 CURRENT MILESTONE
 
+> **Back on track after a styling & mobile detour (2026-08).** A mobile/styling pass shipped as
+> commits `de25865` and `cfd2355` (long-press multi-selection for slides and blocks, native
+> long-press text selection inside table cells, custom dropdowns replacing native `<select>`s).
+> That pass only *touched* Phase 10 (Mobile Experience); those items remain open and we will come
+> back to them when the roadmap reaches that phase. Development now resumes here on the remaining
+> educational blocks.
+
 ## Educational Content Blocks
 
 New block types:
@@ -481,6 +488,12 @@ Future long-term evolution:
 
 ## Mobile Experience
 
+> **Touched 2026-08 — NOT completed, will return later.** A first mobile-integration pass partially
+> explored this area during the styling detour: touch long-press multi-selection for slides and
+> blocks, native long-press text selection inside table cells, and custom dropdowns replacing native
+> `<select>`s in block controls. This is an exploratory detour, **not** the completion of this
+> phase. All items below remain open and will be addressed when the roadmap reaches Phase 10.
+
 - [ ] Touch-friendly editing
 - [ ] Mobile toolbar
 - [ ] Touch selection
@@ -515,6 +528,8 @@ Optimization
 ---
 
 # Current Priority Order
+
+> **Next:** return to the remaining Phase 6 educational blocks (Code, Flashcard, Equation / Math).
 
 ## Immediate
 

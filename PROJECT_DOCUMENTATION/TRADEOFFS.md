@@ -345,6 +345,90 @@ Costs
 
 ⚠️ Drag handles require special handling because tables have strict DOM rules.
 
+9. Native Select vs Custom Select Component
+   Context
+
+Callout, Quiz, and Exercise controls used native `<select>` elements.
+
+On desktop they render fine.
+
+On mobile, native option lists are rendered by the operating system: full-width, dark, and impossible to theme.
+
+Current Choice
+
+Build a shared custom dropdown: `components/blocks/shared/Select.jsx`.
+
+It reuses the editor's visual language (ActionMenu look: white card, shadow, accent highlight, radius) and closes on outside press or Escape.
+
+Why This Choice Was Made
+
+The editor already has a designed menu system (ActionMenu).
+
+Using a native select inside a designed product creates inconsistent visuals and unreadable option lists on mobile.
+
+Benefits
+
+✅ Consistent styling across desktop and mobile
+
+✅ Matches the existing ActionMenu look
+
+✅ Full control over open/close, selection highlight, and scroll
+
+Costs
+
+⚠️ Loses native accessibility/behavior (keyboard listbox navigation, screen-reader semantics)
+
+⚠️ Requires manual outside-click and Escape handling
+
+⚠️ Future accessibility pass may need ARIA role additions
+
+Future Consideration
+
+If accessibility becomes a hard requirement, the component can add role="listbox"/option semantics without changing the API.
+
+10. Long-Press Disambiguation: Block Multi-Select vs Native Text Selection
+   Context
+
+On touch devices, a single long-press gesture was needed for two conflicting jobs:
+
+selecting a block for multi-selection (mirroring the slide list), and selecting text inside rich-text areas.
+
+Early attempts to enable long-press for multi-selection broke native text selection inside table cells.
+
+Current Choice
+
+Centralize the gesture in `useLongPress()` with target-based routing:
+
+blocks opt in via `allowInsideEditable` (long-press over a block toggles block selection);
+
+table cells are always excluded via `.table-cell-inner` (long-press inside a cell keeps its native text selection).
+
+Why This Choice Was Made
+
+The slide list already had a working long-press multi-select model.
+
+Mirroring that model for blocks gave mobile users the same multi-select capability, while scoping kept the table cell text-selection fix intact.
+
+Benefits
+
+✅ One gesture, consistent with the slide list
+
+✅ Table cell long-press text selection preserved
+
+✅ Single source of truth for touch-gesture behavior
+
+Costs
+
+⚠️ Long-press over a text block now selects the block instead of its text
+
+⚠️ Text editing inside blocks relies on tap-to-focus instead of long-press
+
+⚠️ Target-based routing adds coupling to DOM classes (`.table-cell-inner`)
+
+Future Consideration
+
+If text selection inside text blocks must be restored on touch, the routing can be refined (e.g., per-block opt-out) without redesigning the hook.
+
 Final Principle
 
 The Slide Editor intentionally favors:

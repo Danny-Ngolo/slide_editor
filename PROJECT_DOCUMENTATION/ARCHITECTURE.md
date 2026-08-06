@@ -98,6 +98,23 @@ resizeColumn()
 resizeRow()
 ```
 
+```text
+useLongPress()
+
+↓
+
+start()
+
+move()
+
+end()
+
+cancel()
+```
+
+Long-press is a shared touch-gesture hook; blocks opt in via `allowInsideEditable`, and table cells
+are always excluded so their own native text selection keeps ownership of long-press inside cells.
+
 Hooks operate on shared state.
 
 They do not create duplicate copies of shared state.
@@ -431,6 +448,6 @@ The current architecture intentionally prepares for capabilities including
 * reusable document editing
 * additional block types
 * cross-document clipboard
-* mobile editing
+* mobile editing (in progress — long-press multi-selection and touch text selection shipped 2026-08; Phase 10 roadmap items remain open)
 
 These features should extend the existing architecture rather than replace it.

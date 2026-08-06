@@ -176,7 +176,13 @@ Implemented features currently include:
 * block insertion
 * block transformation
 * drag-and-drop
-* multi-block selection
+* multi-block selection (desktop ctrl+click, mobile long-press)
+
+### Mobile & Interaction
+
+* touch long-press multi-selection for slides and blocks
+* native long-press text selection inside table cells (touch)
+* custom dropdowns replacing native `<select>`s in callout / quiz / exercise controls
 
 ### Rich Text
 
@@ -210,6 +216,12 @@ Implemented features currently include:
 The editor has reached a stable architectural foundation.
 
 Most ongoing work focuses on completing the Table V1 feature set before expanding the editor with additional block types and more advanced editing capabilities.
+
+> **2026-08 — Styling & mobile pass shipped (Phase 10 only touched).** A focused pass added touch
+> long-press multi-selection for slides and blocks, restored native long-press text selection inside
+> table cells, and replaced native `<select>`s with custom dropdowns. This touched Phase 10 (Mobile
+> Experience) items without completing them; the roadmap will return to that phase later. Development
+> now returns to the remaining educational blocks (Phase 6).
 
 Current active work includes:
 

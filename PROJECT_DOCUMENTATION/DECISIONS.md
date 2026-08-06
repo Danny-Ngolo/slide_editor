@@ -509,3 +509,92 @@ the block type.
 - Legacy exercise documents render unchanged through the read-time migration; saving writes the new
   `questions[]` shape.
 - "Turn into" remains hidden for both blocks (`hideTransform`).
+
+---
+
+# ADR-014: Custom Select Component over Native Select
+
+**Status:** Accepted
+
+## Context
+
+Callout, Quiz, and Exercise controls used native `<select>` elements. On desktop they render fine,
+but on mobile the OS renders option lists full-width, dark, and unthemeable — visually inconsistent
+with the editor's designed menu system (ActionMenu).
+
+## Decision
+
+Replace native `<select>` usage in block controls with a shared custom dropdown:
+`components/blocks/shared/Select.jsx`. It matches the ActionMenu look (white card, shadow, accent
+highlight, radius), supports `minWidth: 100%`, a max-height scroll, and closes on outside press or
+Escape.
+
+## Rationale
+
+- The editor already has a designed menu visual language; native selects break that consistency.
+- One shared component serves all consumers (Callout variant, Quiz type + difficulty, Exercise
+  difficulty), matching ADR-009 (reuse before reinvention).
+
+## Consequences
+
+### Advantages
+
+* consistent desktop/mobile styling
+* matches the existing ActionMenu look
+* full control over open state, selection highlight, and scroll
+
+### Trade-offs
+
+* loses native accessibility behavior (keyboard listbox navigation, screen-reader semantics)
+* requires manual outside-click and Escape handling
+* a future accessibility pass may need ARIA `role="listbox"`/`option` semantics added to the
+  component without changing its API
+
+---
+
+# ADR-015: Long-Press Gesture Ownership on Touch
+
+**Status:** Accepted
+
+## Context
+
+On touch devices a single long-press gesture was needed for two conflicting jobs: multi-selecting a
+block (mirroring the slide list) and selecting text inside rich-text areas. Early attempts to enable
+long-press multi-selection broke the native long-press text selection inside table cells.
+
+## Decision
+
+Centralize the gesture in `useLongPress()` with target-based routing:
+
+- Blocks opt in via an `allowInsideEditable` option — long-press over a block toggles
+  `toggleBlockSelection` (mirroring `Slide.jsx`'s `toggleSlideSelection`).
+- Table cells are always excluded via the `.table-cell-inner` scope — long-press inside a cell keeps
+  its native text selection.
+- Form controls (`input`, `textarea`, `select`) are always skipped.
+
+## Rationale
+
+- The slide list already established a working long-press multi-select model; mirroring it gives
+  blocks the same capability with minimal new surface (ADR-009).
+- Scoping by target preserves the table cell text-selection fix without reintroducing the conflict.
+- Selected blocks are made visible with an accent ring + `accentSoft` background in `BlockRenderer`,
+  so desktop ctrl+click multi-selection becomes visually trackable too.
+
+## Consequences
+
+### Advantages
+
+* one gesture, consistent with the slide list
+* table cell long-press text selection preserved
+* single source of truth for touch-gesture behavior
+
+### Trade-offs
+
+* long-press over a text block now selects the block instead of its text; editing relies on
+  tap-to-focus
+* target-based routing couples the hook to a DOM scope class (`.table-cell-inner`)
+
+### Future
+
+* if text selection inside text blocks must be restored on touch, add per-block opt-out in the hook
+  without redesigning it
