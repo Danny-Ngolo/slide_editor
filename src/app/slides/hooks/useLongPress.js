@@ -35,7 +35,11 @@ export const consumeLongPressFired = () => {
   return fired;
 };
 
-export function useLongPress({ onLongPress, duration = DEFAULT_DURATION }) {
+export function useLongPress({
+  onLongPress,
+  duration = DEFAULT_DURATION,
+  allowInsideEditable = false,
+}) {
   const { activeEditor } = useEditorContext();
   const timerRef = useRef(null);
   const startPosRef = useRef(null);
@@ -52,8 +56,12 @@ export function useLongPress({ onLongPress, duration = DEFAULT_DURATION }) {
     const insideFormControl = target?.closest?.("input, textarea, select");
     if (insideFormControl) return;
 
+    // Long-presses inside a table cell are always handed to the cell's own
+    // native text-selection — never to block selection.
+    if (target?.closest?.(".table-cell-inner")) return;
+
     const insideEditable = target?.closest?.('[contenteditable="true"]');
-    if (insideEditable && activeEditor) return;
+    if (!allowInsideEditable && insideEditable && activeEditor) return;
 
     startPosRef.current = { x: e.clientX, y: e.clientY };
 

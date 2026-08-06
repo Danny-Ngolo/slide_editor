@@ -28,6 +28,7 @@ const SlideCanvas = ({ slide, slides }) => {
   const closeInsertMenu = useCallback(() => setShowInsertMenu(false), [setShowInsertMenu]);
   const {
     setSelectedBlock,
+    setSelectedBlocks,
     editorToolBarRef,
     tableMenu,
     setTableMenu,
@@ -93,12 +94,13 @@ const SlideCanvas = ({ slide, slides }) => {
           }}
         >
           <div
-            onClick={() =>
+            onClick={() => {
               setSelectedBlock({
                 slideId: null,
                 blockId: null,
-              })
-            }
+              });
+              setSelectedBlocks([]);
+            }}
             style={{
               maxWidth: "min(800px, 100%)",
               margin: "auto",

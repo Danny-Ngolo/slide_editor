@@ -29,7 +29,10 @@ const BlockRenderer = ({ block, slideId }) => {
 
   const longPressHandlers = useLongPress({
     onLongPress: () => toggleBlockSelection(slideId, block.id),
+    allowInsideEditable: true,
   });
+
+  const isSelected = isBlockSelected(slideId, block.id, selectedBlocks);
 
   return (
     <div
@@ -41,11 +44,13 @@ const BlockRenderer = ({ block, slideId }) => {
         marginBottom: "15px",
         padding: "10px",
         border: block.important ? "2px solid orange" : "1px solid #ccc",
+        borderRadius: RADIUS.lg,
         minHeight: "80px",
         width: "100%",
         position: "relative",
-        boxShadow: isBlockSelected(slideId, block.id, selectedBlocks)
-          ? "0 0 0 2px #fff"
+        background: isSelected ? COLORS.accentSoft : "transparent",
+        boxShadow: isSelected
+          ? `0 0 0 2px ${COLORS.accent}`
           : "none",
       }}
     >
