@@ -2,6 +2,12 @@ import { useCallback } from "react";
 import { useEditorContext } from "../../components/EditorContext";
 import { getRangeSet } from "./tableUtils";
 
+// Last pointer type seen on a cell press. The contextmenu event is a MouseEvent
+// (no pointerType), but Android fires it on long-press — we use this to tell a
+// real right-click apart from a touch long-press so long-press can keep doing
+// native text selection instead of selecting the cell.
+let lastPointerType = "mouse";
+
 export function useTableSelection({ updateTable }) {
   const {
     selectionAnchor,
@@ -17,7 +23,9 @@ export function useTableSelection({ updateTable }) {
     tableDragRef,
   } = useEditorContext();
 
-  const handleCellMouseDown = (row, col, cellId, shiftKey = false, blockId) => {
+  const handleCellMouseDown = (row, col, cellId, shiftKey = false, blockId, e) => {
+    const pointerType = e?.pointerType || "mouse";
+    lastPointerType = pointerType;
     // Shared drag state so the press cell, dragged-over cells and release cell
     // all agree on what happened during this drag.
     tableDragRef.current = {
@@ -73,6 +81,9 @@ export function useTableSelection({ updateTable }) {
       setCellDragActive(false);
       const drag = tableDragRef.current;
       tableDragRef.current = null;
+      // A cancelled gesture (browser took over for scroll/native selection):
+      // clean up but do not surface the cell menu.
+      if (e?.type === "pointercancel") return;
       // After a cross-cell drag, surface the cell menu (Copy/Paste/Merge/Split/
       // Clear) at the release point so those actions are reachable without
       // right-clicking.
@@ -93,6 +104,15 @@ export function useTableSelection({ updateTable }) {
   // Right-click handler — opens the menu with type "cell" so the Merge/Split
   // buttons become accessible.
   const handleCellContextMenu = (e, blockId, rowIndex, columnIndex) => {
+    // On touch, a long-press is the native gesture for text selection (Android
+    // fires contextmenu on long-press). Let the browser keep it: no cell select,
+    // no menu, no preventDefault — the cell stays unselected until the drag
+    // actually crosses into a second cell. Right-click keeps the menu.
+    const isTouch =
+      lastPointerType === "touch" ||
+      e?.pointerType === "touch" ||
+      e?.sourceCapabilities?.firesTouchEvents;
+    if (isTouch) return;
     e.preventDefault();
     e.stopPropagation();
     if (!selectedCells.has(`${rowIndex},${columnIndex}`)) {

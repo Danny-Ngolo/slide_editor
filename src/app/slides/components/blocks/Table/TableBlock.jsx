@@ -127,11 +127,19 @@ const TableBlock = ({ slideId, block }) => {
     };
   }, [tableResizeState, slideId, block, handleTableMouseMove, handleTableMouseUp]);
 
-  // Global mouseup — ends drag selection even if the mouse is released outside any cell.
-  // Always-on (no dependency on isSelecting) so we never miss a mouseup.
+  // Global mouseup/pointerup/pointercancel — ends drag selection even if the
+  // pointer is released outside any cell, and releases the eager touch lock when
+  // the browser takes the gesture over for native text selection/scroll.
+  // Always-on (no dependency on isSelecting) so we never miss a cleanup.
   useEffect(() => {
     document.addEventListener('mouseup', handleCellMouseUp);
-    return () => document.removeEventListener('mouseup', handleCellMouseUp);
+    document.addEventListener('pointerup', handleCellMouseUp);
+    document.addEventListener('pointercancel', handleCellMouseUp);
+    return () => {
+      document.removeEventListener('mouseup', handleCellMouseUp);
+      document.removeEventListener('pointerup', handleCellMouseUp);
+      document.removeEventListener('pointercancel', handleCellMouseUp);
+    };
   }, [handleCellMouseUp]);
 
   // Multi-cell selection is extended from the document level instead of

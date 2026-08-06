@@ -25,6 +25,7 @@ import { Accordion } from "./shared/Accordion";
 import { TimeInput } from "./shared/TimeInput";
 import RichTextField from "./shared/RichTextField";
 import ResourceSection from "./shared/ResourceSection";
+import Select from "./shared/Select";
 
 const OptionRow = ({
   option,
@@ -178,17 +179,15 @@ const QuestionCard = ({
         >
           {typeLabel}
         </span>
-        <select
+        <Select
           value={question.type}
-          onChange={(e) => onSetType(e.target.value)}
-          style={{ ...INPUT_STYLE, marginLeft: "auto", fontSize: "12px" }}
-        >
-          {Object.keys(QUESTION_TYPES).map((key) => (
-            <option key={key} value={key}>
-              {QUESTION_TYPES[key].label}
-            </option>
-          ))}
-        </select>
+          options={Object.keys(QUESTION_TYPES).map((key) => ({
+            value: key,
+            label: QUESTION_TYPES[key].label,
+          }))}
+          onChange={onSetType}
+          style={{ marginLeft: "auto", fontSize: "12px" }}
+        />
         <button
           type="button"
           onClick={(e) => {
@@ -402,21 +401,16 @@ const QuizBlock = ({ block, slideId }) => {
       >
         <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           Difficulty
-          <select
+          <Select
             value={content.difficulty}
-            onChange={(e) =>
-              updateField("difficulty", e.target.value, {
+            options={DIFFICULTY_OPTIONS}
+            onChange={(v) =>
+              updateField("difficulty", v, {
                 recordHistory: true,
               })
             }
             style={INPUT_STYLE}
-          >
-            {DIFFICULTY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          />
         </label>
         <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           Time (min)

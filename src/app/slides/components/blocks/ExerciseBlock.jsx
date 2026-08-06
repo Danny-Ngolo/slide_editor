@@ -17,6 +17,7 @@ import { TimeInput } from "./shared/TimeInput";
 import { withDefaults } from "../../hooks/exerciseUtils";
 import RichTextField from "./shared/RichTextField";
 import ResourceSection from "./shared/ResourceSection";
+import Select from "./shared/Select";
 
 const QuestionCard = ({
   question,
@@ -190,21 +191,16 @@ const ExerciseBlock = ({ block, slideId }) => {
       >
         <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           Difficulty
-          <select
+          <Select
             value={content.difficulty}
-            onChange={(e) =>
-              updateField("difficulty", e.target.value, {
+            options={DIFFICULTY_OPTIONS}
+            onChange={(v) =>
+              updateField("difficulty", v, {
                 recordHistory: true,
               })
             }
             style={INPUT_STYLE}
-          >
-            {DIFFICULTY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          />
         </label>
         <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           Time (min)

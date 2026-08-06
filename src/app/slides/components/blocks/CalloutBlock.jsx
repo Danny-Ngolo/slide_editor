@@ -15,7 +15,8 @@ import { useSlides } from "../../hooks/useSlides";
 import { useRichTextEditor } from "../../hooks/useRichTextEditor";
 import { EditorContent } from "@tiptap/react";
 import { useEditorContext } from "../EditorContext";
-import { COLORS, INPUT_STYLE, RADIUS } from "./shared/styles";
+import Select from "./shared/Select";
+import { COLORS, RADIUS } from "./shared/styles";
 
 const CalloutBlock = ({ block, slideId }) => {
   const { updateBlock } = useSlides();
@@ -144,29 +145,24 @@ const CalloutBlock = ({ block, slideId }) => {
           </span>
 
           {/* TYPE SELECTOR */}
-          <select
+          <Select
             value={variant}
-            onChange={(e) => {
+            options={Object.keys(calloutTypes).map((key) => ({
+              value: key,
+              label: calloutTypes[key].label,
+            }))}
+            onChange={(v) => {
               updateBlock(slideId, block.id, {
                 ...block.content,
-                variant: e.target.value,
+                variant: v,
               });
             }}
             style={{
-              ...INPUT_STYLE,
               marginLeft: "auto",
               fontSize: "12px",
               borderRadius: RADIUS.md,
             }}
-          >
-            {Object.keys(calloutTypes).map((key) => {
-              return (
-                <option key={key} value={key}>
-                  {calloutTypes[key].label}
-                </option>
-              );
-            })}
-          </select>
+          />
         </div>
 
         <EditorContent editor={editor} />

@@ -79,7 +79,7 @@ const TableCell = ({
       onPointerDown={(e) => {
         // Only trigger drag selection on primary left clicks (button 0)
         if (e.button !== 0) return;
-        handleCellMouseDown(rowIndex, columnIndex, cell.id, e.shiftKey, block.id);
+        handleCellMouseDown(rowIndex, columnIndex, cell.id, e.shiftKey, block.id, e);
       }}
       onPointerUp={(e) => handleCellMouseUp(e)}
       onKeyDownCapture={(e) => handleCellKeyDown(e, rowIndex, columnIndex, block)}
