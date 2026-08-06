@@ -21,7 +21,7 @@ const TableCell = ({
   const { registerEditor, unregisterEditor, focusEditor, tableSelection } =
     useEditorContext();
 
-  const { handleCellMouseDown, handleCellMouseEnter, handleCellMouseUp, handleCellKeyDown } = useTable();
+  const { handleCellMouseDown, handleCellMouseUp, handleCellKeyDown } = useTable();
 
   const editor = useInitEditor({
     slideId,
@@ -79,16 +79,13 @@ const TableCell = ({
       onPointerDown={(e) => {
         // Only trigger drag selection on primary left clicks (button 0)
         if (e.button !== 0) return;
-        // No preventDefault — allows TipTap to receive focus naturally.
-        // ProseMirror pointer-events are disabled via CSS only while dragging
-        // (table[data-selecting=true] .ProseMirror { pointer-events: none })
-        // so multi-cell drag still works without the editor hijacking events.
-        handleCellMouseDown(rowIndex, columnIndex, cell.id, e.shiftKey);
+        handleCellMouseDown(rowIndex, columnIndex, cell.id, e.shiftKey, block.id);
       }}
-      onPointerEnter={() => handleCellMouseEnter(rowIndex, columnIndex)}
-      onPointerUp={handleCellMouseUp}
+      onPointerUp={(e) => handleCellMouseUp(e)}
       onKeyDownCapture={(e) => handleCellKeyDown(e, rowIndex, columnIndex, block)}
       className="table-cell-inner"
+      data-row={rowIndex}
+      data-col={columnIndex}
     >
       <EditorContent editor={editor} />
     </div>

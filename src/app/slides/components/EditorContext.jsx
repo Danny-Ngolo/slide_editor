@@ -57,6 +57,15 @@ const EditorProvider = ({ children }) => {
   // Shared drag-selection state (must live in context so all useTable() instances share it)
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionAnchor, setSelectionAnchor] = useState(null);
+  // Becomes true only once a drag actually crosses into a second cell. Only
+  // then do we lock text selection / pointer events. A plain click (focus) or
+  // a drag that stays inside one cell keeps normal text selection/editing.
+  const [cellDragActive, setCellDragActive] = useState(false);
+
+  // Shared drag bookkeeping for table cell selection (must live in context: each
+  // useTable()/useTableSelection() instance would otherwise own its own copy, so
+  // the press cell, the dragged-over cells, and the release cell would disagree).
+  const tableDragRef = useRef(null);
 
   const [tableMenu, setTableMenu] = useState(null);
 
@@ -149,6 +158,9 @@ const EditorProvider = ({ children }) => {
         setIsSelecting,
         selectionAnchor,
         setSelectionAnchor,
+        cellDragActive,
+        setCellDragActive,
+        tableDragRef,
 
         tableMenu,
         setTableMenu,

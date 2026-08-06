@@ -16,6 +16,7 @@ const TableBlock = ({ slideId, block }) => {
     handleTableMouseMove,
     handleTableMouseUp,
     handleCellMouseUp,
+    handleCellMouseEnter,
     handleDragEnd,
     isSelecting,
     clearCellSelection,
@@ -24,17 +25,24 @@ const TableBlock = ({ slideId, block }) => {
     deleteTableSelection,
   } = useTable();
   const {
-    tableMenu,
     setTableMenu,
     tableMenuRef,
     tableResizeState,
     tableSelection,
     selectedCells,
+    cellDragActive,
   } = useEditorContext();
 
   const tableRef = useRef(null);
 
   const rows = block.content?.rows || [];
+
+  // Live ref so the document-level hit-test always calls the freshest
+  // handleCellMouseEnter (it closes over isSelecting/anchor/cellDragActive).
+  const handleCellMouseEnterRef = useRef(handleCellMouseEnter);
+  useEffect(() => {
+    handleCellMouseEnterRef.current = handleCellMouseEnter;
+  });
 
   // Keyboard shortcuts for merge (Ctrl+M) and split (Ctrl+S) active on selected cells
   useEffect(() => {
@@ -83,25 +91,25 @@ const TableBlock = ({ slideId, block }) => {
   ]);
 
   useEffect(() => {
-    const isMenuForThisBlock = tableMenu?.blockId === block.id || tableSelection?.blockId === block.id;
-    if (!isMenuForThisBlock) return;
-
+    // Always-on: clicking/pressing anywhere outside this table (and outside its
+    // open menu) clears the cell/row/column selection and any open menu.
+    // Using mousedown (not click) so the click that follows a drag-release does
+    // not immediately close a menu opened on mouseup.
     const closeTableMenu = () => setTableMenu(null);
 
-    const handleClickOutside = (e) => {
-      const insideMenu = tableMenuRef.current?.contains(e.target);
-
-      if (insideMenu) return;
-
+    const handlePointerDownOutside = (e) => {
+      if (tableRef.current?.contains(e.target)) return;
+      if (tableMenuRef.current?.contains(e.target)) return;
       closeTableMenu();
       clearTableSelection();
       clearCellSelection();
     };
 
-    document.addEventListener("click", handleClickOutside);
+    document.addEventListener("mousedown", handlePointerDownOutside);
 
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [tableMenu, tableSelection, block.id, clearCellSelection, clearTableSelection, setTableMenu, tableMenuRef]);
+    return () =>
+      document.removeEventListener("mousedown", handlePointerDownOutside);
+  }, [clearCellSelection, clearTableSelection, setTableMenu, tableMenuRef, tableRef]);
 
   useEffect(() => {
     if (!tableResizeState) return;
@@ -126,6 +134,40 @@ const TableBlock = ({ slideId, block }) => {
     return () => document.removeEventListener('mouseup', handleCellMouseUp);
   }, [handleCellMouseUp]);
 
+  // Multi-cell selection is extended from the document level instead of
+  // relying on each cell's pointerenter. While the button is held, the browser
+  // implicitly captures the pointer to the first cell (Pointer Events spec), so
+  // pointerenter never fires on the other cells being dragged over — we
+  // hit-test the pointer position instead. This is also what makes the drag
+  // work on touch (non-passive touchmove preventDefault owns the gesture so it
+  // is not treated as a scroll or hijacked into text-selection).
+  useEffect(() => {
+    if (!isSelecting) return;
+
+    const handlePointerMove = (e) => {
+      const el = document
+        .elementFromPoint(e.clientX, e.clientY)
+        ?.closest?.(".table-cell-inner");
+      if (!el) return;
+      const row = Number(el.dataset.row);
+      const col = Number(el.dataset.col);
+      if (Number.isInteger(row) && Number.isInteger(col)) {
+        handleCellMouseEnterRef.current(row, col);
+      }
+    };
+
+    const preventTouchScroll = (e) => e.preventDefault();
+
+    document.addEventListener("pointermove", handlePointerMove);
+    document.addEventListener("touchmove", preventTouchScroll, {
+      passive: false,
+    });
+    return () => {
+      document.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("touchmove", preventTouchScroll);
+    };
+  }, [isSelecting]);
+
 
 
   return (
@@ -139,7 +181,7 @@ const TableBlock = ({ slideId, block }) => {
         })
       }
     >
-      <table ref={tableRef} className="table-block" data-selecting={isSelecting}>
+      <table ref={tableRef} className="table-block" data-cell-drag={cellDragActive}>
         <TableHeader
           slideId={slideId}
           block={block}

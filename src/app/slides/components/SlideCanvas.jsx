@@ -106,6 +106,8 @@ const SlideCanvas = ({ slide, slides }) => {
               border: "1px solid #e2e5ea",
               borderRadius: "8px",
               background: "#ffffff",
+              color: "#1f2328",
+              colorScheme: "light",
             }}
           >
             <EditorToolBar useRef={editorToolBarRef} />
@@ -118,6 +120,7 @@ const SlideCanvas = ({ slide, slides }) => {
                 fontWeight: "bold",
                 margin: "0 0 0.5em",
                 display: "block",
+                color: "#1f2328",
               }}
             />
 

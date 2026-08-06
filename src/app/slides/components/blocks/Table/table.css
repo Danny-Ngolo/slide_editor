@@ -3,6 +3,7 @@
   margin: auto;
   border-collapse: collapse;
   border-spacing: 0;
+  color: #1f2328;
 }
 
 .row-handle-cell,
@@ -130,8 +131,10 @@ th {
   outline: none;
 }
 
-/* Enable pointer-events on ProseMirror for typing/editing,
-   but disable them while actively dragging to select multiple cells */
-table[data-selecting="true"] .ProseMirror {
+/* A plain click/focus (or a drag that stays inside one cell) keeps normal
+   text selection + editing: nothing is locked. Only once a drag actually
+   crosses into a second cell (multi-cell selection) do we disable ProseMirror
+   pointer events so the editor doesn't hijack the drag. */
+table[data-cell-drag="true"] .ProseMirror {
   pointer-events: none;
 }

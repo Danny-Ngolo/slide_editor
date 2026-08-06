@@ -9,12 +9,25 @@ export function useTableSelection({ updateTable }) {
     setSelectedCells,
     isSelecting,
     setIsSelecting,
+    cellDragActive,
+    setCellDragActive,
     selectedCells,
     focusEditor,
     setTableMenu,
+    tableDragRef,
   } = useEditorContext();
 
-  const handleCellMouseDown = (row, col, cellId, shiftKey = false) => {
+  const handleCellMouseDown = (row, col, cellId, shiftKey = false, blockId) => {
+    // Shared drag state so the press cell, dragged-over cells and release cell
+    // all agree on what happened during this drag.
+    tableDragRef.current = {
+      didDrag: false,
+      blockId: blockId || null,
+      lastCell: { row, col },
+    };
+    // A fresh pointer-down on a cell starts a new interaction: close any open
+    // table menu (right-click/long-press/drag-release) so it doesn't linger.
+    setTableMenu(null);
     let anchor = selectionAnchor;
     if (shiftKey && anchor) {
       const newSet = getRangeSet(anchor, { row, col });
@@ -22,22 +35,60 @@ export function useTableSelection({ updateTable }) {
     } else {
       anchor = { row, col };
       setSelectionAnchor(anchor);
-      setSelectedCells(new Set([`${row},${col}`]));
+      // A fresh pointer-down starts clean: clear any previous selection so it
+      // is deselected the moment we click/drag elsewhere. Only an actual drag
+      // crossing cells re-selects.
+      setSelectedCells(new Set());
     }
     setIsSelecting(true);
+    setCellDragActive(false);
     if (cellId) focusEditor(cellId);
   };
 
   const handleCellMouseEnter = (row, col) => {
-    if (isSelecting && selectionAnchor) {
-      const newSet = getRangeSet(selectionAnchor, { row, col });
-      setSelectedCells(newSet);
+    if (!tableDragRef.current) {
+      tableDragRef.current = {
+        didDrag: false,
+        blockId: null,
+        lastCell: { row, col },
+      };
+    } else {
+      tableDragRef.current.lastCell = { row, col };
     }
+    if (!isSelecting || !selectionAnchor) return;
+    const crossing =
+      selectionAnchor.row !== row || selectionAnchor.col !== col;
+    if (crossing) {
+      tableDragRef.current.didDrag = true;
+      setCellDragActive(true);
+    }
+    if (!crossing && !cellDragActive) return;
+    const newSet = getRangeSet(selectionAnchor, { row, col });
+    setSelectedCells(newSet);
   };
 
-  const handleCellMouseUp = useCallback(() => {
-    setIsSelecting(false);
-  }, [setIsSelecting]);
+  const handleCellMouseUp = useCallback(
+    (e) => {
+      setIsSelecting(false);
+      setCellDragActive(false);
+      const drag = tableDragRef.current;
+      tableDragRef.current = null;
+      // After a cross-cell drag, surface the cell menu (Copy/Paste/Merge/Split/
+      // Clear) at the release point so those actions are reachable without
+      // right-clicking.
+      if (!drag?.didDrag || !drag.blockId) return;
+      const pointerX = typeof e?.clientX === "number" ? e.clientX : 0;
+      const pointerY = typeof e?.clientY === "number" ? e.clientY : 0;
+      setTableMenu({
+        blockId: drag.blockId,
+        type: "cell",
+        rowIndex: drag.lastCell?.row ?? 0,
+        columnIndex: drag.lastCell?.col ?? 0,
+        anchor: { top: pointerY, right: pointerX - 6, left: pointerX },
+      });
+    },
+    [setIsSelecting, setCellDragActive, setTableMenu, tableDragRef],
+  );
 
   // Right-click handler — opens the menu with type "cell" so the Merge/Split
   // buttons become accessible.
@@ -67,7 +118,9 @@ export function useTableSelection({ updateTable }) {
   const clearCellSelection = useCallback(() => {
     setSelectedCells(new Set());
     setSelectionAnchor(null);
-  }, [setSelectedCells, setSelectionAnchor]);
+    setCellDragActive(false);
+    tableDragRef.current = null;
+  }, [setSelectedCells, setSelectionAnchor, setCellDragActive, tableDragRef]);
 
   const mergeSelectedCells = (slideId, blockId) => {
     const cellsArray = Array.from(selectedCells).map((str) => {
