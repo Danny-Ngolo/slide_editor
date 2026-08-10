@@ -11,6 +11,7 @@ import {
   FlaskConical,
   ListChecks,
   Table2,
+  Sigma,
 } from "lucide-react";
 
 export const blocks_groups = [
@@ -86,6 +87,12 @@ export const blocks_groups = [
         label: "Quiz",
         desc: "Assess with a set of questions",
         icon: ListChecks,
+      },
+      {
+        type: "math",
+        label: "Math",
+        desc: "Add LaTeX expressions",
+        icon: Sigma,
       },
     ],
   },
