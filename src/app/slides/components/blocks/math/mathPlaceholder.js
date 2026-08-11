@@ -1,12 +1,7 @@
-// mathPlaceholder.js — pure Placeholder/Cursor engine (§16.4, Layer A).
-// Transport-level only: string algebra over placeholder markers and caret
-// offsets. No React, no LaTeX knowledge. It maps a template + set of values ->
-// (resolved text, caret position, placeholder map for Tab navigation).
+// mathPlaceholder.js — pure Placeholder/Cursor engine supporting sequential & nested expressions.
 
 const MARKER = /!(\d+)/g;
 
-// Recursively dereference nested `!{n}` markers in `text` using `valueMap`
-// (an object keyed by placeholder index). Unknown markers are left as-is.
 export const resolveAll = (text, valueMap = {}) =>
   String(text).replace(MARKER, (marker, key) => {
     const value = valueMap[key];
@@ -41,45 +36,78 @@ const build = (template, values) => {
 const centerOf = (placeholder) =>
   placeholder ? Math.floor((placeholder.from + placeholder.to) / 2) : null;
 
-// Core solve: returns `{ text, cursor, placeholders }`.
-// - `cursor` is the collapsed caret offset (center of the `cursorAt` placeholder).
-// - `placeholders` is `[{ index, from, to }]` over the resolved text (Tab walk).
 export const placeholderResolve = (template, values = [], cursorAt = 0) => {
   const { text, placeholders } = build(template, values);
-  const target = placeholders.find((p) => p.index === cursorAt) ?? placeholders[0] ?? null;
-  return { text, cursor: target ? centerOf(target) : text.length, placeholders };
+  const target =
+    placeholders.find((p) => p.index === cursorAt) ?? placeholders[0] ?? null;
+  return {
+    text,
+    cursor: target ? centerOf(target) : text.length,
+    placeholders,
+  };
 };
 
-// Alias kept for the §16.4 generic insertion API name.
 export const insertTemplate = placeholderResolve;
 
-// Tab/Shift+Tab step to the next/previous placeholder center (wraps around).
-// Returns a collapsed caret offset, or null when there are no placeholders.
-export const navigatePlaceholder = (placeholders = [], current, direction = "next") => {
+export const navigatePlaceholder = (
+  placeholders = [],
+  current,
+  direction = "next",
+) => {
   if (!placeholders.length) return null;
-  const centers = placeholders
-    .map((p) => ({ index: p.index, center: centerOf(p) }))
-    .sort((a, b) => a.center - b.center);
+  const sorted = [...placeholders].sort((a, b) => a.from - b.from);
+  const currentIndex = sorted.findIndex(
+    (p) => current >= p.from && current <= p.to,
+  );
 
-  const compare = direction === "prev" ? (c) => c.center < current : (c) => c.center > current;
-  return (centers.find(compare) ?? centers[0]).center;
+  let targetIndex;
+  if (currentIndex === -1) {
+    let closestIdx = 0;
+    let minDst = Infinity;
+    sorted.forEach((p, idx) => {
+      const dst = Math.abs(centerOf(p) - current);
+      if (dst < minDst) {
+        minDst = dst;
+        closestIdx = idx;
+      }
+    });
+    targetIndex = closestIdx;
+  } else if (direction === "prev") {
+    targetIndex = (currentIndex - 1 + sorted.length) % sorted.length;
+  } else {
+    targetIndex = (currentIndex + 1) % sorted.length;
+  }
+
+  return centerOf(sorted[targetIndex]);
 };
 
-// Keep a placeholder map accurate while the user types inside the source.
-// `caret` is the caret position **before** the edit that changed
-// `prevLatex` into `nextLatex`. Slots before the caret keep their offsets,
-// slots after it shift by the length delta, and the slot the caret is inside
-// grows/shrinks by the delta (so typing in an empty numerator widens that slot).
-export const offsetPlaceholders = (placeholders = [], prevLatex = "", nextLatex = "", caret = 0) => {
+export const offsetPlaceholders = (
+  placeholders = [],
+  prevLatex = "",
+  nextLatex = "",
+  caret = 0,
+) => {
   if (!placeholders.length) return placeholders;
 
   const delta = nextLatex.length - prevLatex.length;
-  const shift = (pos) => Math.max(0, pos + delta);
+  const maxLen = nextLatex.length;
+  const clamp = (pos) => Math.max(0, Math.min(pos + delta, maxLen));
+  const clampPos = (pos) => Math.max(0, Math.min(pos, maxLen));
 
   return placeholders.map((p) => {
     if (caret > p.to) return p;
-    if (caret < p.from) return { index: p.index, from: shift(p.from), to: shift(p.to) };
-    return { index: p.index, from: p.from, to: Math.max(p.from, p.to + delta) };
+    if (caret < p.from) {
+      return {
+        index: p.index,
+        from: clamp(p.from),
+        to: clamp(p.to),
+      };
+    }
+    return {
+      index: p.index,
+      from: clampPos(p.from),
+      to: Math.max(p.from, clamp(p.to, maxLen)),
+    };
   });
 };
 
@@ -95,103 +123,177 @@ const findMatchingClosing = (str, start, openChar = "{", closeChar = "}") => {
   return -1;
 };
 
-export const detectPlaceholders = (latex) => {
+// Sequential scanner supporting concatenated and nested LaTeX macro structures
+export const detectPlaceholders = (latex, baseOffset = 0) => {
   if (!latex) return [];
+  let results = [];
 
-  // 1. Fraction: \frac{A}{B}
-  if (latex.startsWith("\\frac{")) {
-    const open1 = 5;
-    const close1 = findMatchingClosing(latex, open1, "{", "}");
-    if (close1 !== -1 && latex[close1 + 1] === "{") {
-      const open2 = close1 + 1;
-      const close2 = findMatchingClosing(latex, open2, "{", "}");
-      if (close2 !== -1) {
-        return [
-          { index: 0, from: open1 + 1, to: close1 },
-          { index: 1, from: open2 + 1, to: close2 },
-        ];
+  let i = 0;
+  while (i < latex.length) {
+    // 1. Fraction: \frac{A}{B}
+    if (latex.slice(i).startsWith("\\frac{")) {
+      const open1 = i + 5;
+      const close1 = findMatchingClosing(latex, open1, "{", "}");
+      if (close1 !== -1 && latex[close1 + 1] === "{") {
+        const open2 = close1 + 1;
+        const close2 = findMatchingClosing(latex, open2, "{", "}");
+        if (close2 !== -1) {
+          results.push(
+            ...detectPlaceholders(
+              latex.slice(open1 + 1, close1),
+              baseOffset + open1 + 1,
+            ),
+          );
+          results.push(
+            ...detectPlaceholders(
+              latex.slice(open2 + 1, close2),
+              baseOffset + open2 + 1,
+            ),
+          );
+          i = close2 + 1;
+          continue;
+        }
       }
     }
-  }
 
-  // 2. n-th root: \sqrt[A]{B}
-  if (latex.startsWith("\\sqrt[")) {
-    const open1 = 5;
-    const close1 = findMatchingClosing(latex, open1, "[", "]");
-    if (close1 !== -1 && latex[close1 + 1] === "{") {
-      const open2 = close1 + 1;
-      const close2 = findMatchingClosing(latex, open2, "{", "}");
-      if (close2 !== -1) {
-        return [
-          { index: 0, from: open1 + 1, to: close1 },
-          { index: 1, from: open2 + 1, to: close2 },
-        ];
+    // 2. n-th root: \sqrt[A]{B}
+    if (latex.slice(i).startsWith("\\sqrt[")) {
+      const open1 = i + 5;
+      const close1 = findMatchingClosing(latex, open1, "[", "]");
+      if (close1 !== -1 && latex[close1 + 1] === "{") {
+        const open2 = close1 + 1;
+        const close2 = findMatchingClosing(latex, open2, "{", "}");
+        if (close2 !== -1) {
+          results.push(
+            ...detectPlaceholders(
+              latex.slice(open1 + 1, close1),
+              baseOffset + open1 + 1,
+            ),
+          );
+          results.push(
+            ...detectPlaceholders(
+              latex.slice(open2 + 1, close2),
+              baseOffset + open2 + 1,
+            ),
+          );
+          i = close2 + 1;
+          continue;
+        }
       }
     }
-  }
 
-  // 3. Square root: \sqrt{A}
-  if (latex.startsWith("\\sqrt{")) {
-    const open1 = 5;
-    const close1 = findMatchingClosing(latex, open1, "{", "}");
-    if (close1 !== -1 && close1 === latex.length - 1) {
-      return [{ index: 0, from: open1 + 1, to: close1 }];
-    }
-  }
-
-  // 4. Integral: \int_{A}^{B} C
-  if (latex.startsWith("\\int_{")) {
-    const open1 = 5;
-    const close1 = findMatchingClosing(latex, open1, "{", "}");
-    if (close1 !== -1 && latex.startsWith("^{", close1 + 1)) {
-      const open2 = close1 + 2;
-      const close2 = findMatchingClosing(latex, open2, "{", "}");
-      if (close2 !== -1) {
-        let cStart = close2 + 1;
-        if (latex[cStart] === " ") cStart++;
-        return [
-          { index: 0, from: open1 + 1, to: close1 },
-          { index: 1, from: open2 + 1, to: close2 },
-          { index: 2, from: cStart, to: latex.length },
-        ];
+    // 3. Square root: \sqrt{A}
+    if (latex.slice(i).startsWith("\\sqrt{")) {
+      const open1 = i + 5;
+      const close1 = findMatchingClosing(latex, open1, "{", "}");
+      if (close1 !== -1) {
+        results.push(
+          ...detectPlaceholders(
+            latex.slice(open1 + 1, close1),
+            baseOffset + open1 + 1,
+          ),
+        );
+        i = close1 + 1;
+        continue;
       }
     }
-  }
 
-  // 5. Sum: \sum_{A}^{B} C
-  if (latex.startsWith("\\sum_{")) {
-    const open1 = 5;
-    const close1 = findMatchingClosing(latex, open1, "{", "}");
-    if (close1 !== -1 && latex.startsWith("^{", close1 + 1)) {
-      const open2 = close1 + 2;
-      const close2 = findMatchingClosing(latex, open2, "{", "}");
-      if (close2 !== -1) {
-        let cStart = close2 + 1;
-        if (latex[cStart] === " ") cStart++;
-        return [
-          { index: 0, from: open1 + 1, to: close1 },
-          { index: 1, from: open2 + 1, to: close2 },
-          { index: 2, from: cStart, to: latex.length },
-        ];
+    // 4. Integral: \int_{A}^{B}
+    if (latex.slice(i).startsWith("\\int_{")) {
+      const open1 = i + 5;
+      const close1 = findMatchingClosing(latex, open1, "{", "}");
+      if (close1 !== -1 && latex.startsWith("^{", close1 + 1)) {
+        const open2 = close1 + 2;
+        const close2 = findMatchingClosing(latex, open2, "{", "}");
+        if (close2 !== -1) {
+          results.push(
+            ...detectPlaceholders(
+              latex.slice(open1 + 1, close1),
+              baseOffset + open1 + 1,
+            ),
+          );
+          results.push(
+            ...detectPlaceholders(
+              latex.slice(open2 + 1, close2),
+              baseOffset + open2 + 1,
+            ),
+          );
+          i = close2 + 1;
+          continue;
+        }
       }
     }
-  }
 
-  // 6. Binomial: \binom{A}{B}
-  if (latex.startsWith("\\binom{")) {
-    const open1 = 6;
-    const close1 = findMatchingClosing(latex, open1, "{", "}");
-    if (close1 !== -1 && latex[close1 + 1] === "{") {
-      const open2 = close1 + 1;
-      const close2 = findMatchingClosing(latex, open2, "{", "}");
-      if (close2 !== -1) {
-        return [
-          { index: 0, from: open1 + 1, to: close1 },
-          { index: 1, from: open2 + 1, to: close2 },
-        ];
+    // 5. Sum: \sum_{A}^{B}
+    if (latex.slice(i).startsWith("\\sum_{")) {
+      const open1 = i + 5;
+      const close1 = findMatchingClosing(latex, open1, "{", "}");
+      if (close1 !== -1 && latex.startsWith("^{", close1 + 1)) {
+        const open2 = close1 + 2;
+        const close2 = findMatchingClosing(latex, open2, "{", "}");
+        if (close2 !== -1) {
+          results.push(
+            ...detectPlaceholders(
+              latex.slice(open1 + 1, close1),
+              baseOffset + open1 + 1,
+            ),
+          );
+          results.push(
+            ...detectPlaceholders(
+              latex.slice(open2 + 1, close2),
+              baseOffset + open2 + 1,
+            ),
+          );
+          i = close2 + 1;
+          continue;
+        }
       }
     }
+
+    // 6. Binomial: \binom{A}{B}
+    if (latex.slice(i).startsWith("\\binom{")) {
+      const open1 = i + 6;
+      const close1 = findMatchingClosing(latex, open1, "{", "}");
+      if (close1 !== -1 && latex[close1 + 1] === "{") {
+        const open2 = close1 + 1;
+        const close2 = findMatchingClosing(latex, open2, "{", "}");
+        if (close2 !== -1) {
+          results.push(
+            ...detectPlaceholders(
+              latex.slice(open1 + 1, close1),
+              baseOffset + open1 + 1,
+            ),
+          );
+          results.push(
+            ...detectPlaceholders(
+              latex.slice(open2 + 1, close2),
+              baseOffset + open2 + 1,
+            ),
+          );
+          i = close2 + 1;
+          continue;
+        }
+      }
+    }
+
+    // Raw marker scan
+    if (latex[i] === "!" && i + 1 < latex.length && /\d/.test(latex[i + 1])) {
+      const match = latex.slice(i).match(/^!(\d+)/);
+      if (match) {
+        results.push({
+          index: 0,
+          from: baseOffset + i,
+          to: baseOffset + i + match[0].length,
+        });
+        i += match[0].length;
+        continue;
+      }
+    }
+
+    i++;
   }
 
-  return [];
+  return results
+    .sort((a, b) => a.from - b.from)
+    .map((p, idx) => ({ ...p, index: idx }));
 };
