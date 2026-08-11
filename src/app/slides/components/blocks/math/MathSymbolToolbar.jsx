@@ -15,11 +15,17 @@ import { COLORS, RADIUS } from "../shared/styles";
 // such as n/d for a fraction); the placeholder-resolved skeleton is the fallback
 // for templates that carry concrete LaTeX (e.g. the quadratic formula).
 const itemPreviewLatex = (item) => {
-  if (item.type === "symbol") return item.latex;
-  const tpl = item.templateId ? getTemplate(item.templateId) : null;
-  if (!tpl) return "";
+  if (item.type === "symbol") return item.latex || item.symbol || "";
+
+  const tplKey = item.templateId ?? item.id;
+  const tpl = tplKey ? getTemplate(tplKey) : item;
+
+  if (!tpl) return item.latex || "";
   if (tpl.preview) return tpl.preview;
-  return placeholderResolve(tpl.latex, tpl.placeholders ?? []).text;
+  if (tpl.latex) {
+    return placeholderResolve(tpl.latex, tpl.placeholders ?? []).text;
+  }
+  return "";
 };
 
 const buttonStyle = {
@@ -71,18 +77,31 @@ const MathSymbolToolbar = ({ groups = [], onInsert, compact = false }) => {
               <button
                 key={item.id}
                 type="button"
-                title={item.description ?? item.keywords?.join(", ") ?? item.label}
+                title={
+                  item.description ?? item.keywords?.join(", ") ?? item.label
+                }
                 aria-label={item.label}
                 onClick={() => onInsert?.(item)}
                 style={buttonStyle}
                 onMouseDown={(e) => e.preventDefault()}
               >
                 {item.type === "template" ? (
-                  <span style={{ display: "inline-flex", fontSize: "13px", lineHeight: 1 }}>
-                    <MathRenderer latex={itemPreviewLatex(item)} mode="inline" />
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      fontSize: "13px",
+                      lineHeight: 1,
+                    }}
+                  >
+                    <MathRenderer
+                      latex={itemPreviewLatex(item)}
+                      mode="inline"
+                    />
                   </span>
                 ) : (
-                  <span style={{ fontSize: "15px", lineHeight: 1 }}>{item.label}</span>
+                  <span style={{ fontSize: "15px", lineHeight: 1 }}>
+                    {item.label}
+                  </span>
                 )}
               </button>
             ))}

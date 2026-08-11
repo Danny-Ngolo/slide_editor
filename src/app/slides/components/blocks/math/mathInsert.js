@@ -1,20 +1,55 @@
-// mathInsert.js — unified insertion engine with nested placeholder boundary tracking.
-
 import { placeholderResolve } from "./mathPlaceholder";
 import { getTemplate } from "./mathTemplates";
 
 export const SYMBOL = "symbol";
 export const TEMPLATE = "template";
 
+const getItemType = (item) => {
+  if (!item) return null;
+
+  if (item.type === TEMPLATE || item.type === SYMBOL) {
+    return item.type;
+  }
+
+  if (item.templateId || item.placeholders) {
+    return TEMPLATE;
+  }
+
+  return SYMBOL;
+};
+
+const getTemplateDefinition = (item) => {
+  if (!item) return null;
+
+  if (typeof item === "string") {
+    return {
+      latex: item,
+      placeholders: [],
+      cursorAt: 0,
+    };
+  }
+
+  if (item.templateId) {
+    return getTemplate(item.templateId);
+  }
+
+  if (item.id) {
+    return getTemplate(item.id) ?? item;
+  }
+
+  return item;
+};
+
 export const insertSymbol = (latex, selection, token) => {
   const start = Math.max(0, selection?.start ?? latex.length);
   const end = Math.max(start, selection?.end ?? start);
 
   const next = latex.slice(0, start) + token + latex.slice(end);
+  const cursor = start + token.length;
 
   return {
     latex: next,
-    selection: { start: start + token.length, end: start + token.length },
+    selection: { start: cursor, end: cursor },
     placeholders: [],
   };
 };
@@ -27,83 +62,77 @@ export const insertTemplateAt = (
 ) => {
   const start = Math.max(0, selection?.start ?? latex.length);
   const end = Math.max(start, selection?.end ?? start);
-  const selectedText = latex.slice(start, end);
 
-  const templateStr =
-    typeof templateObj === "string"
-      ? templateObj
-      : (templateObj?.latex ?? templateObj?.template ?? "");
+  const template = getTemplateDefinition(templateObj);
 
-  const placeholdersConfig = [...(templateObj?.placeholders ?? [])];
-  const cursorAtConfig = templateObj?.cursorAt ?? 0;
-
-  // Insert selected text into target cursor slot without corrupting placeholder array bounds
-  if (selectedText) {
-    if (placeholdersConfig.length > cursorAtConfig) {
-      placeholdersConfig[cursorAtConfig] = selectedText;
-    } else if (placeholdersConfig.length > 0) {
-      placeholdersConfig[0] = selectedText;
-    } else {
-      placeholdersConfig.push(selectedText);
-    }
+  if (!template || typeof template.latex !== "string") {
+    return {
+      latex,
+      selection: { start, end },
+      placeholders: existingPlaceholders,
+    };
   }
 
-  const {
-    text,
-    cursor,
-    placeholders: childPlaceholders,
-  } = placeholderResolve(templateStr, placeholdersConfig, cursorAtConfig);
+  const selectedText = latex.slice(start, end);
 
-  const newLatex = latex.slice(0, start) + text + latex.slice(end);
-  const delta = text.length - selectedText.length;
+  const values = Array.isArray(template.placeholders)
+    ? [...template.placeholders]
+    : [];
 
-  const absoluteChildPlaceholders = childPlaceholders.map((p) => ({
-    index: p.index,
+  const cursorAt = template.cursorAt ?? 0;
+
+  if (selectedText && values.length > 0) {
+    values[cursorAt] = selectedText;
+  }
+
+  const resolved = placeholderResolve(template.latex, values, cursorAt);
+
+  const newLatex = latex.slice(0, start) + resolved.text + latex.slice(end);
+
+  const insertedLength = resolved.text.length;
+  const replacedLength = end - start;
+  const delta = insertedLength - replacedLength;
+
+  const updatedExisting = existingPlaceholders
+    .filter((p) => !(p.from >= start && p.to <= end))
+    .map((p) => {
+      if (p.from >= end) {
+        return {
+          ...p,
+          from: p.from + delta,
+          to: p.to + delta,
+        };
+      }
+
+      if (p.from <= start && p.to >= end) {
+        return {
+          ...p,
+          to: p.to + delta,
+        };
+      }
+
+      return p;
+    });
+
+  const insertedPlaceholders = resolved.placeholders.map((p) => ({
+    ...p,
     from: p.from + start,
     to: p.to + start,
   }));
 
-  // Re-map existing parent and sibling placeholders around the nested template
-  let updatedPlaceholders = [];
-  if (existingPlaceholders && existingPlaceholders.length > 0) {
-    existingPlaceholders.forEach((p) => {
-      // Replaced completely by selected range -> remove
-      if (
-        p.from >= start &&
-        p.to <= end &&
-        (start !== end || p.from === start)
-      ) {
-        return;
-      }
-      // Strictly after insertion point -> shift right by delta
-      if (p.from >= end) {
-        updatedPlaceholders.push({
-          index: p.index,
-          from: p.from + delta,
-          to: p.to + delta,
-        });
-      }
-      // Encloses insertion point (Parent container) -> expand boundary by delta
-      else if (p.to >= start) {
-        updatedPlaceholders.push({
-          index: p.index,
-          from: p.from,
-          to: p.to + delta,
-        });
-      } else {
-        updatedPlaceholders.push(p);
-      }
-    });
-  }
-
-  const allPlaceholders = [...updatedPlaceholders, ...absoluteChildPlaceholders]
+  const placeholders = [...updatedExisting, ...insertedPlaceholders]
     .sort((a, b) => a.from - b.from)
-    .map((p, idx) => ({ ...p, index: idx }));
+    .map((p, index) => ({
+      ...p,
+      index,
+    }));
+
+  const cursor = start + resolved.cursor;
 
   return {
     latex: newLatex,
-    selection: { start: start + cursor, end: start + cursor },
-    placeholders: allPlaceholders,
+    selection: { start: cursor, end: cursor },
+    placeholders,
   };
 };
 
@@ -116,41 +145,19 @@ export const applyInsert = (
   const start = Math.max(0, selection?.start ?? latex.length);
   const end = Math.max(start, selection?.end ?? start);
 
-  let resolvedItem = item;
-  if (typeof item === "string" && item.includes("!")) {
-    resolvedItem = { type: TEMPLATE, latex: item };
-  } else if (
-    item &&
-    typeof item === "object" &&
-    item.id &&
-    !item.latex &&
-    !item.template
-  ) {
-    if (typeof getTemplate === "function") {
-      const t = getTemplate(item.id);
-      if (t) resolvedItem = t;
-    }
+  const type = getItemType(item);
+
+  if (type === TEMPLATE) {
+    return insertTemplateAt(latex, { start, end }, item, existingPlaceholders);
   }
 
-  const templateStr = resolvedItem?.latex ?? resolvedItem?.template ?? "";
-  const itemType =
-    resolvedItem?.type ?? (templateStr.includes("!") ? TEMPLATE : SYMBOL);
+  let token = "";
 
-  if (itemType === TEMPLATE || templateStr.includes("!")) {
-    return insertTemplateAt(
-      latex,
-      { start, end },
-      resolvedItem,
-      existingPlaceholders,
-    );
+  if (typeof item === "string") {
+    token = item;
   } else {
-    const token =
-      typeof resolvedItem === "string"
-        ? resolvedItem
-        : (resolvedItem?.latex ??
-          resolvedItem?.value ??
-          resolvedItem?.symbol ??
-          "");
-    return insertSymbol(latex, { start, end }, token);
+    token = item?.latex ?? item?.value ?? item?.symbol ?? "";
   }
+
+  return insertSymbol(latex, { start, end }, token);
 };

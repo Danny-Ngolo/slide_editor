@@ -1,5 +1,3 @@
-// mathPlaceholder.js — pure Placeholder/Cursor engine supporting sequential & nested expressions.
-
 const MARKER = /!(\d+)/g;
 
 export const resolveAll = (text, valueMap = {}) =>
@@ -14,23 +12,39 @@ const build = (template, values) => {
   );
 
   const placeholders = [];
-  let out = "";
+  let text = "";
   let cursor = 0;
-  for (const match of template.matchAll(MARKER)) {
-    out += template.slice(cursor, match.index);
+
+  for (const match of String(template).matchAll(MARKER)) {
+    text += String(template).slice(cursor, match.index);
     cursor = match.index + match[0].length;
 
-    const key = match[1];
-    const resolved =
-      valueMap[key] == null ? match[0] : resolveAll(valueMap[key], valueMap);
+    const index = Number(match[1]);
+    const value = valueMap[String(index)];
 
-    const from = out.length;
-    out += resolved;
-    placeholders.push({ index: Number(key), from, to: out.length });
+    const from = text.length;
+
+    if (value == null) {
+      text += match[0];
+    } else {
+      text += resolveAll(value, valueMap);
+    }
+
+    const to = text.length;
+
+    placeholders.push({
+      index,
+      from,
+      to,
+    });
   }
-  out += template.slice(cursor);
 
-  return { text: out, placeholders };
+  text += String(template).slice(cursor);
+
+  return {
+    text,
+    placeholders,
+  };
 };
 
 const centerOf = (placeholder) =>
@@ -38,8 +52,12 @@ const centerOf = (placeholder) =>
 
 export const placeholderResolve = (template, values = [], cursorAt = 0) => {
   const { text, placeholders } = build(template, values);
+
   const target =
-    placeholders.find((p) => p.index === cursorAt) ?? placeholders[0] ?? null;
+    placeholders.find((placeholder) => placeholder.index === cursorAt) ??
+    placeholders[0] ??
+    null;
+
   return {
     text,
     cursor: target ? centerOf(target) : text.length,
@@ -51,34 +69,47 @@ export const insertTemplate = placeholderResolve;
 
 export const navigatePlaceholder = (
   placeholders = [],
-  current,
+  current = 0,
   direction = "next",
 ) => {
   if (!placeholders.length) return null;
-  const sorted = [...placeholders].sort((a, b) => a.from - b.from);
+
+  const sorted = [...placeholders].sort((a, b) => {
+    if (a.from !== b.from) return a.from - b.from;
+    return a.to - b.to;
+  });
+
   const currentIndex = sorted.findIndex(
-    (p) => current >= p.from && current <= p.to,
+    (placeholder) => current >= placeholder.from && current <= placeholder.to,
   );
 
-  let targetIndex;
   if (currentIndex === -1) {
-    let closestIdx = 0;
-    let minDst = Infinity;
-    sorted.forEach((p, idx) => {
-      const dst = Math.abs(centerOf(p) - current);
-      if (dst < minDst) {
-        minDst = dst;
-        closestIdx = idx;
-      }
-    });
-    targetIndex = closestIdx;
-  } else if (direction === "prev") {
-    targetIndex = (currentIndex - 1 + sorted.length) % sorted.length;
-  } else {
-    targetIndex = (currentIndex + 1) % sorted.length;
+    if (direction === "prev") {
+      const previous = [...sorted]
+        .reverse()
+        .find((placeholder) => placeholder.to < current);
+
+      return previous
+        ? centerOf(previous)
+        : centerOf(sorted[sorted.length - 1]);
+    }
+
+    const next = sorted.find((placeholder) => placeholder.from > current);
+
+    return next ? centerOf(next) : centerOf(sorted[0]);
   }
 
-  return centerOf(sorted[targetIndex]);
+  if (direction === "prev") {
+    if (currentIndex === 0) return centerOf(sorted[sorted.length - 1]);
+
+    return centerOf(sorted[currentIndex - 1]);
+  }
+
+  if (currentIndex === sorted.length - 1) {
+    return centerOf(sorted[0]);
+  }
+
+  return centerOf(sorted[currentIndex + 1]);
 };
 
 export const offsetPlaceholders = (
@@ -87,213 +118,233 @@ export const offsetPlaceholders = (
   nextLatex = "",
   caret = 0,
 ) => {
-  if (!placeholders.length) return placeholders;
+  if (!placeholders.length) return [];
 
-  const delta = nextLatex.length - prevLatex.length;
-  const maxLen = nextLatex.length;
-  const clamp = (pos) => Math.max(0, Math.min(pos + delta, maxLen));
-  const clampPos = (pos) => Math.max(0, Math.min(pos, maxLen));
+  const delta = String(nextLatex).length - String(prevLatex).length;
+  const nextLength = String(nextLatex).length;
 
-  return placeholders.map((p) => {
-    if (caret > p.to) return p;
-    if (caret < p.from) {
+  return placeholders
+    .map((placeholder) => {
+      if (caret < placeholder.from) {
+        return {
+          ...placeholder,
+          from: placeholder.from + delta,
+          to: placeholder.to + delta,
+        };
+      }
+
+      if (caret > placeholder.to) {
+        return { ...placeholder };
+      }
+
       return {
-        index: p.index,
-        from: clamp(p.from),
-        to: clamp(p.to),
+        ...placeholder,
+        to: Math.max(
+          placeholder.from,
+          Math.min(placeholder.to + delta, nextLength),
+        ),
       };
-    }
-    return {
-      index: p.index,
-      from: clampPos(p.from),
-      to: Math.max(p.from, clamp(p.to, maxLen)),
-    };
-  });
+    })
+    .filter(
+      (placeholder) =>
+        placeholder.from >= 0 &&
+        placeholder.from <= nextLength &&
+        placeholder.to >= placeholder.from,
+    );
 };
 
-const findMatchingClosing = (str, start, openChar = "{", closeChar = "}") => {
+const findMatchingClosing = (text, start, openChar = "{", closeChar = "}") => {
   let depth = 0;
-  for (let i = start; i < str.length; i++) {
-    if (str[i] === openChar) depth++;
-    else if (str[i] === closeChar) {
+
+  for (let i = start; i < text.length; i++) {
+    if (text[i] === openChar) {
+      depth++;
+    } else if (text[i] === closeChar) {
       depth--;
-      if (depth === 0) return i;
+
+      if (depth === 0) {
+        return i;
+      }
     }
   }
+
   return -1;
 };
 
-// Sequential scanner supporting concatenated and nested LaTeX macro structures
 export const detectPlaceholders = (latex, baseOffset = 0) => {
   if (!latex) return [];
-  let results = [];
 
+  const results = [];
   let i = 0;
+
   while (i < latex.length) {
-    // 1. Fraction: \frac{A}{B}
-    if (latex.slice(i).startsWith("\\frac{")) {
-      const open1 = i + 5;
-      const close1 = findMatchingClosing(latex, open1, "{", "}");
-      if (close1 !== -1 && latex[close1 + 1] === "{") {
-        const open2 = close1 + 1;
-        const close2 = findMatchingClosing(latex, open2, "{", "}");
-        if (close2 !== -1) {
+    if (latex.startsWith("\\frac{", i)) {
+      const numeratorOpen = i + 5;
+      const numeratorClose = findMatchingClosing(latex, numeratorOpen);
+
+      if (numeratorClose !== -1 && latex[numeratorClose + 1] === "{") {
+        const denominatorOpen = numeratorClose + 1;
+        const denominatorClose = findMatchingClosing(latex, denominatorOpen);
+
+        if (denominatorClose !== -1) {
           results.push(
             ...detectPlaceholders(
-              latex.slice(open1 + 1, close1),
-              baseOffset + open1 + 1,
+              latex.slice(numeratorOpen + 1, numeratorClose),
+              baseOffset + numeratorOpen + 1,
             ),
           );
+
           results.push(
             ...detectPlaceholders(
-              latex.slice(open2 + 1, close2),
-              baseOffset + open2 + 1,
+              latex.slice(denominatorOpen + 1, denominatorClose),
+              baseOffset + denominatorOpen + 1,
             ),
           );
-          i = close2 + 1;
+
+          i = denominatorClose + 1;
           continue;
         }
       }
     }
 
-    // 2. n-th root: \sqrt[A]{B}
-    if (latex.slice(i).startsWith("\\sqrt[")) {
-      const open1 = i + 5;
-      const close1 = findMatchingClosing(latex, open1, "[", "]");
-      if (close1 !== -1 && latex[close1 + 1] === "{") {
-        const open2 = close1 + 1;
-        const close2 = findMatchingClosing(latex, open2, "{", "}");
-        if (close2 !== -1) {
+    if (latex.startsWith("\\sqrt[", i)) {
+      const indexOpen = i + 5;
+      const indexClose = findMatchingClosing(latex, indexOpen, "[", "]");
+
+      if (indexClose !== -1 && latex[indexClose + 1] === "{") {
+        const radicandOpen = indexClose + 1;
+        const radicandClose = findMatchingClosing(latex, radicandOpen);
+
+        if (radicandClose !== -1) {
           results.push(
             ...detectPlaceholders(
-              latex.slice(open1 + 1, close1),
-              baseOffset + open1 + 1,
+              latex.slice(indexOpen + 1, indexClose),
+              baseOffset + indexOpen + 1,
             ),
           );
+
           results.push(
             ...detectPlaceholders(
-              latex.slice(open2 + 1, close2),
-              baseOffset + open2 + 1,
+              latex.slice(radicandOpen + 1, radicandClose),
+              baseOffset + radicandOpen + 1,
             ),
           );
-          i = close2 + 1;
+
+          i = radicandClose + 1;
           continue;
         }
       }
     }
 
-    // 3. Square root: \sqrt{A}
-    if (latex.slice(i).startsWith("\\sqrt{")) {
-      const open1 = i + 5;
-      const close1 = findMatchingClosing(latex, open1, "{", "}");
-      if (close1 !== -1) {
+    if (latex.startsWith("\\sqrt{", i)) {
+      const radicandOpen = i + 5;
+      const radicandClose = findMatchingClosing(latex, radicandOpen);
+
+      if (radicandClose !== -1) {
         results.push(
           ...detectPlaceholders(
-            latex.slice(open1 + 1, close1),
-            baseOffset + open1 + 1,
+            latex.slice(radicandOpen + 1, radicandClose),
+            baseOffset + radicandOpen + 1,
           ),
         );
-        i = close1 + 1;
+
+        i = radicandClose + 1;
         continue;
       }
     }
 
-    // 4. Integral: \int_{A}^{B}
-    if (latex.slice(i).startsWith("\\int_{")) {
-      const open1 = i + 5;
-      const close1 = findMatchingClosing(latex, open1, "{", "}");
-      if (close1 !== -1 && latex.startsWith("^{", close1 + 1)) {
-        const open2 = close1 + 2;
-        const close2 = findMatchingClosing(latex, open2, "{", "}");
-        if (close2 !== -1) {
+    if (latex.startsWith("\\int_{", i)) {
+      const lowerOpen = i + 5;
+      const lowerClose = findMatchingClosing(latex, lowerOpen);
+
+      if (lowerClose !== -1 && latex.startsWith("^{", lowerClose + 1)) {
+        const upperOpen = lowerClose + 2;
+        const upperClose = findMatchingClosing(latex, upperOpen);
+
+        if (upperClose !== -1) {
           results.push(
             ...detectPlaceholders(
-              latex.slice(open1 + 1, close1),
-              baseOffset + open1 + 1,
+              latex.slice(lowerOpen + 1, lowerClose),
+              baseOffset + lowerOpen + 1,
             ),
           );
+
           results.push(
             ...detectPlaceholders(
-              latex.slice(open2 + 1, close2),
-              baseOffset + open2 + 1,
+              latex.slice(upperOpen + 1, upperClose),
+              baseOffset + upperOpen + 1,
             ),
           );
-          i = close2 + 1;
+
+          i = upperClose + 1;
           continue;
         }
       }
     }
 
-    // 5. Sum: \sum_{A}^{B}
-    if (latex.slice(i).startsWith("\\sum_{")) {
-      const open1 = i + 5;
-      const close1 = findMatchingClosing(latex, open1, "{", "}");
-      if (close1 !== -1 && latex.startsWith("^{", close1 + 1)) {
-        const open2 = close1 + 2;
-        const close2 = findMatchingClosing(latex, open2, "{", "}");
-        if (close2 !== -1) {
+    if (latex.startsWith("\\sum_{", i)) {
+      const lowerOpen = i + 5;
+      const lowerClose = findMatchingClosing(latex, lowerOpen);
+
+      if (lowerClose !== -1 && latex.startsWith("^{", lowerClose + 1)) {
+        const upperOpen = lowerClose + 2;
+        const upperClose = findMatchingClosing(latex, upperOpen);
+
+        if (upperClose !== -1) {
           results.push(
             ...detectPlaceholders(
-              latex.slice(open1 + 1, close1),
-              baseOffset + open1 + 1,
+              latex.slice(lowerOpen + 1, lowerClose),
+              baseOffset + lowerOpen + 1,
             ),
           );
+
           results.push(
             ...detectPlaceholders(
-              latex.slice(open2 + 1, close2),
-              baseOffset + open2 + 1,
+              latex.slice(upperOpen + 1, upperClose),
+              baseOffset + upperOpen + 1,
             ),
           );
-          i = close2 + 1;
+
+          i = upperClose + 1;
           continue;
         }
       }
     }
 
-    // 6. Binomial: \binom{A}{B}
-    if (latex.slice(i).startsWith("\\binom{")) {
-      const open1 = i + 6;
-      const close1 = findMatchingClosing(latex, open1, "{", "}");
-      if (close1 !== -1 && latex[close1 + 1] === "{") {
-        const open2 = close1 + 1;
-        const close2 = findMatchingClosing(latex, open2, "{", "}");
-        if (close2 !== -1) {
+    if (latex.startsWith("\\binom{", i)) {
+      const firstOpen = i + 7;
+      const firstClose = findMatchingClosing(latex, firstOpen);
+
+      if (firstClose !== -1 && latex[firstClose + 1] === "{") {
+        const secondOpen = firstClose + 1;
+        const secondClose = findMatchingClosing(latex, secondOpen);
+
+        if (secondClose !== -1) {
           results.push(
             ...detectPlaceholders(
-              latex.slice(open1 + 1, close1),
-              baseOffset + open1 + 1,
+              latex.slice(firstOpen + 1, firstClose),
+              baseOffset + firstOpen + 1,
             ),
           );
+
           results.push(
             ...detectPlaceholders(
-              latex.slice(open2 + 1, close2),
-              baseOffset + open2 + 1,
+              latex.slice(secondOpen + 1, secondClose),
+              baseOffset + secondOpen + 1,
             ),
           );
-          i = close2 + 1;
+
+          i = secondClose + 1;
           continue;
         }
-      }
-    }
-
-    // Raw marker scan
-    if (latex[i] === "!" && i + 1 < latex.length && /\d/.test(latex[i + 1])) {
-      const match = latex.slice(i).match(/^!(\d+)/);
-      if (match) {
-        results.push({
-          index: 0,
-          from: baseOffset + i,
-          to: baseOffset + i + match[0].length,
-        });
-        i += match[0].length;
-        continue;
       }
     }
 
     i++;
   }
 
-  return results
-    .sort((a, b) => a.from - b.from)
-    .map((p, idx) => ({ ...p, index: idx }));
+  return results.sort((a, b) => {
+    if (a.from !== b.from) return a.from - b.from;
+    return a.to - b.to;
+  });
 };

@@ -10,11 +10,7 @@ import React, {
 import MathRenderer from "./MathRenderer";
 import MathSymbolToolbar from "./MathSymbolToolbar";
 import { applyInsert } from "./mathInsert";
-import {
-  navigatePlaceholder,
-  offsetPlaceholders,
-  detectPlaceholders,
-} from "./mathPlaceholder";
+import { navigatePlaceholder } from "./mathPlaceholder";
 import { MATH_GROUPS } from "./mathSymbols";
 import { COLORS, RADIUS, FOCUS_RING } from "../shared/styles";
 
@@ -38,26 +34,39 @@ const BlinkingCaret = () => (
   />
 );
 
-const getHighlightedDisplayLatex = (latex, placeholders = [], caretPos) => {
-  if (!latex || placeholders.length === 0) return latex;
+const getHighlightedDisplayLatex = (latex, placeholders, caretPos) => {
+  if (!latex || placeholders.length === 0) {
+    return latex;
+  }
 
   const activeSlot = placeholders.find(
-    (p) => caretPos >= p.from && caretPos <= p.to,
+    (placeholder) => caretPos >= placeholder.from && caretPos <= placeholder.to,
   );
-  if (!activeSlot) return latex; // Only highlight the active slot to prevent nested \colorbox / $ collisions
 
-  const safeFrom = Math.max(0, Math.min(activeSlot.from, latex.length));
-  const safeTo = Math.max(safeFrom, Math.min(activeSlot.to, latex.length));
+  if (!activeSlot) {
+    return latex;
+  }
 
-  const before = latex.slice(0, safeFrom);
-  const content = latex.slice(safeFrom, safeTo);
-  const after = latex.slice(safeTo);
+  const from = Math.max(0, Math.min(activeSlot.from, latex.length));
+
+  const to = Math.max(from, Math.min(activeSlot.to, latex.length));
+
+  const before = latex.slice(0, from);
+  const content = latex.slice(from, to);
+  const after = latex.slice(to);
 
   const bgColor = COLORS.accentSoft;
   const textColor = COLORS.accentText;
+
   const displayContent = content.length === 0 ? "\\phantom{0}" : content;
 
-  const wrapped = `\\colorbox{${bgColor}}{\\color{${textColor}}{$\\displaystyle ${displayContent}$}}`;
+  const wrapped =
+    `\\colorbox{${bgColor}}{` +
+    `\\color{${textColor}}{` +
+    `$\\displaystyle ${displayContent}$` +
+    `}` +
+    `}`;
+
   return before + wrapped + after;
 };
 
@@ -73,254 +82,292 @@ const MathEditor = ({
   const sourceRef = useRef(null);
   const containerRef = useRef(null);
 
-  const [activePlaceholders, setActivePlaceholders] = useState(() =>
-    detectPlaceholders(latex),
-  );
+  const [placeholders, setPlaceholders] = useState([]);
   const [caret, setCaret] = useState(0);
   const [view, setView] = useState("source");
 
-  const pendingApply = useRef(null);
+  const pendingInsertRef = useRef(null);
+  const previousLatexRef = useRef(latex);
   const editAnchorRef = useRef(0);
-  const prevLatexRef = useRef(latex);
 
-  const activePlaceholdersRef = useRef(activePlaceholders);
-  useEffect(() => {
-    activePlaceholdersRef.current = activePlaceholders;
-  }, [activePlaceholders]);
+  const placeholdersRef = useRef(placeholders);
 
-  const viewRef = useRef(view);
   useEffect(() => {
-    viewRef.current = view;
-  }, [view]);
+    placeholdersRef.current = placeholders;
+  }, [placeholders]);
 
   const onChangeRef = useRef(onChange);
+
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
 
-  const handleSelect = (e) => {
-    setCaret(e.currentTarget.selectionStart ?? 0);
+  const handleSelect = (event) => {
+    setCaret(event.currentTarget.selectionStart ?? 0);
   };
-
-  const landingSlot = (placeholders = [], pos) =>
-    placeholders.find((p) => pos >= p.from && pos <= p.to) ??
-    placeholders
-      .map((p) => ({ p, d: Math.abs((p.from + p.to) / 2 - pos) }))
-      .sort((a, b) => a.d - b.d)[0]?.p ??
-    null;
 
   const applyItem = useCallback(
     (item) => {
-      const el = sourceRef.current;
-      if (!el) return;
-      const selection = { start: el.selectionStart, end: el.selectionEnd };
-      const currentLatex = prevLatexRef.current;
-      const result = applyInsert(currentLatex, selection, item);
+      const element = sourceRef.current;
 
-      let nextPlaceholders = result.placeholders;
-      if (activePlaceholders.length > 0) {
-        const adjustedExisting = offsetPlaceholders(
-          activePlaceholders,
-          currentLatex,
-          result.latex,
-          selection.start,
-        );
-        if (item.type === "template") {
-          const combined = [...adjustedExisting, ...result.placeholders];
-          nextPlaceholders = combined
-            .sort((a, b) => a.from - b.from)
-            .map((p, idx) => ({ ...p, index: idx }));
-        } else {
-          nextPlaceholders = adjustedExisting;
-        }
-      }
-
-      pendingApply.current = {
-        caret: result.selection,
-        placeholders: nextPlaceholders,
-      };
-      setCaret(result.selection.start);
-      prevLatexRef.current = result.latex;
-      onChange?.(result.latex);
-    },
-    [activePlaceholders, onChange],
-  );
-
-  useLayoutEffect(() => {
-    prevLatexRef.current = latex;
-    const pending = pendingApply.current;
-    if (!pending) return;
-    const el = sourceRef.current;
-    if (el) {
-      el.focus();
-      const slot = landingSlot(pending.placeholders, pending.caret.start);
-      if (slot) {
-        el.setSelectionRange(slot.from, slot.from);
-        setCaret(slot.from);
-      } else {
-        el.setSelectionRange(pending.caret.start, pending.caret.end);
-      }
-      setActivePlaceholders(pending.placeholders);
-    }
-    pendingApply.current = null;
-  }, [latex]);
-
-  const captureEditAnchor = (e) => {
-    const el = e.currentTarget;
-    if (el) editAnchorRef.current = el.selectionStart ?? editAnchorRef.current;
-  };
-
-  const onSourceChange = (e) => {
-    const el = e.currentTarget;
-    const nextLatex = el.value;
-
-    setActivePlaceholders((prev) =>
-      offsetPlaceholders(
-        prev,
-        prevLatexRef.current,
-        nextLatex,
-        editAnchorRef.current,
-      ),
-    );
-
-    prevLatexRef.current = nextLatex;
-    setCaret(el.selectionStart ?? nextLatex.length);
-    onChange?.(nextLatex);
-  };
-
-  useEffect(() => {
-    const el = sourceRef.current;
-    if (!el) return;
-
-    const onKeyDown = (e) => {
-      const map = activePlaceholdersRef.current;
-      const caretPos = el.selectionStart;
-
-      if (e.key === "Escape" && map.length > 0) {
-        e.preventDefault();
-        e.stopPropagation();
-        const currentSlot = map.find(
-          (p) => caretPos >= p.from && caretPos <= p.to,
-        );
-        const allSlots = [...map].sort((a, b) => a.from - b.from);
-        const exitPos = currentSlot
-          ? currentSlot.to
-          : (allSlots[allSlots.length - 1]?.to ?? caretPos);
-        setActivePlaceholders([]);
-        el.setSelectionRange(exitPos, exitPos);
-        setCaret(exitPos);
+      if (!element) {
         return;
       }
 
-      if (e.key === "ArrowRight" && map.length > 0 && !e.shiftKey) {
-        const currentSlot = map.find(
-          (p) => caretPos >= p.from && caretPos <= p.to,
-        );
-        if (currentSlot && caretPos >= currentSlot.to) {
-          setActivePlaceholders([]);
+      const selection = {
+        start: element.selectionStart,
+        end: element.selectionEnd,
+      };
+
+      const currentLatex = previousLatexRef.current;
+
+      const result = applyInsert(
+        currentLatex,
+        selection,
+        item,
+        placeholdersRef.current,
+      );
+
+      pendingInsertRef.current = {
+        caret: result.selection.start,
+        placeholders: result.placeholders,
+      };
+
+      previousLatexRef.current = result.latex;
+
+      setCaret(result.selection.start);
+      onChange?.(result.latex);
+    },
+    [onChange],
+  );
+
+  useLayoutEffect(() => {
+    previousLatexRef.current = latex;
+
+    const pending = pendingInsertRef.current;
+
+    if (!pending) {
+      return;
+    }
+
+    const element = sourceRef.current;
+
+    if (!element) {
+      pendingInsertRef.current = null;
+      return;
+    }
+
+    element.focus();
+
+    element.setSelectionRange(pending.caret, pending.caret);
+
+    setCaret(pending.caret);
+    setPlaceholders(pending.placeholders);
+
+    pendingInsertRef.current = null;
+  }, [latex]);
+
+  const captureEditAnchor = (event) => {
+    const element = event.currentTarget;
+
+    if (element) {
+      editAnchorRef.current = element.selectionStart ?? editAnchorRef.current;
+    }
+  };
+
+  const onSourceChange = (event) => {
+    const element = event.currentTarget;
+    const nextLatex = element.value;
+
+    const previousLatex = previousLatexRef.current;
+
+    const delta = nextLatex.length - previousLatex.length;
+
+    const editPosition = editAnchorRef.current;
+
+    const updatedPlaceholders = placeholdersRef.current
+      .map((placeholder) => {
+        if (editPosition < placeholder.from) {
+          return {
+            ...placeholder,
+            from: placeholder.from + delta,
+            to: placeholder.to + delta,
+          };
         }
+
+        if (editPosition > placeholder.to) {
+          return placeholder;
+        }
+
+        return {
+          ...placeholder,
+          to: Math.max(placeholder.from, placeholder.to + delta),
+        };
+      })
+      .filter(
+        (placeholder) =>
+          placeholder.from <= nextLatex.length &&
+          placeholder.to <= nextLatex.length,
+      );
+
+    previousLatexRef.current = nextLatex;
+
+    setPlaceholders(updatedPlaceholders);
+    setCaret(element.selectionStart ?? nextLatex.length);
+
+    onChangeRef.current?.(nextLatex);
+  };
+
+  useEffect(() => {
+    const element = sourceRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    const onKeyDown = (event) => {
+      const map = placeholdersRef.current;
+      const caretPos = element.selectionStart;
+
+      if (event.key === "Escape") {
+        if (map.length === 0) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const current = map.find(
+          (placeholder) =>
+            caretPos >= placeholder.from && caretPos <= placeholder.to,
+        );
+
+        const ordered = [...map].sort((a, b) => a.from - b.from);
+
+        const exitPosition = current
+          ? current.to
+          : (ordered.at(-1)?.to ?? caretPos);
+
+        setPlaceholders([]);
+
+        element.setSelectionRange(exitPosition, exitPosition);
+
+        setCaret(exitPosition);
+        return;
       }
 
-      if (e.key === "ArrowLeft" && map.length > 0 && !e.shiftKey) {
-        const currentSlot = map.find(
-          (p) => caretPos >= p.from && caretPos <= p.to,
-        );
-        if (currentSlot && caretPos <= currentSlot.from) {
-          setActivePlaceholders([]);
-        }
-      }
-
-      if (e.key === "Tab") {
-        if (!map.length) return;
-
+      if (event.key === "Tab" && map.length > 0) {
         const target = navigatePlaceholder(
           map,
           caretPos,
-          e.shiftKey ? "prev" : "next",
+          event.shiftKey ? "prev" : "next",
         );
-        if (target == null) return;
 
-        const isWrapAround = e.shiftKey ? target > caretPos : target < caretPos;
+        if (target == null) {
+          return;
+        }
 
-        if (isWrapAround) {
-          setActivePlaceholders([]);
+        const ordered = [...map].sort((a, b) => a.from - b.from);
+
+        const currentIndex = ordered.findIndex(
+          (placeholder) =>
+            caretPos >= placeholder.from && caretPos <= placeholder.to,
+        );
+
+        const targetIndex = ordered.findIndex(
+          (placeholder) =>
+            Math.floor((placeholder.from + placeholder.to) / 2) === target,
+        );
+
+        const wrapping =
+          currentIndex !== -1 &&
+          targetIndex !== -1 &&
+          (event.shiftKey
+            ? targetIndex > currentIndex
+            : targetIndex < currentIndex);
+
+        if (wrapping) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          setPlaceholders([]);
+
           setCaret(caretPos);
           return;
         }
 
-        e.preventDefault();
-        e.stopPropagation();
+        event.preventDefault();
+        event.stopPropagation();
 
-        const slot =
-          map.find((p) => Math.floor((p.from + p.to) / 2) === target) || null;
-        if (slot) {
-          el.setSelectionRange(slot.from, slot.from);
-          editAnchorRef.current = slot.from;
-          setCaret(slot.from);
-        } else {
-          el.setSelectionRange(target, target);
-          editAnchorRef.current = target;
-          setCaret(target);
-        }
+        element.focus();
+        element.setSelectionRange(target, target);
+
+        editAnchorRef.current = target;
+        setCaret(target);
+        return;
       }
 
-      if (map.length > 0 && (e.key === "Backspace" || e.key === "Delete")) {
-        const isCollapsed = el.selectionEnd === caretPos;
-        if (isCollapsed) {
-          const allSlotsEmpty = map.every((p) => p.to === p.from);
-          if (allSlotsEmpty) {
-            e.preventDefault();
-            e.stopPropagation();
-            setActivePlaceholders([]);
-            setCaret(0);
-            onChangeRef.current?.("");
-            return;
-          }
+      if (event.key === "ArrowRight" && !event.shiftKey && map.length > 0) {
+        const current = map.find(
+          (placeholder) =>
+            caretPos >= placeholder.from && caretPos <= placeholder.to,
+        );
 
-          const currentSlot = map.find(
-            (p) => caretPos >= p.from && caretPos <= p.to,
-          );
-          if (currentSlot) {
-            if (e.key === "Backspace" && caretPos === currentSlot.from) {
-              e.preventDefault();
-              e.stopPropagation();
-            }
-            if (e.key === "Delete" && caretPos === currentSlot.to) {
-              e.preventDefault();
-              e.stopPropagation();
-            }
-          }
+        if (current && caretPos >= current.to) {
+          setPlaceholders([]);
+        }
+
+        return;
+      }
+
+      if (event.key === "ArrowLeft" && !event.shiftKey && map.length > 0) {
+        const current = map.find(
+          (placeholder) =>
+            caretPos >= placeholder.from && caretPos <= placeholder.to,
+        );
+
+        if (current && caretPos <= current.from) {
+          setPlaceholders([]);
         }
       }
     };
 
-    el.addEventListener("keydown", onKeyDown, true);
-    return () => el.removeEventListener("keydown", onKeyDown, true);
+    element.addEventListener("keydown", onKeyDown, true);
+
+    return () => element.removeEventListener("keydown", onKeyDown, true);
   }, []);
 
   const jumpToSlot = useCallback((slot) => {
-    const el = sourceRef.current;
-    if (!el || !slot) return;
-    el.focus();
-    el.setSelectionRange(slot.from, slot.from);
+    const element = sourceRef.current;
+
+    if (!element || !slot) {
+      return;
+    }
+
+    element.focus();
+
+    element.setSelectionRange(slot.from, slot.from);
+
     editAnchorRef.current = slot.from;
     setCaret(slot.from);
   }, []);
 
-  const onBlur = (e) => {
+  const onBlur = (event) => {
     if (
       containerRef.current &&
-      e.relatedTarget &&
-      containerRef.current.contains(e.relatedTarget)
+      event.relatedTarget &&
+      containerRef.current.contains(event.relatedTarget)
     ) {
       return;
     }
-    setActivePlaceholders([]);
-    setCaret(e.currentTarget.selectionStart ?? 0);
+
+    setPlaceholders([]);
+
+    setCaret(event.currentTarget.selectionStart ?? 0);
   };
 
   const chips =
-    activePlaceholders.length > 0 ? (
+    placeholders.length > 0 ? (
       <div
         style={{
           display: "flex",
@@ -330,23 +377,26 @@ const MathEditor = ({
           justifyContent: "center",
         }}
       >
-        {activePlaceholders.map((slot) => {
+        {placeholders.map((slot) => {
           const content = latex.slice(slot.from, slot.to);
+
           const isActive = caret >= slot.from && caret <= slot.to;
+
           const isEmpty = content.length === 0;
+
           return (
             <button
-              key={`${slot.index}-${slot.from}`}
+              key={`${slot.from}-${slot.to}`}
               type="button"
               title="Click to fill this slot"
               aria-label={`Fill slot ${slot.index}`}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
+              onMouseDown={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
                 jumpToSlot(slot);
               }}
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(event) => {
+                event.stopPropagation();
               }}
               style={{
                 display: "inline-flex",
@@ -383,6 +433,7 @@ const MathEditor = ({
                   }}
                 >
                   <MathRenderer latex={content} mode="inline" />
+
                   {isActive && <BlinkingCaret />}
                 </span>
               )}
@@ -451,13 +502,17 @@ const MathEditor = ({
     resize: "vertical",
   };
 
-  const switchView = (next) => {
-    setView(next);
-    const el = sourceRef.current;
-    if (el) {
-      el.focus();
-      el.setSelectionRange(caret, caret);
+  const switchView = (nextView) => {
+    setView(nextView);
+
+    const element = sourceRef.current;
+
+    if (!element) {
+      return;
     }
+
+    element.focus();
+    element.setSelectionRange(caret, caret);
   };
 
   return (
@@ -470,7 +525,13 @@ const MathEditor = ({
       }}
     >
       <style>{caretBlinkStyle}</style>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+        }}
+      >
         <div
           style={{
             display: "inline-flex",
@@ -481,16 +542,17 @@ const MathEditor = ({
         >
           <button
             type="button"
-            onMouseDown={(e) => e.preventDefault()}
+            onMouseDown={(event) => event.preventDefault()}
             onClick={() => switchView("source")}
             aria-pressed={view === "source"}
             style={segmentedBtnStyle(view === "source")}
           >
             Source
           </button>
+
           <button
             type="button"
-            onMouseDown={(e) => e.preventDefault()}
+            onMouseDown={(event) => event.preventDefault()}
             onClick={() => switchView("slots")}
             aria-pressed={view === "slots"}
             style={segmentedBtnStyle(view === "slots")}
@@ -512,18 +574,27 @@ const MathEditor = ({
         <div
           role="group"
           aria-label="Visual expression"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={(e) => {
-            if (e.target.closest("button")) return;
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={(event) => {
+            if (event.target.closest("button")) {
+              return;
+            }
 
-            const el = sourceRef.current;
-            if (!el) return;
-            el.focus();
+            const element = sourceRef.current;
 
-            setActivePlaceholders([]);
-            const endPos = latex.length;
-            el.setSelectionRange(endPos, endPos);
-            setCaret(endPos);
+            if (!element) {
+              return;
+            }
+
+            element.focus();
+
+            setPlaceholders([]);
+
+            const endPosition = latex.length;
+
+            element.setSelectionRange(endPosition, endPosition);
+
+            setCaret(endPosition);
           }}
           style={{
             display: "flex",
@@ -538,9 +609,10 @@ const MathEditor = ({
           }}
         >
           <MathRenderer
-            latex={getHighlightedDisplayLatex(latex, activePlaceholders, caret)}
+            latex={getHighlightedDisplayLatex(latex, placeholders, caret)}
             mode="display"
           />
+
           {chips}
         </div>
       )}

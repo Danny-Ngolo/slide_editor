@@ -1,10 +1,9 @@
 // mathTemplates.js — Template Registry (§16.3). Pure data, no components.
 // A template is a structured definition: a LaTeX skeleton with `!n` placeholder
-// markers, per-placeholder seed content, and a cursor contract. Adding a
-// template = adding one registry entry; nothing in the editor changes.
+// markers, per-placeholder seed content, and a cursor contract.
 
 export const MATH_TEMPLATES = {
-fraction: {
+  fraction: {
     id: "fraction",
     description: "Fraction",
     keywords: ["fraction", "frac", "divide", "ratio"],
@@ -76,5 +75,4 @@ fraction: {
 };
 
 export const listTemplates = () => Object.values(MATH_TEMPLATES);
-
 export const getTemplate = (templateId) => MATH_TEMPLATES[templateId] ?? null;
