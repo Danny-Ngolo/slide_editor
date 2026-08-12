@@ -7,10 +7,13 @@ import React, {
   useRef,
   useState,
 } from "react";
+
 import MathRenderer from "./MathRenderer";
 import MathSymbolToolbar from "./MathSymbolToolbar";
 import { applyInsert } from "./mathInsert";
-import { navigatePlaceholder } from "./mathPlaceholder";
+
+import { analyzeLatex, navigatePlaceholder } from "./mathPlaceholder";
+
 import { MATH_GROUPS } from "./mathSymbols";
 import { COLORS, RADIUS, FOCUS_RING } from "../shared/styles";
 
@@ -18,7 +21,6 @@ const caretBlinkStyle = `
   @keyframes math-caret-blink {
     from, to { background-color: transparent }
     50% { background-color: ${COLORS.accent} }
-  }
 `;
 
 const BlinkingCaret = () => (
@@ -33,6 +35,91 @@ const BlinkingCaret = () => (
     }}
   />
 );
+
+const innermostTemplateAt = (templates, position) => {
+  let innermost = null;
+
+  for (const template of templates) {
+    if (template.from <= position && position < template.to) {
+      if (
+        !innermost ||
+        template.to - template.from < innermost.to - innermost.from
+      ) {
+        innermost = template;
+      }
+    }
+  }
+
+  return innermost;
+};
+
+const isStructuralPosition = (templates, position) => {
+  const innermost = innermostTemplateAt(templates, position);
+
+  if (!innermost) {
+    return false;
+  }
+
+  return !innermost.slots.some(
+    (slot) => slot.from <= position && position < slot.to,
+  );
+};
+
+const rangeHasStructuralPosition = (templates, from, to) => {
+  for (let position = from; position < to; position++) {
+    if (isStructuralPosition(templates, position)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const findRemovableEmptyTemplate = (analysis, position, deleteKey) => {
+  const candidates = analysis.templates.filter((template) => {
+    const inside = deleteKey
+      ? position >= template.from && position < template.to
+      : position >= template.from && position <= template.to;
+
+    if (!inside) {
+      return false;
+    }
+
+    return template.slots.every((slot) => slot.from === slot.to);
+  });
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  return candidates.sort((a, b) => a.to - a.from - (b.to - b.from))[0];
+};
+
+const isColorboxSafe = (content) => {
+  let depth = 0;
+
+  for (let index = 0; index < content.length; index++) {
+    if (content[index] === "\\") {
+      index++;
+      continue;
+    }
+
+    if (content[index] === "{") {
+      depth++;
+      continue;
+    }
+
+    if (content[index] === "}") {
+      depth--;
+
+      if (depth < 0) {
+        return false;
+      }
+    }
+  }
+
+  return depth === 0;
+};
 
 const getHighlightedDisplayLatex = (latex, placeholders, caretPos) => {
   if (!latex || placeholders.length === 0) {
@@ -52,17 +139,20 @@ const getHighlightedDisplayLatex = (latex, placeholders, caretPos) => {
   const to = Math.max(from, Math.min(activeSlot.to, latex.length));
 
   const before = latex.slice(0, from);
-  const content = latex.slice(from, to);
-  const after = latex.slice(to);
 
-  const bgColor = COLORS.accentSoft;
-  const textColor = COLORS.accentText;
+  const content = latex.slice(from, to);
+
+  const after = latex.slice(to);
 
   const displayContent = content.length === 0 ? "\\phantom{0}" : content;
 
+  if (!isColorboxSafe(displayContent)) {
+    return latex;
+  }
+
   const wrapped =
-    `\\colorbox{${bgColor}}{` +
-    `\\color{${textColor}}{` +
+    `\\colorbox{${COLORS.accentSoft}}{` +
+    `\\color{${COLORS.accentText}}{` +
     `$\\displaystyle ${displayContent}$` +
     `}` +
     `}`;
@@ -80,17 +170,32 @@ const MathEditor = ({
   showToolbar = true,
 }) => {
   const sourceRef = useRef(null);
+
   const containerRef = useRef(null);
 
-  const [placeholders, setPlaceholders] = useState([]);
+  const analysis = useMemo(() => analyzeLatex(latex), [latex]);
+
+  const [placeholders, setPlaceholders] = useState(analysis.placeholders);
+
   const [caret, setCaret] = useState(0);
+
   const [view, setView] = useState("source");
 
-  const pendingInsertRef = useRef(null);
   const previousLatexRef = useRef(latex);
-  const editAnchorRef = useRef(0);
+
+  const pendingCaretRef = useRef(null);
+
+  const structureRef = useRef(analysis);
 
   const placeholdersRef = useRef(placeholders);
+
+  const [previousLatex, setPreviousLatex] = useState(latex);
+
+  if (previousLatex !== latex) {
+    setPreviousLatex(latex);
+
+    setPlaceholders(analysis.placeholders);
+  }
 
   useEffect(() => {
     placeholdersRef.current = placeholders;
@@ -106,113 +211,78 @@ const MathEditor = ({
     setCaret(event.currentTarget.selectionStart ?? 0);
   };
 
-  const applyItem = useCallback(
-    (item) => {
-      const element = sourceRef.current;
+  const applyItem = useCallback((item) => {
+    const element = sourceRef.current;
 
-      if (!element) {
-        return;
-      }
+    if (!element) {
+      return;
+    }
 
-      const selection = {
-        start: element.selectionStart,
-        end: element.selectionEnd,
-      };
+    const selection = {
+      start: element.selectionStart ?? previousLatexRef.current.length,
 
-      const currentLatex = previousLatexRef.current;
+      end: element.selectionEnd ?? element.selectionStart ?? 0,
+    };
 
-      const result = applyInsert(
-        currentLatex,
-        selection,
-        item,
-        placeholdersRef.current,
-      );
+    const result = applyInsert(previousLatexRef.current, selection, item);
 
-      pendingInsertRef.current = {
-        caret: result.selection.start,
-        placeholders: result.placeholders,
-      };
+    const analysis = analyzeLatex(result.latex);
 
-      previousLatexRef.current = result.latex;
+    structureRef.current = analysis;
 
-      setCaret(result.selection.start);
-      onChange?.(result.latex);
-    },
-    [onChange],
-  );
+    setPlaceholders(analysis.placeholders);
+
+    pendingCaretRef.current = result.selection.start;
+
+    previousLatexRef.current = result.latex;
+
+    setCaret(result.selection.start);
+
+    onChangeRef.current?.(result.latex);
+  }, []);
 
   useLayoutEffect(() => {
     previousLatexRef.current = latex;
 
-    const pending = pendingInsertRef.current;
+    structureRef.current = analysis;
 
-    if (!pending) {
+    const pendingCaret = pendingCaretRef.current;
+
+    if (pendingCaret === null) {
       return;
     }
 
     const element = sourceRef.current;
 
     if (!element) {
-      pendingInsertRef.current = null;
+      pendingCaretRef.current = null;
       return;
     }
 
     element.focus();
 
-    element.setSelectionRange(pending.caret, pending.caret);
+    const nextCaret = Math.max(0, Math.min(pendingCaret, latex.length));
 
-    setCaret(pending.caret);
-    setPlaceholders(pending.placeholders);
+    element.setSelectionRange(nextCaret, nextCaret);
 
-    pendingInsertRef.current = null;
-  }, [latex]);
+    setCaret(nextCaret);
 
-  const captureEditAnchor = (event) => {
-    const element = event.currentTarget;
-
-    if (element) {
-      editAnchorRef.current = element.selectionStart ?? editAnchorRef.current;
-    }
-  };
+    pendingCaretRef.current = null;
+  }, [latex, analysis]);
 
   const onSourceChange = (event) => {
     const element = event.currentTarget;
+
     const nextLatex = element.value;
 
-    const previousLatex = previousLatexRef.current;
-
-    const delta = nextLatex.length - previousLatex.length;
-
-    const editPosition = editAnchorRef.current;
-
-    const updatedPlaceholders = placeholdersRef.current
-      .map((placeholder) => {
-        if (editPosition < placeholder.from) {
-          return {
-            ...placeholder,
-            from: placeholder.from + delta,
-            to: placeholder.to + delta,
-          };
-        }
-
-        if (editPosition > placeholder.to) {
-          return placeholder;
-        }
-
-        return {
-          ...placeholder,
-          to: Math.max(placeholder.from, placeholder.to + delta),
-        };
-      })
-      .filter(
-        (placeholder) =>
-          placeholder.from <= nextLatex.length &&
-          placeholder.to <= nextLatex.length,
-      );
+    const analysis = analyzeLatex(nextLatex);
 
     previousLatexRef.current = nextLatex;
 
-    setPlaceholders(updatedPlaceholders);
+    structureRef.current = analysis;
+
+    setPlaceholders(analysis.placeholders);
+
     setCaret(element.selectionStart ?? nextLatex.length);
 
     onChangeRef.current?.(nextLatex);
@@ -227,7 +297,12 @@ const MathEditor = ({
 
     const onKeyDown = (event) => {
       const map = placeholdersRef.current;
-      const caretPos = element.selectionStart;
+
+      const structure = structureRef.current;
+
+      const caretPos = element.selectionStart ?? 0;
+
+      const selectionEnd = element.selectionEnd ?? caretPos;
 
       if (event.key === "Escape") {
         if (map.length === 0) {
@@ -246,24 +321,27 @@ const MathEditor = ({
 
         const exitPosition = current
           ? current.to
-          : (ordered.at(-1)?.to ?? caretPos);
+          : (ordered[ordered.length - 1]?.to ?? caretPos);
 
         setPlaceholders([]);
 
         element.setSelectionRange(exitPosition, exitPosition);
 
         setCaret(exitPosition);
+
         return;
       }
 
       if (event.key === "Tab" && map.length > 0) {
+        event.stopPropagation();
+
         const target = navigatePlaceholder(
           map,
           caretPos,
           event.shiftKey ? "prev" : "next",
         );
 
-        if (target == null) {
+        if (target === null) {
           return;
         }
 
@@ -275,8 +353,7 @@ const MathEditor = ({
         );
 
         const targetIndex = ordered.findIndex(
-          (placeholder) =>
-            Math.floor((placeholder.from + placeholder.to) / 2) === target,
+          (placeholder) => placeholder.to === target,
         );
 
         const wrapping =
@@ -293,6 +370,7 @@ const MathEditor = ({
           setPlaceholders([]);
 
           setCaret(caretPos);
+
           return;
         }
 
@@ -300,10 +378,11 @@ const MathEditor = ({
         event.stopPropagation();
 
         element.focus();
+
         element.setSelectionRange(target, target);
 
-        editAnchorRef.current = target;
         setCaret(target);
+
         return;
       }
 
@@ -329,6 +408,68 @@ const MathEditor = ({
         if (current && caretPos <= current.from) {
           setPlaceholders([]);
         }
+
+        return;
+      }
+
+      if (event.key === "Backspace" || event.key === "Delete") {
+        const templates = structure.templates;
+
+        if (templates.length > 0) {
+          const removable = findRemovableEmptyTemplate(
+            structure,
+            caretPos,
+            event.key === "Delete",
+          );
+
+          if (removable) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const currentLatex = previousLatexRef.current;
+
+            const cleanedLatex =
+              currentLatex.slice(0, removable.from) +
+              currentLatex.slice(removable.to);
+
+            const nextAnalysis = analyzeLatex(cleanedLatex);
+
+            const nextCaret = Math.min(removable.from, cleanedLatex.length);
+
+            previousLatexRef.current = cleanedLatex;
+
+            structureRef.current = nextAnalysis;
+
+            setPlaceholders(nextAnalysis.placeholders);
+
+            setCaret(nextCaret);
+
+            pendingCaretRef.current = nextCaret;
+
+            onChangeRef.current?.(cleanedLatex);
+
+            return;
+          }
+
+          const hasSelection = selectionEnd !== caretPos;
+
+          const deleteFrom = hasSelection
+            ? Math.min(caretPos, selectionEnd)
+            : event.key === "Backspace"
+              ? caretPos - 1
+              : caretPos;
+
+          const deleteTo = hasSelection
+            ? Math.max(caretPos, selectionEnd)
+            : deleteFrom + 1;
+
+          if (rangeHasStructuralPosition(templates, deleteFrom, deleteTo)) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }
+
+        return;
       }
     };
 
@@ -346,10 +487,9 @@ const MathEditor = ({
 
     element.focus();
 
-    element.setSelectionRange(slot.from, slot.from);
+    element.setSelectionRange(slot.to, slot.to);
 
-    editAnchorRef.current = slot.from;
-    setCaret(slot.from);
+    setCaret(slot.to);
   }, []);
 
   const onBlur = (event) => {
@@ -386,13 +526,14 @@ const MathEditor = ({
 
           return (
             <button
-              key={`${slot.from}-${slot.to}`}
+              key={`${slot.index}-${slot.from}-${slot.to}`}
               type="button"
               title="Click to fill this slot"
               aria-label={`Fill slot ${slot.index}`}
               onMouseDown={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
+
                 jumpToSlot(slot);
               }}
               onClick={(event) => {
@@ -422,7 +563,13 @@ const MathEditor = ({
                 isActive ? (
                   <BlinkingCaret />
                 ) : (
-                  <span style={{ lineHeight: 1 }}>…</span>
+                  <span
+                    style={{
+                      lineHeight: 1,
+                    }}
+                  >
+                    …
+                  </span>
                 )
               ) : (
                 <span
@@ -456,6 +603,7 @@ const MathEditor = ({
         }}
       >
         <span>baseline</span>
+
         <BlinkingCaret />
       </div>
     );
@@ -512,6 +660,25 @@ const MathEditor = ({
     }
 
     element.focus();
+
+    if (nextView === "slots") {
+      const mapped = analysis.placeholders;
+
+      const insidePlaceholder = mapped.some(
+        (placeholder) => caret >= placeholder.from && caret <= placeholder.to,
+      );
+
+      const nextCaret = insidePlaceholder ? caret : latex.length;
+
+      setPlaceholders(mapped);
+
+      setCaret(nextCaret);
+
+      element.setSelectionRange(nextCaret, nextCaret);
+
+      return;
+    }
+
     element.setSelectionRange(caret, caret);
   };
 
@@ -588,7 +755,9 @@ const MathEditor = ({
 
             element.focus();
 
-            setPlaceholders([]);
+            const mapped = analysis.placeholders;
+
+            setPlaceholders(mapped);
 
             const endPosition = latex.length;
 
@@ -613,20 +782,26 @@ const MathEditor = ({
             mode="display"
           />
 
+          {caret >= latex.length &&
+            !placeholders.some(
+              (placeholder) =>
+                caret >= placeholder.from && caret <= placeholder.to,
+            ) && <BlinkingCaret />}
+
           {chips}
         </div>
       )}
 
-      <div style={{ position: "relative" }}>
+      <div
+        style={{
+          position: "relative",
+        }}
+      >
         <textarea
           ref={sourceRef}
           value={latex}
           onChange={onSourceChange}
           onSelect={handleSelect}
-          onKeyDown={captureEditAnchor}
-          onBeforeInput={captureEditAnchor}
-          onPointerDown={captureEditAnchor}
-          onCompositionStart={captureEditAnchor}
           onBlur={onBlur}
           autoFocus={autoFocus}
           placeholder={placeholder}

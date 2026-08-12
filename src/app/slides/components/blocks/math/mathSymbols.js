@@ -41,6 +41,20 @@ export const MATH_GROUPS = [
     ],
   },
   {
+    id: "braces",
+    label: "Braces",
+    items: [
+      basicSymbol("lbrace", "{", "\\{", ["brace", "set", "literal", "braces"]),
+      basicSymbol("rbrace", "}", "\\}", ["brace", "set", "literal", "braces"]),
+      basicSymbol(
+        "set",
+        "{·}",
+        "\\{a, b\\}",
+        ["set", "braces", "literal", "collection"],
+      ),
+    ],
+  },
+  {
     id: "greek",
     label: "Greek",
     items: [

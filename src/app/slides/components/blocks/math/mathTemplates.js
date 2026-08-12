@@ -58,9 +58,10 @@ export const MATH_TEMPLATES = {
     description: "Quadratic formula",
     keywords: ["quadratic", "formula", "roots"],
     category: "Templates",
-    latex: "x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}",
-    placeholders: [],
+    latex: "!0 = \\frac{!1 \\pm \\sqrt{!2}}{!3}",
+    placeholders: ["x", "-b", "b^2-4ac", "2a"],
     cursorAt: 0,
+    preview: "x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}",
   },
   binomial: {
     id: "binomial",

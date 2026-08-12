@@ -1,75 +1,110 @@
 import { placeholderResolve } from "./mathPlaceholder";
+
 import { getTemplate } from "./mathTemplates";
 
 export const SYMBOL = "symbol";
 export const TEMPLATE = "template";
 
-const getItemType = (item) => {
-  if (!item) return null;
+const normalizeSelection = (latex, selection) => {
+  const length = latex.length;
 
-  if (item.type === TEMPLATE || item.type === SYMBOL) {
-    return item.type;
-  }
+  const start = Math.max(0, Math.min(selection?.start ?? length, length));
 
-  if (item.templateId || item.placeholders) {
-    return TEMPLATE;
-  }
+  const end = Math.max(start, Math.min(selection?.end ?? start, length));
 
-  return SYMBOL;
+  return {
+    start,
+    end,
+  };
 };
 
-const getTemplateDefinition = (item) => {
-  if (!item) return null;
+const resolveItem = (item) => {
+  if (!item) {
+    return null;
+  }
 
   if (typeof item === "string") {
+    if (item.includes("!")) {
+      return {
+        type: TEMPLATE,
+        latex: item,
+        placeholders: [],
+        cursorAt: 0,
+      };
+    }
+
     return {
+      type: SYMBOL,
       latex: item,
-      placeholders: [],
-      cursorAt: 0,
     };
   }
 
+  if (item.type === TEMPLATE || item.type === SYMBOL) {
+    if (item.type === TEMPLATE && item.templateId) {
+      const template = getTemplate(item.templateId);
+
+      return template
+        ? {
+            ...template,
+            type: TEMPLATE,
+          }
+        : null;
+    }
+
+    return item;
+  }
+
   if (item.templateId) {
-    return getTemplate(item.templateId);
+    const template = getTemplate(item.templateId);
+
+    return template
+      ? {
+          ...template,
+          type: TEMPLATE,
+        }
+      : null;
   }
 
   if (item.id) {
-    return getTemplate(item.id) ?? item;
+    const template = getTemplate(item.id);
+
+    if (template) {
+      return {
+        ...template,
+        type: TEMPLATE,
+      };
+    }
   }
 
   return item;
 };
 
 export const insertSymbol = (latex, selection, token) => {
-  const start = Math.max(0, selection?.start ?? latex.length);
-  const end = Math.max(start, selection?.end ?? start);
+  const { start, end } = normalizeSelection(latex, selection);
 
-  const next = latex.slice(0, start) + token + latex.slice(end);
-  const cursor = start + token.length;
+  const nextLatex = latex.slice(0, start) + token + latex.slice(end);
+
+  const caret = start + token.length;
 
   return {
-    latex: next,
-    selection: { start: cursor, end: cursor },
-    placeholders: [],
+    latex: nextLatex,
+    selection: {
+      start: caret,
+      end: caret,
+    },
   };
 };
 
-export const insertTemplateAt = (
-  latex,
-  selection,
-  templateObj,
-  existingPlaceholders = [],
-) => {
-  const start = Math.max(0, selection?.start ?? latex.length);
-  const end = Math.max(start, selection?.end ?? start);
-
-  const template = getTemplateDefinition(templateObj);
+export const insertTemplateAt = (latex, selection, template) => {
+  const { start, end } = normalizeSelection(latex, selection);
 
   if (!template || typeof template.latex !== "string") {
     return {
       latex,
-      selection: { start, end },
-      placeholders: existingPlaceholders,
+      selection: {
+        start,
+        end,
+      },
     };
   }
 
@@ -87,77 +122,38 @@ export const insertTemplateAt = (
 
   const resolved = placeholderResolve(template.latex, values, cursorAt);
 
-  const newLatex = latex.slice(0, start) + resolved.text + latex.slice(end);
+  const nextLatex = latex.slice(0, start) + resolved.text + latex.slice(end);
 
-  const insertedLength = resolved.text.length;
-  const replacedLength = end - start;
-  const delta = insertedLength - replacedLength;
-
-  const updatedExisting = existingPlaceholders
-    .filter((p) => !(p.from >= start && p.to <= end))
-    .map((p) => {
-      if (p.from >= end) {
-        return {
-          ...p,
-          from: p.from + delta,
-          to: p.to + delta,
-        };
-      }
-
-      if (p.from <= start && p.to >= end) {
-        return {
-          ...p,
-          to: p.to + delta,
-        };
-      }
-
-      return p;
-    });
-
-  const insertedPlaceholders = resolved.placeholders.map((p) => ({
-    ...p,
-    from: p.from + start,
-    to: p.to + start,
-  }));
-
-  const placeholders = [...updatedExisting, ...insertedPlaceholders]
-    .sort((a, b) => a.from - b.from)
-    .map((p, index) => ({
-      ...p,
-      index,
-    }));
-
-  const cursor = start + resolved.cursor;
+  const caret = start + resolved.cursor;
 
   return {
-    latex: newLatex,
-    selection: { start: cursor, end: cursor },
-    placeholders,
+    latex: nextLatex,
+    selection: {
+      start: caret,
+      end: caret,
+    },
   };
 };
 
-export const applyInsert = (
-  latex,
-  selection,
-  item,
-  existingPlaceholders = [],
-) => {
-  const start = Math.max(0, selection?.start ?? latex.length);
-  const end = Math.max(start, selection?.end ?? start);
+export const applyInsert = (latex, selection, item) => {
+  const resolvedItem = resolveItem(item);
 
-  const type = getItemType(item);
-
-  if (type === TEMPLATE) {
-    return insertTemplateAt(latex, { start, end }, item, existingPlaceholders);
+  if (!resolvedItem) {
+    return {
+      latex,
+      selection: {
+        start: selection?.start ?? latex.length,
+        end: selection?.end ?? selection?.start ?? latex.length,
+      },
+    };
   }
 
-  let token = "";
-
-  if (typeof item === "string") {
-    token = item;
-  } else {
-    token = item?.latex ?? item?.value ?? item?.symbol ?? "";
+  if (resolvedItem.type === TEMPLATE) {
+    return insertTemplateAt(latex, selection, resolvedItem);
   }
 
-  return insertSymbol(latex, { start, end }, token);
+  const token =
+    resolvedItem.latex ?? resolvedItem.value ?? resolvedItem.symbol ?? "";
+
+  return insertSymbol(latex, selection, token);
 };
