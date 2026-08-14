@@ -9,13 +9,15 @@ import React, {
 } from "react";
 
 import MathRenderer from "./MathRenderer";
-import MathSymbolToolbar from "./MathSymbolToolbar";
+import MathSlotsView from "./MathSlotsView";
+import MathEditorShell from "./MathEditorShell";
 import { applyInsert } from "./mathInsert";
 
-import { analyzeLatex, navigatePlaceholder } from "./mathPlaceholder";
+import { analyzeLatex } from "./mathPlaceholder";
 
 import { MATH_GROUPS } from "./mathSymbols";
-import { COLORS, RADIUS, FOCUS_RING } from "../shared/styles";
+import { COLORS, RADIUS } from "../shared/styles";
+import { useMathEditorKeyboard } from "./useMathEditorKeyboard";
 
 const caretBlinkStyle = `
   @keyframes math-caret-blink {
@@ -35,130 +37,6 @@ const BlinkingCaret = () => (
     }}
   />
 );
-
-const innermostTemplateAt = (templates, position) => {
-  let innermost = null;
-
-  for (const template of templates) {
-    if (template.from <= position && position < template.to) {
-      if (
-        !innermost ||
-        template.to - template.from < innermost.to - innermost.from
-      ) {
-        innermost = template;
-      }
-    }
-  }
-
-  return innermost;
-};
-
-const isStructuralPosition = (templates, position) => {
-  const innermost = innermostTemplateAt(templates, position);
-
-  if (!innermost) {
-    return false;
-  }
-
-  return !innermost.slots.some(
-    (slot) => slot.from <= position && position < slot.to,
-  );
-};
-
-const rangeHasStructuralPosition = (templates, from, to) => {
-  for (let position = from; position < to; position++) {
-    if (isStructuralPosition(templates, position)) {
-      return true;
-    }
-  }
-
-  return false;
-};
-
-const findRemovableEmptyTemplate = (analysis, position, deleteKey) => {
-  const candidates = analysis.templates.filter((template) => {
-    const inside = deleteKey
-      ? position >= template.from && position < template.to
-      : position >= template.from && position <= template.to;
-
-    if (!inside) {
-      return false;
-    }
-
-    return template.slots.every((slot) => slot.from === slot.to);
-  });
-
-  if (candidates.length === 0) {
-    return null;
-  }
-
-  return candidates.sort((a, b) => a.to - a.from - (b.to - b.from))[0];
-};
-
-const isColorboxSafe = (content) => {
-  let depth = 0;
-
-  for (let index = 0; index < content.length; index++) {
-    if (content[index] === "\\") {
-      index++;
-      continue;
-    }
-
-    if (content[index] === "{") {
-      depth++;
-      continue;
-    }
-
-    if (content[index] === "}") {
-      depth--;
-
-      if (depth < 0) {
-        return false;
-      }
-    }
-  }
-
-  return depth === 0;
-};
-
-const getHighlightedDisplayLatex = (latex, placeholders, caretPos) => {
-  if (!latex || placeholders.length === 0) {
-    return latex;
-  }
-
-  const activeSlot = placeholders.find(
-    (placeholder) => caretPos >= placeholder.from && caretPos <= placeholder.to,
-  );
-
-  if (!activeSlot) {
-    return latex;
-  }
-
-  const from = Math.max(0, Math.min(activeSlot.from, latex.length));
-
-  const to = Math.max(from, Math.min(activeSlot.to, latex.length));
-
-  const before = latex.slice(0, from);
-
-  const content = latex.slice(from, to);
-
-  const after = latex.slice(to);
-
-  const displayContent = content.length === 0 ? "\\phantom{0}" : content;
-
-  if (!isColorboxSafe(displayContent)) {
-    return latex;
-  }
-
-  const wrapped =
-    `\\colorbox{${COLORS.accentSoft}}{` +
-    `\\color{${COLORS.accentText}}{` +
-    `$\\displaystyle ${displayContent}$` +
-    `}` +
-    `}`;
-
-  return before + wrapped + after;
-};
 
 const MathEditor = ({
   latex = "",
@@ -288,195 +166,16 @@ const MathEditor = ({
     onChangeRef.current?.(nextLatex);
   };
 
-  useEffect(() => {
-    const element = sourceRef.current;
-
-    if (!element) {
-      return;
-    }
-
-    const onKeyDown = (event) => {
-      const map = placeholdersRef.current;
-
-      const structure = structureRef.current;
-
-      const caretPos = element.selectionStart ?? 0;
-
-      const selectionEnd = element.selectionEnd ?? caretPos;
-
-      if (event.key === "Escape") {
-        if (map.length === 0) {
-          return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        const current = map.find(
-          (placeholder) =>
-            caretPos >= placeholder.from && caretPos <= placeholder.to,
-        );
-
-        const ordered = [...map].sort((a, b) => a.from - b.from);
-
-        const exitPosition = current
-          ? current.to
-          : (ordered[ordered.length - 1]?.to ?? caretPos);
-
-        setPlaceholders([]);
-
-        element.setSelectionRange(exitPosition, exitPosition);
-
-        setCaret(exitPosition);
-
-        return;
-      }
-
-      if (event.key === "Tab" && map.length > 0) {
-        event.stopPropagation();
-
-        const target = navigatePlaceholder(
-          map,
-          caretPos,
-          event.shiftKey ? "prev" : "next",
-        );
-
-        if (target === null) {
-          return;
-        }
-
-        const ordered = [...map].sort((a, b) => a.from - b.from);
-
-        const currentIndex = ordered.findIndex(
-          (placeholder) =>
-            caretPos >= placeholder.from && caretPos <= placeholder.to,
-        );
-
-        const targetIndex = ordered.findIndex(
-          (placeholder) => placeholder.to === target,
-        );
-
-        const wrapping =
-          currentIndex !== -1 &&
-          targetIndex !== -1 &&
-          (event.shiftKey
-            ? targetIndex > currentIndex
-            : targetIndex < currentIndex);
-
-        if (wrapping) {
-          event.preventDefault();
-          event.stopPropagation();
-
-          setPlaceholders([]);
-
-          setCaret(caretPos);
-
-          return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        element.focus();
-
-        element.setSelectionRange(target, target);
-
-        setCaret(target);
-
-        return;
-      }
-
-      if (event.key === "ArrowRight" && !event.shiftKey && map.length > 0) {
-        const current = map.find(
-          (placeholder) =>
-            caretPos >= placeholder.from && caretPos <= placeholder.to,
-        );
-
-        if (current && caretPos >= current.to) {
-          setPlaceholders([]);
-        }
-
-        return;
-      }
-
-      if (event.key === "ArrowLeft" && !event.shiftKey && map.length > 0) {
-        const current = map.find(
-          (placeholder) =>
-            caretPos >= placeholder.from && caretPos <= placeholder.to,
-        );
-
-        if (current && caretPos <= current.from) {
-          setPlaceholders([]);
-        }
-
-        return;
-      }
-
-      if (event.key === "Backspace" || event.key === "Delete") {
-        const templates = structure.templates;
-
-        if (templates.length > 0) {
-          const removable = findRemovableEmptyTemplate(
-            structure,
-            caretPos,
-            event.key === "Delete",
-          );
-
-          if (removable) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            const currentLatex = previousLatexRef.current;
-
-            const cleanedLatex =
-              currentLatex.slice(0, removable.from) +
-              currentLatex.slice(removable.to);
-
-            const nextAnalysis = analyzeLatex(cleanedLatex);
-
-            const nextCaret = Math.min(removable.from, cleanedLatex.length);
-
-            previousLatexRef.current = cleanedLatex;
-
-            structureRef.current = nextAnalysis;
-
-            setPlaceholders(nextAnalysis.placeholders);
-
-            setCaret(nextCaret);
-
-            pendingCaretRef.current = nextCaret;
-
-            onChangeRef.current?.(cleanedLatex);
-
-            return;
-          }
-
-          const hasSelection = selectionEnd !== caretPos;
-
-          const deleteFrom = hasSelection
-            ? Math.min(caretPos, selectionEnd)
-            : event.key === "Backspace"
-              ? caretPos - 1
-              : caretPos;
-
-          const deleteTo = hasSelection
-            ? Math.max(caretPos, selectionEnd)
-            : deleteFrom + 1;
-
-          if (rangeHasStructuralPosition(templates, deleteFrom, deleteTo)) {
-            event.preventDefault();
-            event.stopPropagation();
-          }
-        }
-
-        return;
-      }
-    };
-
-    element.addEventListener("keydown", onKeyDown, true);
-
-    return () => element.removeEventListener("keydown", onKeyDown, true);
-  }, []);
+  useMathEditorKeyboard({
+    elementRef: sourceRef,
+    structureRef,
+    placeholdersRef,
+    previousLatexRef,
+    setPlaceholders,
+    setCaret,
+    onChangeRef,
+    pendingCaretRef,
+  });
 
   const jumpToSlot = useCallback((slot) => {
     const element = sourceRef.current;
@@ -505,118 +204,6 @@ const MathEditor = ({
 
     setCaret(event.currentTarget.selectionStart ?? 0);
   };
-
-  const chips =
-    placeholders.length > 0 ? (
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "6px",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {placeholders.map((slot) => {
-          const content = latex.slice(slot.from, slot.to);
-
-          const isActive = caret >= slot.from && caret <= slot.to;
-
-          const isEmpty = content.length === 0;
-
-          return (
-            <button
-              key={`${slot.index}-${slot.from}-${slot.to}`}
-              type="button"
-              title="Click to fill this slot"
-              aria-label={`Fill slot ${slot.index}`}
-              onMouseDown={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-
-                jumpToSlot(slot);
-              }}
-              onClick={(event) => {
-                event.stopPropagation();
-              }}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minWidth: "28px",
-                minHeight: "24px",
-                padding: "2px 10px",
-                borderRadius: RADIUS.pill,
-                cursor: "pointer",
-                fontSize: "12px",
-                border: isActive
-                  ? `2px solid ${COLORS.accent}`
-                  : isEmpty
-                    ? `1px dashed ${COLORS.placeholder}`
-                    : `1px solid ${COLORS.fieldBorder}`,
-                boxShadow: isActive ? FOCUS_RING : "none",
-                background: isActive ? COLORS.accentSoft : COLORS.fieldBg,
-                color: isActive ? COLORS.accentText : COLORS.placeholder,
-              }}
-            >
-              {isEmpty ? (
-                isActive ? (
-                  <BlinkingCaret />
-                ) : (
-                  <span
-                    style={{
-                      lineHeight: 1,
-                    }}
-                  >
-                    …
-                  </span>
-                )
-              ) : (
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    lineHeight: 1,
-                  }}
-                >
-                  <MathRenderer latex={content} mode="inline" />
-
-                  {isActive && <BlinkingCaret />}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    ) : (
-      <div
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "4px 12px",
-          borderRadius: RADIUS.pill,
-          fontSize: "12px",
-          background: COLORS.fieldBg,
-          border: `1px solid ${COLORS.fieldBorder}`,
-          color: COLORS.placeholder,
-        }}
-      >
-        <span>baseline</span>
-
-        <BlinkingCaret />
-      </div>
-    );
-
-  const segmentedBtnStyle = (isActive) => ({
-    padding: "4px 12px",
-    border: "none",
-    fontSize: "12px",
-    cursor: "pointer",
-    background: isActive ? COLORS.accent : "transparent",
-    color: isActive ? "#ffffff" : COLORS.label,
-    transition: "background 0.15s ease, color 0.15s ease",
-  });
 
   const hiddenTextareaStyle = {
     position: "absolute",
@@ -693,128 +280,146 @@ const MathEditor = ({
     >
       <style>{caretBlinkStyle}</style>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-        }}
+      <MathEditorShell
+        view={view}
+        switchView={switchView}
+        showToolbar={showToolbar}
+        toolbarGroups={toolbarGroups}
+        applyItem={applyItem}
       >
-        <div
-          style={{
-            display: "inline-flex",
-            border: `1px solid ${COLORS.fieldBorder}`,
-            borderRadius: RADIUS.sm,
-            overflow: "hidden",
-          }}
-        >
-          <button
-            type="button"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => switchView("source")}
-            aria-pressed={view === "source"}
-            style={segmentedBtnStyle(view === "source")}
-          >
-            Source
-          </button>
-
-          <button
-            type="button"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => switchView("slots")}
-            aria-pressed={view === "slots"}
-            style={segmentedBtnStyle(view === "slots")}
-          >
-            Visual
-          </button>
-        </div>
-      </div>
-
-      {showToolbar && (
-        <MathSymbolToolbar
-          groups={toolbarGroups}
-          onInsert={applyItem}
-          compact
-        />
-      )}
-
-      {view === "slots" && (
-        <div
-          role="group"
-          aria-label="Visual expression"
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={(event) => {
-            if (event.target.closest("button")) {
-              return;
-            }
-
-            const element = sourceRef.current;
-
-            if (!element) {
-              return;
-            }
-
-            element.focus();
-
-            const mapped = analysis.placeholders;
-
-            setPlaceholders(mapped);
-
-            const endPosition = latex.length;
-
-            element.setSelectionRange(endPosition, endPosition);
-
-            setCaret(endPosition);
-          }}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "10px",
-            padding: "18px 12px",
-            border: `1px dashed ${COLORS.accentBorder}`,
-            borderRadius: RADIUS.md,
-            background: COLORS.surfaceAlt,
-            cursor: "text",
-          }}
-        >
-          <MathRenderer
-            latex={getHighlightedDisplayLatex(latex, placeholders, caret)}
-            mode="display"
+        {view === "slots" && (
+          <MathSlotsView
+            latex={latex}
+            placeholders={placeholders}
+            caret={caret}
+            sourceRef={sourceRef}
+            jumpToSlot={jumpToSlot}
+            setPlaceholders={setPlaceholders}
+            setCaret={setCaret}
+            BlinkingCaret={BlinkingCaret}
           />
+        )}
 
-          {caret >= latex.length &&
-            !placeholders.some(
-              (placeholder) =>
-                caret >= placeholder.from && caret <= placeholder.to,
-            ) && <BlinkingCaret />}
-
-          {chips}
+        <div
+          style={{
+            position: "relative",
+          }}
+        >
+          <textarea
+            ref={sourceRef}
+            value={latex}
+            onChange={onSourceChange}
+            onSelect={handleSelect}
+            onBlur={onBlur}
+            autoFocus={autoFocus}
+            placeholder={placeholder}
+            aria-label="LaTeX source"
+            spellCheck="false"
+            rows={2}
+            style={
+              view === "source" ? visibleTextareaStyle : hiddenTextareaStyle
+            }
+          />
         </div>
-      )}
 
-      <div
-        style={{
-          position: "relative",
-        }}
-      >
-        <textarea
-          ref={sourceRef}
-          value={latex}
-          onChange={onSourceChange}
-          onSelect={handleSelect}
-          onBlur={onBlur}
-          autoFocus={autoFocus}
-          placeholder={placeholder}
-          aria-label="LaTeX source"
-          spellCheck="false"
-          rows={2}
-          style={view === "source" ? visibleTextareaStyle : hiddenTextareaStyle}
-        />
-      </div>
+        {view === "source" && placeholders.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "6px",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {placeholders.map((slot) => {
+              const content = latex.slice(slot.from, slot.to);
+              const isActive = caret >= slot.from && caret <= slot.to;
+              const isEmpty = content.length === 0;
 
-      {view === "source" && chips}
+              return (
+                <button
+                  key={`${slot.index}-${slot.from}-${slot.to}`}
+                  type="button"
+                  title="Click to fill this slot"
+                  aria-label={`Fill slot ${slot.index}`}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
 
-      {view === "source" && <MathRenderer latex={latex} mode={mode} />}
+                    jumpToSlot(slot);
+                  }}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                  }}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minWidth: "28px",
+                    minHeight: "24px",
+                    padding: "2px 10px",
+                    borderRadius: RADIUS.pill,
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    border: isActive
+                      ? `2px solid ${COLORS.accent}`
+                      : isEmpty
+                        ? `1px dashed ${COLORS.placeholder}`
+                        : `1px solid ${COLORS.fieldBorder}`,
+                    boxShadow: isActive
+                      ? "0 0 0 2px rgba(99, 102, 241, 0.15)"
+                      : "none",
+                    background: isActive ? "#e0e7ff" : COLORS.fieldBg,
+                    color: isActive ? COLORS.accentText : COLORS.placeholder,
+                  }}
+                >
+                  {isEmpty ? (
+                    isActive ? (
+                      <BlinkingCaret />
+                    ) : (
+                      <span style={{ lineHeight: 1 }}>…</span>
+                    )
+                  ) : (
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        lineHeight: 1,
+                      }}
+                    >
+                      <MathRenderer latex={content} mode="inline" />
+
+                      {isActive && <BlinkingCaret />}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {view === "source" && placeholders.length === 0 && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "4px 12px",
+              borderRadius: RADIUS.pill,
+              fontSize: "12px",
+              background: COLORS.fieldBg,
+              border: `1px solid ${COLORS.fieldBorder}`,
+              color: COLORS.placeholder,
+            }}
+          >
+            <span>baseline</span>
+            <BlinkingCaret />
+          </div>
+        )}
+
+        {view === "source" && <MathRenderer latex={latex} mode={mode} />}
+      </MathEditorShell>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 # Math Block Development Plan
 
-> Status: Planning
+> Status: In process
 >
 > This document defines the vision, scope, architecture, and implementation roadmap for the Math Block.
 >
@@ -138,13 +138,13 @@ Reasons:
 
 ## Math V1 — Foundation
 
-### Editing
+### Editing [ok]
 
 - Live mathematical editing
 - Real-time rendering
 - Editable equations
 
-### Basic Operators
+### Basic Operators [ok]
 
 - -
 - −
@@ -170,12 +170,12 @@ Reasons:
 - x₁
 - a₂
 
-### Fractions
+### Fractions [ok]
 
 - numerator
 - denominator
 
-### Roots
+### Roots [ok]
 
 - Square root
 - n-th root
@@ -215,14 +215,14 @@ Reasons:
 
 ### Calculus
 
-- Integrals
+- Integrals [ok]
 - Double Integrals
 - Triple Integrals
 - Contour Integrals
 - Derivatives
 - Partial Derivatives
 - Limits
-- Summations
+- Summations [ok]
 - Products
 
 ### Linear Algebra

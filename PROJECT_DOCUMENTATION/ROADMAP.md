@@ -271,7 +271,7 @@ Implementation:
 > **Back on track after a styling & mobile detour (2026-08).** A mobile/styling pass shipped as
 > commits `de25865` and `cfd2355` (long-press multi-selection for slides and blocks, native
 > long-press text selection inside table cells, custom dropdowns replacing native `<select>`s).
-> That pass only *touched* Phase 10 (Mobile Experience); those items remain open and we will come
+> That pass only _touched_ Phase 10 (Mobile Experience); those items remain open and we will come
 > back to them when the roadmap reaches that phase. Development now resumes here on the remaining
 > educational blocks.
 
@@ -335,7 +335,7 @@ V1 authoring (shipped): see `EXCERCISE_BLOCK_PLAN.md` M1–M3.
 ## Equation / Math Block
 
 - [ ] Mathematical expressions
-- [ ] LaTeX support
+- [x] LaTeX support
 - [ ] Scientific content support
 
 ---
