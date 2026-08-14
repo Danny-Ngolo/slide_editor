@@ -41,11 +41,16 @@ export const MATH_GROUPS = [
     ],
   },
   {
-    id: "braces",
-    label: "Braces",
+    id: "parentheses",
+    label: "Parentheses",
     items: [
-      basicSymbol("lbrace", "{", "\\{", ["brace", "set", "literal", "braces"]),
-      basicSymbol("rbrace", "}", "\\}", ["brace", "set", "literal", "braces"]),
+      basicSymbol("lparen", "(", "(", ["parenthesis", "paren", "left", "open"]),
+      basicSymbol("rparen", ")", ")", ["parenthesis", "paren", "right", "close"]),
+      basicSymbol("lbracket", "[", "[", ["bracket", "left", "open"]),
+      basicSymbol("rbracket", "]", "]", ["bracket", "right", "close"]),
+      basicSymbol("lbrace", "{", "\\{", ["brace", "set", "literal", "braces", "left", "open"]),
+      basicSymbol("rbrace", "}", "\\}", ["brace", "set", "literal", "braces", "right", "close"]),
+      basicSymbol("vertical", "|", "|", ["vertical", "bar", "absolute", "norm"]),
       basicSymbol(
         "set",
         "{·}",
@@ -67,6 +72,27 @@ export const MATH_GROUPS = [
       basicSymbol("sigma", "σ", "\\sigma", ["sigma"]),
       basicSymbol("omega", "ω", "\\omega", ["omega"]),
       basicSymbol("infinity", "∞", "\\infty", ["infinity"]),
+      basicSymbol("lambda", "λ", "\\lambda", ["lambda"]),
+      basicSymbol("mu", "μ", "\\mu", ["mu"]),
+      basicSymbol("phi", "φ", "\\phi", ["phi"]),
+      basicSymbol("Delta", "Δ", "\\Delta", ["Delta", "capital delta"]),
+      basicSymbol("Omega", "Ω", "\\Omega", ["Omega", "capital omega"]),
+    ],
+  },
+  {
+    id: "powers",
+    label: "Powers",
+    items: [
+      basicTemplate("square", "square", "x²", ["square", "power", "exponent", "squared"]),
+      basicTemplate("cube", "cube", "x³", ["cube", "power", "exponent", "cubed"]),
+      basicTemplate("superscript", "superscript", "xⁿ", ["superscript", "power", "exponent"]),
+    ],
+  },
+  {
+    id: "subscripts",
+    label: "Subscripts",
+    items: [
+      basicTemplate("subscript", "subscript", "x₁", ["subscript", "index", "sub"]),
     ],
   },
   {
@@ -98,6 +124,14 @@ export const MATH_GROUPS = [
     items: [
       basicTemplate("quadratic", "quadratic", "Quadratic formula", ["quadratic", "formula", "roots"]),
       basicTemplate("binomial", "binomial", "Binomial", ["binomial", "choose", "combination"]),
+    ],
+  },
+  {
+    id: "misc",
+    label: "Miscellaneous",
+    items: [
+      basicSymbol("degree", "°", "^\\circ", ["degree", "angle", "temperature"]),
+      basicSymbol("percent", "%", "\\%", ["percent", "percentage"]),
     ],
   },
 ];

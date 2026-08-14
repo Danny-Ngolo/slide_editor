@@ -1,37 +1,3 @@
-> **This repository is the Slide Editor repository.**
-
-Its job is **not** to explain the entire VipiClass ecosystem.
-
-Its job is to explain the editor that will later be integrated into VipiClass.
-
-That's exactly how large software projects are documented. Every subsystem has its own context document.
-
-So I'd keep the document editor-focused, but I'd make one important addition:
-
-> Explain **where this editor fits** in the future.
-
-Just a few paragraphs are enough.
-
----
-
-# What I would change
-
-Instead of saying:
-
-> Slide Editor is a web-based presentation editor...
-
-I'd say something like:
-
-> The Slide Editor is the rich content engine of VipiClass. Although it currently focuses on lesson and slide authoring, its architecture is intentionally designed to become the unified editing engine used across the platform.
-
-That sentence changes everything.
-
----
-
-## Here's how I would rewrite `CONTEXT.md`
-
----
-
 # Project Context: Slide Editor
 
 ## 1. Purpose
@@ -44,14 +10,14 @@ Its long-term objective is to become the standard editing engine for every rich 
 
 Examples include:
 
-* lessons
-* lecture notes
-* assignments
-* quizzes
-* documentation
-* AI-generated educational content
-* interactive learning materials
-* future collaborative documents
+- lessons
+- lecture notes
+- assignments
+- quizzes
+- documentation
+- AI-generated educational content
+- interactive learning materials
+- future collaborative documents
 
 For that reason, architectural decisions prioritize extensibility, maintainability, and consistency over short-term implementation speed.
 
@@ -67,14 +33,14 @@ Instead, the goal is to establish a solid editing foundation that future platfor
 
 Current development priorities include:
 
-* block rendering
-* rich text editing
-* drag-and-drop
-* history management
-* table editing
-* keyboard navigation
-* selection systems
-* reusable editor infrastructure
+- block rendering
+- rich text editing
+- drag-and-drop
+- history management
+- table editing
+- keyboard navigation
+- selection systems
+- reusable editor infrastructure
 
 ---
 
@@ -90,12 +56,12 @@ Each block owns its own rendering logic while sharing common editor infrastructu
 
 This approach allows heterogeneous content such as:
 
-* text
-* callouts
-* tables
-* images
-* videos
-* quizzes
+- text
+- callouts
+- tables
+- images
+- videos
+- quizzes
 
 to coexist naturally inside the same slide.
 
@@ -107,11 +73,11 @@ Whenever multiple block types require similar behavior, the functionality is cen
 
 Examples include:
 
-* shared formatting toolbar
-* unified rich text initialization
-* history management
-* drag-and-drop architecture
-* block insertion workflow
+- shared formatting toolbar
+- unified rich text initialization
+- history management
+- drag-and-drop architecture
+- block insertion workflow
 
 The objective is to make new block types inherit existing capabilities instead of reimplementing them.
 
@@ -165,49 +131,49 @@ Implemented features currently include:
 
 ### Slide Management
 
-* slide creation
-* deletion
-* duplication
-* reordering
+- slide creation
+- deletion
+- duplication
+- reordering
 
 ### Block System
 
-* multiple block types
-* block insertion
-* block transformation
-* drag-and-drop
-* multi-block selection (desktop ctrl+click, mobile long-press)
+- multiple block types
+- block insertion
+- block transformation
+- drag-and-drop
+- multi-block selection (desktop ctrl+click, mobile long-press)
 
 ### Mobile & Interaction
 
-* touch long-press multi-selection for slides and blocks
-* native long-press text selection inside table cells (touch)
-* custom dropdowns replacing native `<select>`s in callout / quiz / exercise controls
+- touch long-press multi-selection for slides and blocks
+- native long-press text selection inside table cells (touch)
+- custom dropdowns replacing native `<select>`s in callout / quiz / exercise controls
 
 ### Rich Text
 
-* Tiptap integration
-* shared toolbar
-* slash menu
-* reusable editor initialization
+- Tiptap integration
+- shared toolbar
+- slash menu
+- reusable editor initialization
 
 ### Table
 
-* rich text cells
-* row operations
-* column operations
-* resizing
-* row reordering
-* column reordering
-* keyboard navigation
+- rich text cells
+- row operations
+- column operations
+- resizing
+- row reordering
+- column reordering
+- keyboard navigation
 
 ### Editing Infrastructure
 
-* undo / redo
-* autosave
-* clipboard
-* history
-* active editor synchronization
+- undo / redo
+- autosave
+- clipboard
+- history
+- active editor synchronization
 
 ---
 
@@ -225,11 +191,11 @@ Most ongoing work focuses on completing the Table V1 feature set before expandin
 
 Current active work includes:
 
-* cell selection
-* multi-cell selection
-* merge and split cells
-* internal clipboard improvements
-* keyboard interaction refinement
+- cell selection
+- multi-cell selection
+- merge and split cells
+- internal clipboard improvements
+- keyboard interaction refinement
 
 ---
 

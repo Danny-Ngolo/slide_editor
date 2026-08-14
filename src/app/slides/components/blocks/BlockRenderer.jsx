@@ -9,6 +9,7 @@ import YoutubeBlock from "./YoutubeBlock";
 import CalloutBlock from "./CalloutBlock";
 import ExerciseBlock from "./ExerciseBlock";
 import MathBlock from "./MathBlock";
+import CodeBlock from "./CodeBlock";
 import BlockActions from "../BlockActions";
 import { MoreVertical } from "lucide-react";
 import { useEditorContext } from "../EditorContext";
@@ -106,7 +107,8 @@ const BlockRenderer = ({ block, slideId }) => {
           hideTransform={
             block.type === "exercise" ||
             block.type === "quiz" ||
-            block.type === "math"
+            block.type === "math" ||
+            block.type === "code"
           }
         />
       )}
@@ -129,6 +131,7 @@ const BlockRenderer = ({ block, slideId }) => {
         <QuizBlock slideId={slideId} block={block} />
       )}
       {block.type === "math" && <MathBlock slideId={slideId} block={block} />}
+      {block.type === "code" && <CodeBlock slideId={slideId} block={block} />}
     </div>
   );
 };

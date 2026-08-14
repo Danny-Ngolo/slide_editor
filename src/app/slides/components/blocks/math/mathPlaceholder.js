@@ -413,6 +413,94 @@ const parseTemplateRanges = (latex, start = 0, end = latex.length) => {
       }
     }
 
+    /*
+     * x^{A} - Superscript
+     */
+    // Look for pattern: something^{something}
+    if (index < latex.length - 2 && latex[index] === "^" && latex[index + 1] === "{") {
+      const superscriptOpen = index + 1; // Position of {
+      const superscriptClose = findMatchingClosing(latex, superscriptOpen);
+      
+      if (superscriptClose !== -1 && superscriptClose < end) {
+        // Find the base (character before ^)
+        const baseStart = Math.max(0, index - 1);
+        const baseFrom = baseStart;
+        const baseTo = index; // Up to but not including ^
+        
+        const superscriptFrom = superscriptOpen + 1;
+        const superscriptTo = superscriptClose;
+        
+        const children = [
+          ...parseTemplateRanges(latex, baseFrom, baseTo),
+          ...parseTemplateRanges(latex, superscriptFrom, superscriptTo),
+        ];
+        
+        templates.push({
+          type: "superscript",
+          from: baseFrom,
+          to: superscriptClose + 1,
+          slots: [
+            {
+              from: baseFrom,
+              to: baseTo,
+            },
+            {
+              from: superscriptFrom,
+              to: superscriptTo,
+            },
+          ],
+          children,
+        });
+        
+        index = superscriptClose + 1;
+        continue;
+      }
+    }
+
+    /*
+     * x_{A} - Subscript
+     */
+    // Look for pattern: something_{something}
+    if (index < latex.length - 2 && latex[index] === "_" && latex[index + 1] === "{") {
+      const subscriptOpen = index + 1; // Position of {
+      const subscriptClose = findMatchingClosing(latex, subscriptOpen);
+      
+      if (subscriptClose !== -1 && subscriptClose < end) {
+        // Find the base (character before _)
+        const baseStart = Math.max(0, index - 1);
+        const baseFrom = baseStart;
+        const baseTo = index; // Up to but not including _
+        
+        const subscriptFrom = subscriptOpen + 1;
+        const subscriptTo = subscriptClose;
+        
+        const children = [
+          ...parseTemplateRanges(latex, baseFrom, baseTo),
+          ...parseTemplateRanges(latex, subscriptFrom, subscriptTo),
+        ];
+        
+        templates.push({
+          type: "subscript",
+          from: baseFrom,
+          to: subscriptClose + 1,
+          slots: [
+            {
+              from: baseFrom,
+              to: baseTo,
+            },
+            {
+              from: subscriptFrom,
+              to: subscriptTo,
+            },
+          ],
+          children,
+        });
+        
+        index = subscriptClose + 1;
+        continue;
+      }
+    }
+
     // Quadratic formula
     if (latex.startsWith("x = \\frac{", index)) {
       const fractionOpen = index + 9;

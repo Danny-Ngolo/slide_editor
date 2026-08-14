@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { navigatePlaceholder } from "./mathPlaceholder";
+import { navigatePlaceholder, analyzeLatex } from "./mathPlaceholder";
 import {
   findRemovableEmptyTemplate,
   isStructuralPosition,
@@ -134,6 +134,64 @@ export const useMathEditorKeyboard = ({
           setPlaceholders([]);
         }
 
+        return;
+      }
+
+      // Shortcut: Ctrl+^ or Ctrl+Shift+6 for superscript
+      if ((event.key === "^" || event.key === "6") && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const currentLatex = previousLatexRef.current;
+        // Get selected text
+        const selectedText = currentLatex.slice(Math.min(caretPos, selectionEnd), Math.max(caretPos, selectionEnd));
+        
+        // Create a superscript template insertion
+        // If text is selected, use it as the base, otherwise create empty base
+        const base = selectedText || "x";
+        const newLatex = currentLatex.slice(0, Math.min(caretPos, selectionEnd)) + 
+                        `${base}^{}` + 
+                        currentLatex.slice(Math.max(caretPos, selectionEnd));
+        
+        const nextAnalysis = analyzeLatex(newLatex);
+        // Place cursor inside the braces for the superscript
+        const nextCaret = Math.min(caretPos, selectionEnd) + base.length + 2; // After ^{
+        
+        previousLatexRef.current = newLatex;
+        structureRef.current = nextAnalysis;
+        setPlaceholders(nextAnalysis.placeholders);
+        setCaret(nextCaret);
+        pendingCaretRef.current = nextCaret;
+        onChangeRef.current?.(newLatex);
+        return;
+      }
+      
+      // Shortcut: Ctrl+_ or Ctrl+Shift+- for subscript
+      if ((event.key === "_" || event.key === "-") && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const currentLatex = previousLatexRef.current;
+        // Get selected text
+        const selectedText = currentLatex.slice(Math.min(caretPos, selectionEnd), Math.max(caretPos, selectionEnd));
+        
+        // Create a subscript template insertion
+        // If text is selected, use it as the base, otherwise create empty base
+        const base = selectedText || "x";
+        const newLatex = currentLatex.slice(0, Math.min(caretPos, selectionEnd)) + 
+                        `${base}_{}` + 
+                        currentLatex.slice(Math.max(caretPos, selectionEnd));
+        
+        const nextAnalysis = analyzeLatex(newLatex);
+        // Place cursor inside the braces for the subscript
+        const nextCaret = Math.min(caretPos, selectionEnd) + base.length + 2; // After _{
+        
+        previousLatexRef.current = newLatex;
+        structureRef.current = nextAnalysis;
+        setPlaceholders(nextAnalysis.placeholders);
+        setCaret(nextCaret);
+        pendingCaretRef.current = nextCaret;
+        onChangeRef.current?.(newLatex);
         return;
       }
 
