@@ -16,6 +16,11 @@ import { applyInsert } from "./mathInsert";
 
 import { analyzeLatex } from "./mathPlaceholder";
 
+import {
+  findRemovableEmptyTemplate,
+  getSelectedTemplate,
+} from "./mathEditorUtils";
+
 import { MATH_GROUPS } from "./mathSymbols";
 import { COLORS, RADIUS } from "../shared/styles";
 import { useMathEditorKeyboard } from "./useMathEditorKeyboard";
@@ -60,7 +65,13 @@ const MathEditor = ({
 
   const [caret, setCaret] = useState(0);
 
-  const [view, setView] = useState("source");
+  const [view, setView] = useState("slots");
+
+  const viewRef = useRef(view);
+
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
 
   const previousLatexRef = useRef(latex);
 
@@ -185,11 +196,30 @@ const MathEditor = ({
     onChangeRef.current?.(nextLatex);
   };
 
+  const selectedTemplate = useMemo(() => {
+    if (view !== "slots") {
+      return null;
+    }
+
+    if (
+      findRemovableEmptyTemplate(analysis, caret, false) ||
+      findRemovableEmptyTemplate(analysis, caret, true)
+    ) {
+      return null;
+    }
+
+    return (
+      getSelectedTemplate(analysis, caret, "Backspace") ??
+      getSelectedTemplate(analysis, caret, "Delete")
+    );
+  }, [view, analysis, caret]);
+
   useMathEditorKeyboard({
     elementRef: sourceRef,
     structureRef,
     placeholdersRef,
     previousLatexRef,
+    viewRef,
     setPlaceholders,
     setCaret,
     onChangeRef,
@@ -320,6 +350,7 @@ const MathEditor = ({
             latex={latex}
             placeholders={placeholders}
             caret={caret}
+            selectedTemplate={selectedTemplate}
             sourceRef={sourceRef}
             jumpToSlot={jumpToSlot}
             setPlaceholders={setPlaceholders}

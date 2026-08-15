@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { navigatePlaceholder, analyzeLatex } from "./mathPlaceholder";
 import {
   findRemovableEmptyTemplate,
+  getSelectedTemplate,
   isStructuralPosition,
   rangeHasStructuralPosition,
 } from "./mathEditorUtils";
@@ -12,6 +13,7 @@ export const useMathEditorKeyboard = ({
   structureRef,
   placeholdersRef,
   previousLatexRef,
+  viewRef,
   setPlaceholders,
   setCaret,
   onChangeRef,
@@ -137,8 +139,17 @@ export const useMathEditorKeyboard = ({
         return;
       }
 
-      // Shortcut: Ctrl+^ or Ctrl+Shift+6 for superscript
-      if ((event.key === "^" || event.key === "6") && (event.ctrlKey || event.metaKey)) {
+      // Superscript: Ctrl+^ / Ctrl+Shift+6, or a bare `^` typed in visual mode
+      const isSuperscriptKey = event.key === "^" || event.key === "6";
+      const isSuperscriptShortcut =
+        isSuperscriptKey && (event.ctrlKey || event.metaKey);
+      const isBareSuperscript =
+        event.key === "^" &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        viewRef.current === "slots";
+
+      if (isSuperscriptShortcut || isBareSuperscript) {
         event.preventDefault();
         event.stopPropagation();
         
@@ -166,8 +177,17 @@ export const useMathEditorKeyboard = ({
         return;
       }
       
-      // Shortcut: Ctrl+_ or Ctrl+Shift+- for subscript
-      if ((event.key === "_" || event.key === "-") && (event.ctrlKey || event.metaKey)) {
+      // Subscript: Ctrl+_ / Ctrl+Shift+-, or a bare `_` typed in visual mode
+      const isSubscriptKey = event.key === "_" || event.key === "-";
+      const isSubscriptShortcut =
+        isSubscriptKey && (event.ctrlKey || event.metaKey);
+      const isBareSubscript =
+        event.key === "_" &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        viewRef.current === "slots";
+
+      if (isSubscriptShortcut || isBareSubscript) {
         event.preventDefault();
         event.stopPropagation();
         
@@ -231,6 +251,41 @@ export const useMathEditorKeyboard = ({
 
           const hasSelection = selectionEnd !== caretPos;
 
+          if (viewRef.current === "slots" && !hasSelection) {
+            const selectedTemplate = getSelectedTemplate(
+              structure,
+              caretPos,
+              event.key,
+            );
+
+            if (selectedTemplate) {
+              event.preventDefault();
+              event.stopPropagation();
+
+              const currentLatex = previousLatexRef.current;
+              const cleanedLatex =
+                currentLatex.slice(0, selectedTemplate.from) +
+                currentLatex.slice(selectedTemplate.to);
+
+              const nextAnalysis = analyzeLatex(cleanedLatex);
+              const nextCaret = Math.min(
+                selectedTemplate.from,
+                cleanedLatex.length,
+              );
+
+              previousLatexRef.current = cleanedLatex;
+              structureRef.current = nextAnalysis;
+
+              setPlaceholders(nextAnalysis.placeholders);
+              setCaret(nextCaret);
+
+              pendingCaretRef.current = nextCaret;
+              onChangeRef.current?.(cleanedLatex, { recordHistory: true });
+
+              return;
+            }
+          }
+
           const deleteFrom = hasSelection
             ? Math.min(caretPos, selectionEnd)
             : event.key === "Backspace"
@@ -263,5 +318,6 @@ export const useMathEditorKeyboard = ({
     placeholdersRef,
     previousLatexRef,
     structureRef,
+    viewRef,
   ]);
 };

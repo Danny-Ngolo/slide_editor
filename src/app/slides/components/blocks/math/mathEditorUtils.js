@@ -29,6 +29,22 @@ export const isStructuralPosition = (templates, position) => {
   );
 };
 
+export const getSelectedTemplate = (analysis, caretPos, key) => {
+  const templates = analysis.templates;
+
+  if (templates.length === 0) {
+    return null;
+  }
+
+  const deletionPos = key === "Delete" ? caretPos : caretPos - 1;
+
+  if (!isStructuralPosition(templates, deletionPos)) {
+    return null;
+  }
+
+  return innermostTemplateAt(templates, deletionPos);
+};
+
 export const rangeHasStructuralPosition = (templates, from, to) => {
   for (let position = from; position < to; position++) {
     if (isStructuralPosition(templates, position)) {
@@ -122,8 +138,13 @@ export const isColorboxSafe = (content) => {
   return depth === 0;
 };
 
-export const getHighlightedDisplayLatex = (latex, placeholders, caretPos) => {
-  if (!latex || placeholders.length === 0) {
+export const getHighlightedDisplayLatex = (
+  latex,
+  placeholders,
+  caretPos,
+  selectedRange = null,
+) => {
+  if (!latex) {
     return latex;
   }
 
@@ -131,13 +152,15 @@ export const getHighlightedDisplayLatex = (latex, placeholders, caretPos) => {
     (placeholder) => caretPos >= placeholder.from && caretPos <= placeholder.to,
   );
 
-  if (!activeSlot) {
+  const outerRange = selectedRange || activeSlot;
+
+  if (!outerRange) {
     return latex;
   }
 
-  const from = Math.max(0, Math.min(activeSlot.from, latex.length));
+  const from = Math.max(0, Math.min(outerRange.from, latex.length));
 
-  const to = Math.max(from, Math.min(activeSlot.to, latex.length));
+  const to = Math.max(from, Math.min(outerRange.to, latex.length));
 
   const before = latex.slice(0, from);
 
@@ -145,10 +168,38 @@ export const getHighlightedDisplayLatex = (latex, placeholders, caretPos) => {
 
   const after = latex.slice(to);
 
-  const displayContent = content.length === 0 ? "\\phantom{0}" : content;
-
-  if (!isColorboxSafe(displayContent)) {
+  if (!isColorboxSafe(content)) {
     return latex;
+  }
+
+  let displayContent = content.length === 0 ? "\\phantom{0}" : content;
+
+  if (
+    selectedRange &&
+    activeSlot &&
+    activeSlot.from >= from &&
+    activeSlot.to <= to
+  ) {
+    const innerFrom = Math.max(activeSlot.from - from, 0);
+
+    const innerTo = Math.min(activeSlot.to - from, content.length);
+
+    if (innerFrom < innerTo) {
+      const innerBefore = content.slice(0, innerFrom);
+
+      const innerText = content.slice(innerFrom, innerTo);
+
+      const innerAfter = content.slice(innerTo);
+
+      const innerWrapped =
+        `\\colorbox{${COLORS.accent}}{` +
+        `\\color{#ffffff}{` +
+        `$\\displaystyle ${innerText}$` +
+        `}` +
+        `}`;
+
+      displayContent = innerBefore + innerWrapped + innerAfter;
+    }
   }
 
   const wrapped =

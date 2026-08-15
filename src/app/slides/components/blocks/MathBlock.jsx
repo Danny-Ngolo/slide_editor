@@ -121,7 +121,9 @@ const ExpressionCard = ({
         <MathEditor
           latex={expression.latex}
           mode={expression.mode}
-          onChange={(latex) => updateExpression(expression.id, { latex })}
+          onChange={(latex, options = {}) =>
+            updateExpression(expression.id, { latex }, options)
+          }
         />
       </div>
     </div>

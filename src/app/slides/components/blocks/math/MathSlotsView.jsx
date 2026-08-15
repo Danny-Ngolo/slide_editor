@@ -8,6 +8,7 @@ const MathSlotsView = ({
   latex,
   placeholders,
   caret,
+  selectedTemplate,
   sourceRef,
   jumpToSlot,
   setPlaceholders,
@@ -184,7 +185,14 @@ const MathSlotsView = ({
         }}
       >
         <MathRenderer
-          latex={getHighlightedDisplayLatex(latex, placeholders, caret)}
+          latex={getHighlightedDisplayLatex(
+            latex,
+            placeholders,
+            caret,
+            selectedTemplate
+              ? { from: selectedTemplate.from, to: selectedTemplate.to }
+              : null,
+          )}
           mode="display"
         />
 
