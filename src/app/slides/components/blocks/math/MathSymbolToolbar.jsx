@@ -50,7 +50,8 @@ const MathSymbolToolbar = ({ groups = [], onInsert, compact = false }) => {
     <div
       style={{
         display: "flex",
-        flexDirection: "column",
+        flexWrap: "wrap",
+        alignItems: "flex-start",
         gap: "8px",
         padding: "6px 8px",
         border: `1px solid ${COLORS.border}`,
@@ -59,14 +60,21 @@ const MathSymbolToolbar = ({ groups = [], onInsert, compact = false }) => {
       }}
     >
       {groups.map((group) => (
-        <div key={group.id}>
+        <div
+          key={group.id}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: "4px",
+          }}
+        >
           {!compact && (
             <div
               style={{
                 fontSize: "11px",
                 fontWeight: 600,
                 color: COLORS.label,
-                marginBottom: "4px",
               }}
             >
               {group.label}
