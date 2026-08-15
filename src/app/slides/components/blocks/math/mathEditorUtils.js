@@ -40,16 +40,53 @@ export const rangeHasStructuralPosition = (templates, from, to) => {
 };
 
 export const findRemovableEmptyTemplate = (analysis, position, deleteKey) => {
-  const candidates = analysis.templates.filter((template) => {
+  const removalRange = (template) => {
+    const isSupSub =
+      template.type === "superscript" || template.type === "subscript";
+
+    if (isSupSub) {
+      const content = template.slots[template.slots.length - 1];
+
+      const inContent =
+        (position >= content.from && position <= content.to) ||
+        position === template.to;
+
+      if (content.from !== content.to || !inContent) {
+        return null;
+      }
+
+      const base = template.slots.length === 2 ? template.slots[0] : null;
+
+      const hasContentBase = Boolean(base && base.from !== base.to);
+
+      return {
+        from: hasContentBase ? base.to : template.from,
+        to: template.to,
+      };
+    }
+
+    if (!template.slots.every((slot) => slot.from === slot.to)) {
+      return null;
+    }
+
+    return {
+      from: template.from,
+      to: template.to,
+    };
+  };
+
+  const candidates = analysis.templates.flatMap((template) => {
     const inside = deleteKey
       ? position >= template.from && position < template.to
       : position >= template.from && position <= template.to;
 
     if (!inside) {
-      return false;
+      return [];
     }
 
-    return template.slots.every((slot) => slot.from === slot.to);
+    const range = removalRange(template);
+
+    return range ? [range] : [];
   });
 
   if (candidates.length === 0) {

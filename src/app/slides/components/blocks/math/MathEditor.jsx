@@ -52,6 +52,8 @@ const MathEditor = ({
 
   const containerRef = useRef(null);
 
+  const mouseDownInsideRef = useRef(false);
+
   const analysis = useMemo(() => analyzeLatex(latex), [latex]);
 
   const [placeholders, setPlaceholders] = useState(analysis.placeholders);
@@ -85,6 +87,22 @@ const MathEditor = ({
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    const clearMouseDownFlag = () => {
+      mouseDownInsideRef.current = false;
+    };
+
+    window.addEventListener("pointerup", clearMouseDownFlag);
+
+    window.addEventListener("blur", clearMouseDownFlag);
+
+    return () => {
+      window.removeEventListener("pointerup", clearMouseDownFlag);
+
+      window.removeEventListener("blur", clearMouseDownFlag);
+    };
+  }, []);
 
   const handleSelect = (event) => {
     setCaret(event.currentTarget.selectionStart ?? 0);
@@ -193,11 +211,17 @@ const MathEditor = ({
   }, []);
 
   const onBlur = (event) => {
-    if (
+    const insideContainer =
       containerRef.current &&
       event.relatedTarget &&
-      containerRef.current.contains(event.relatedTarget)
-    ) {
+      containerRef.current.contains(event.relatedTarget);
+
+    const windowFocused =
+      typeof document !== "undefined" &&
+      document.hasFocus() &&
+      document.visibilityState !== "hidden";
+
+    if (insideContainer || !windowFocused || mouseDownInsideRef.current) {
       return;
     }
 
@@ -273,6 +297,9 @@ const MathEditor = ({
   return (
     <div
       ref={containerRef}
+      onMouseDownCapture={() => {
+        mouseDownInsideRef.current = true;
+      }}
       style={{
         display: "flex",
         flexDirection: "column",

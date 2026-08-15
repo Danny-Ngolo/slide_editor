@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 import MathRenderer from "./MathRenderer";
 import { getHighlightedDisplayLatex } from "./mathEditorUtils";
@@ -14,6 +14,18 @@ const MathSlotsView = ({
   setCaret,
   BlinkingCaret,
 }) => {
+  const pressedPillRef = useRef(false);
+
+  useEffect(() => {
+    const clearPressedPill = () => {
+      pressedPillRef.current = false;
+    };
+
+    window.addEventListener("pointerup", clearPressedPill);
+
+    return () => window.removeEventListener("pointerup", clearPressedPill);
+  }, []);
+
   const chips =
     placeholders.length > 0 ? (
       <div
@@ -37,6 +49,8 @@ const MathSlotsView = ({
               title="Click to fill this slot"
               aria-label={`Fill slot ${slot.index}`}
               onMouseDown={(event) => {
+                pressedPillRef.current = true;
+
                 event.preventDefault();
                 event.stopPropagation();
 
@@ -115,6 +129,12 @@ const MathSlotsView = ({
     );
 
   const handleBackgroundClick = (event) => {
+    if (pressedPillRef.current) {
+      pressedPillRef.current = false;
+
+      return;
+    }
+
     if (event.target.closest("button")) {
       return;
     }
@@ -156,15 +176,24 @@ const MathSlotsView = ({
         cursor: "text",
       }}
     >
-      <MathRenderer
-        latex={getHighlightedDisplayLatex(latex, placeholders, caret)}
-        mode="display"
-      />
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <MathRenderer
+          latex={getHighlightedDisplayLatex(latex, placeholders, caret)}
+          mode="display"
+        />
 
-      {caret >= latex.length &&
-        !placeholders.some(
-          (placeholder) => caret >= placeholder.from && caret <= placeholder.to,
-        ) && <BlinkingCaret />}
+        {caret >= latex.length &&
+          !placeholders.some(
+            (placeholder) =>
+              caret >= placeholder.from && caret <= placeholder.to,
+          ) && <BlinkingCaret />}
+      </span>
 
       {chips}
     </div>

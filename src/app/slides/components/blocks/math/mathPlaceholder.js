@@ -92,6 +92,24 @@ const findMatchingClosing = (text, start, openChar = "{", closeChar = "}") => {
   return -1;
 };
 
+const isDigit = (ch) =>
+  typeof ch === "string" && ch.length > 0 && ch >= "0" && ch <= "9";
+
+const isExponentChar = (ch) =>
+  typeof ch === "string" && ch.length > 0 && /^[a-zA-Z0-9]$/.test(ch);
+
+const isBaseChar = (ch) =>
+  typeof ch === "string" &&
+  ch.length > 0 &&
+  !"{}\\^_".includes(ch) &&
+  ch.trim() !== "";
+
+const buildBaseSlot = (latex, index) => {
+  const hasBase = index > 0 && isBaseChar(latex[index - 1]);
+
+  return hasBase ? { from: index - 1, to: index } : null;
+};
+
 const parseTemplateRanges = (latex, start = 0, end = latex.length) => {
   const templates = [];
   let index = start;
@@ -414,89 +432,175 @@ const parseTemplateRanges = (latex, start = 0, end = latex.length) => {
     }
 
     /*
-     * x^{A} - Superscript
+     * x^{A} / x^A - Superscript
      */
-    // Look for pattern: something^{something}
-    if (index < latex.length - 2 && latex[index] === "^" && latex[index + 1] === "{") {
-      const superscriptOpen = index + 1; // Position of {
-      const superscriptClose = findMatchingClosing(latex, superscriptOpen);
-      
-      if (superscriptClose !== -1 && superscriptClose < end) {
-        // Find the base (character before ^)
-        const baseStart = Math.max(0, index - 1);
-        const baseFrom = baseStart;
-        const baseTo = index; // Up to but not including ^
-        
-        const superscriptFrom = superscriptOpen + 1;
-        const superscriptTo = superscriptClose;
-        
-        const children = [
-          ...parseTemplateRanges(latex, baseFrom, baseTo),
-          ...parseTemplateRanges(latex, superscriptFrom, superscriptTo),
-        ];
-        
+    if (latex[index] === "^" && index + 1 < end) {
+      const base = buildBaseSlot(latex, index);
+
+      const braced = latex[index + 1] === "{";
+
+      if (braced) {
+        const superscriptOpen = index + 1;
+
+        const superscriptClose = findMatchingClosing(latex, superscriptOpen);
+
+        if (superscriptClose !== -1 && superscriptClose < end) {
+          const superscriptFrom = superscriptOpen + 1;
+
+          const superscriptTo = superscriptClose;
+
+          templates.push({
+            type: "superscript",
+            from: base ? base.from : index,
+            to: superscriptClose + 1,
+            slots: base
+              ? [
+                  base,
+                  {
+                    from: superscriptFrom,
+                    to: superscriptTo,
+                  },
+                ]
+              : [
+                  {
+                    from: superscriptFrom,
+                    to: superscriptTo,
+                  },
+                ],
+            children: [
+              ...(base ? parseTemplateRanges(latex, base.from, base.to) : []),
+              ...parseTemplateRanges(latex, superscriptFrom, superscriptTo),
+            ],
+          });
+
+          index = superscriptClose + 1;
+
+          continue;
+        }
+      } else if (isExponentChar(latex[index + 1])) {
+        const contentFrom = index + 1;
+
+        let contentTo = contentFrom + 1;
+
+        if (isDigit(latex[contentFrom])) {
+          while (contentTo < end && isDigit(latex[contentTo])) {
+            contentTo++;
+          }
+        }
+
         templates.push({
           type: "superscript",
-          from: baseFrom,
-          to: superscriptClose + 1,
-          slots: [
-            {
-              from: baseFrom,
-              to: baseTo,
-            },
-            {
-              from: superscriptFrom,
-              to: superscriptTo,
-            },
+          from: base ? base.from : index,
+          to: contentTo,
+          slots: base
+            ? [
+                base,
+                {
+                  from: contentFrom,
+                  to: contentTo,
+                },
+              ]
+            : [
+                {
+                  from: contentFrom,
+                  to: contentTo,
+                },
+              ],
+          children: [
+            ...(base ? parseTemplateRanges(latex, base.from, base.to) : []),
+            ...parseTemplateRanges(latex, contentFrom, contentTo),
           ],
-          children,
         });
-        
-        index = superscriptClose + 1;
+
+        index = contentTo;
+
         continue;
       }
     }
 
     /*
-     * x_{A} - Subscript
+     * x_{A} / x_A - Subscript
      */
-    // Look for pattern: something_{something}
-    if (index < latex.length - 2 && latex[index] === "_" && latex[index + 1] === "{") {
-      const subscriptOpen = index + 1; // Position of {
-      const subscriptClose = findMatchingClosing(latex, subscriptOpen);
-      
-      if (subscriptClose !== -1 && subscriptClose < end) {
-        // Find the base (character before _)
-        const baseStart = Math.max(0, index - 1);
-        const baseFrom = baseStart;
-        const baseTo = index; // Up to but not including _
-        
-        const subscriptFrom = subscriptOpen + 1;
-        const subscriptTo = subscriptClose;
-        
-        const children = [
-          ...parseTemplateRanges(latex, baseFrom, baseTo),
-          ...parseTemplateRanges(latex, subscriptFrom, subscriptTo),
-        ];
-        
+    if (latex[index] === "_" && index + 1 < end) {
+      const base = buildBaseSlot(latex, index);
+
+      const braced = latex[index + 1] === "{";
+
+      if (braced) {
+        const subscriptOpen = index + 1;
+
+        const subscriptClose = findMatchingClosing(latex, subscriptOpen);
+
+        if (subscriptClose !== -1 && subscriptClose < end) {
+          const subscriptFrom = subscriptOpen + 1;
+
+          const subscriptTo = subscriptClose;
+
+          templates.push({
+            type: "subscript",
+            from: base ? base.from : index,
+            to: subscriptClose + 1,
+            slots: base
+              ? [
+                  base,
+                  {
+                    from: subscriptFrom,
+                    to: subscriptTo,
+                  },
+                ]
+              : [
+                  {
+                    from: subscriptFrom,
+                    to: subscriptTo,
+                  },
+                ],
+            children: [
+              ...(base ? parseTemplateRanges(latex, base.from, base.to) : []),
+              ...parseTemplateRanges(latex, subscriptFrom, subscriptTo),
+            ],
+          });
+
+          index = subscriptClose + 1;
+
+          continue;
+        }
+      } else if (isExponentChar(latex[index + 1])) {
+        const contentFrom = index + 1;
+
+        let contentTo = contentFrom + 1;
+
+        if (isDigit(latex[contentFrom])) {
+          while (contentTo < end && isDigit(latex[contentTo])) {
+            contentTo++;
+          }
+        }
+
         templates.push({
           type: "subscript",
-          from: baseFrom,
-          to: subscriptClose + 1,
-          slots: [
-            {
-              from: baseFrom,
-              to: baseTo,
-            },
-            {
-              from: subscriptFrom,
-              to: subscriptTo,
-            },
+          from: base ? base.from : index,
+          to: contentTo,
+          slots: base
+            ? [
+                base,
+                {
+                  from: contentFrom,
+                  to: contentTo,
+                },
+              ]
+            : [
+                {
+                  from: contentFrom,
+                  to: contentTo,
+                },
+              ],
+          children: [
+            ...(base ? parseTemplateRanges(latex, base.from, base.to) : []),
+            ...parseTemplateRanges(latex, contentFrom, contentTo),
           ],
-          children,
         });
-        
-        index = subscriptClose + 1;
+
+        index = contentTo;
+
         continue;
       }
     }
