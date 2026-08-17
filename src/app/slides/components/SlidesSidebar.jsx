@@ -2,13 +2,10 @@
 
 import React from "react";
 
-import { DndContext, closestCenter } from "@dnd-kit/core";
-
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { arrayMove } from "@dnd-kit/sortable";
 import { Plus } from "lucide-react";
 import SortableSlide from "./SortableSlide";
 import Slide from "./Slide";
@@ -22,32 +19,17 @@ import {
 
 const SlidesSidebar = ({
   slides,
-  setSlides,
   activeSlideId,
   setActiveSlideId,
   addSlide,
   deleteSlide,
+  activeDragType,
 }) => {
-  const handleSlideDragEnd = (event) => {
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = slides.findIndex((s) => s.id === active.id);
-    const newIndex = slides.findIndex((s) => s.id === over.id);
-
-    setSlides(arrayMove(slides, oldIndex, newIndex));
-  };
-
   return (
-    <DndContext
-      onDragEnd={handleSlideDragEnd}
-      collisionDetection={closestCenter}
+    <SortableContext
+      items={slides.map((s) => `slide-${s.id}`)}
+      strategy={verticalListSortingStrategy}
     >
-      <SortableContext
-        items={slides.map((s) => s.id)}
-        strategy={verticalListSortingStrategy}
-      >
         <div
           style={{
             width: "clamp(160px, 24vw, 260px)",
@@ -93,7 +75,11 @@ const SlidesSidebar = ({
             }}
           >
             {slides.map((slide) => (
-              <SortableSlide key={slide.id} slide={slide}>
+              <SortableSlide
+                key={slide.id}
+                slide={slide}
+                disabled={activeDragType === "block"}
+              >
                 <Slide
                   slide={slide}
                   activeSlideId={activeSlideId}
@@ -116,7 +102,6 @@ const SlidesSidebar = ({
           </button>
         </div>
       </SortableContext>
-    </DndContext>
   );
 };
 

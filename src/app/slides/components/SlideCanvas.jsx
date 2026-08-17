@@ -1,14 +1,11 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
-
-import { DndContext, closestCenter } from "@dnd-kit/core";
+import React, { useCallback, useState } from "react";
 
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { arrayMove } from "@dnd-kit/sortable";
 
 import BlockRenderer from "./blocks/BlockRenderer";
 import EditorToolBar from "./EditorToolBar";
@@ -17,7 +14,6 @@ import InsertMenuBetween from "./InsertMenuBetween";
 import SortableBlock from "./SortableBlock";
 import { useEditorContext } from "./EditorContext";
 import { useSlides } from "../hooks/useSlides";
-import { useHistory } from "../hooks/useHistory";
 import { computeFixedMenuPosition } from "../utils/menuPosition";
 import TableActionMenu from "./blocks/Table/TableActionMenu";
 import EditableTitle from "./EditableTitle";
@@ -37,7 +33,6 @@ const SlideCanvas = ({ slide, slides }) => {
     setTableSelection,
   } = useEditorContext();
   const { addBlock, updateSlideTitle } = useSlides();
-  const { setSlides } = useHistory();
 
   const handleClickAddBlock = (e) => {
     const clickY = e.clientY;
@@ -55,34 +50,13 @@ const SlideCanvas = ({ slide, slides }) => {
     setShowInsertMenu(true);
   };
 
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) return;
-
-    setSlides(
-      slides.map((slideItem) => {
-        if (slideItem.id !== slide.id) return slideItem;
-
-        const oldIndex = slideItem.blocks.findIndex((b) => b.id === active.id);
-        const newIndex = slideItem.blocks.findIndex((b) => b.id === over.id);
-
-        return {
-          ...slideItem,
-          blocks: arrayMove(slideItem.blocks, oldIndex, newIndex),
-        };
-      }),
-    );
-  };
-
   if (!slide) return null;
 
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext
-        items={slide.blocks.map((b) => b.id)}
-        strategy={verticalListSortingStrategy}
-      >
+    <SortableContext
+      items={slide.blocks.map((b) => `block-${b.id}`)}
+      strategy={verticalListSortingStrategy}
+    >
         <div
           style={{
             padding: "clamp(12px, 3vw, 40px)",
@@ -141,7 +115,7 @@ const SlideCanvas = ({ slide, slides }) => {
                         />
                       )}
 
-                      <SortableBlock block={block}>
+                      <SortableBlock block={block} slideId={slide.id}>
                         <BlockRenderer
                           block={block}
                           slideId={slide.id}
@@ -197,7 +171,6 @@ const SlideCanvas = ({ slide, slides }) => {
           </div>
         </div>
       </SortableContext>
-    </DndContext>
   );
 };
 

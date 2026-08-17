@@ -1,8 +1,19 @@
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
 
-export function useEditorSortable({ id, data = { type: null } }) {
-  const sortable = useSortable({ id, data });
+export function useEditorSortable({
+  id,
+  type = null,
+  slideId = null,
+  blockId = null,
+  data,
+  disabled = false,
+}) {
+  const sortable = useSortable({
+    id,
+    data: data ?? { type, slideId, blockId },
+    disabled,
+  });
 
   return {
     ...sortable,

@@ -4,6 +4,9 @@ import React from "react";
 import { Copy, Trash, ClipboardPaste, Plus, X } from "lucide-react";
 import { useEditorContext } from "./EditorContext";
 import { useClipboard } from "../hooks/useClipboard";
+import { useHistory } from "../hooks/useHistory";
+import { useSlides } from "../hooks/useSlides";
+import Select from "./blocks/shared/Select";
 
 const BUTTON_STYLE = {
   display: "flex",
@@ -40,6 +43,9 @@ const SelectionActionsBar = () => {
     deleteSelectedSlides,
   } = useClipboard();
 
+  const { slidesHistory } = useHistory();
+  const { moveBlocksToSlide, setActiveSlideId } = useSlides();
+
   const count = selectedBlocks.length + selectedSlides.length;
 
   if (count < 2) return null;
@@ -62,6 +68,38 @@ const SelectionActionsBar = () => {
   const clearSelection = () => {
     setSelectedBlocks([]);
     setSelectedSlides([]);
+  };
+
+  const slides = slidesHistory?.present || [];
+
+  const sourceSlideIds = new Set(selectedBlocks.map((block) => block.slideId));
+
+  const moveOptions = slides
+    .filter((slide) => !sourceSlideIds.has(slide.id))
+    .map((slide) => ({
+      value: slide.id,
+      label: slide.title || "Untitled slide",
+    }));
+
+  const handleMoveToSlide = (targetSlideId) => {
+    const groups = new Map();
+
+    selectedBlocks.forEach((block) => {
+      if (!groups.has(block.slideId)) groups.set(block.slideId, []);
+      groups.get(block.slideId).push(block.blockId);
+    });
+
+    groups.forEach((blockIds, sourceSlideId) => {
+      moveBlocksToSlide(sourceSlideId, blockIds, targetSlideId);
+    });
+
+    setActiveSlideId(targetSlideId);
+    setSelectedBlocks(
+      selectedBlocks.map((block) => ({
+        slideId: targetSlideId,
+        blockId: block.blockId,
+      })),
+    );
   };
 
   return (
@@ -131,6 +169,22 @@ const SelectionActionsBar = () => {
       >
         <Trash size={15} /> Delete
       </button>
+
+      {isBlocks && moveOptions.length > 0 && (
+        <Select
+          placeholder="Move to slide…"
+          value={null}
+          options={moveOptions}
+          onChange={handleMoveToSlide}
+          ariaLabel="Move selected blocks to slide"
+          style={{
+            background: "rgba(255, 255, 255, 0.08)",
+            color: "#fff",
+            border: "none",
+            height: "34px",
+          }}
+        />
+      )}
 
       <button
         type="button"

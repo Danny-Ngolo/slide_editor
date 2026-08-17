@@ -1,20 +1,46 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { COLORS, INPUT_STYLE, RADIUS, SHADOWS } from "./styles";
 
 // Replaces native <select> dropdowns: the browser's option list is OS-styled
 // (dark, full-width) and cannot be themed. This renders a custom trigger styled
 // like INPUT_STYLE and a white, shadowed option menu matching the ActionMenu look.
-const Select = ({ value, options, onChange, style, ariaLabel }) => {
+const Select = ({ value, options, onChange, style, ariaLabel, placeholder }) => {
   const [open, setOpen] = useState(false);
+  const [menuUp, setMenuUp] = useState(false);
   const wrapRef = useRef(null);
+  const menuRef = useRef(null);
 
   const selected = useMemo(
     () => options?.find((o) => o.value === value),
     [options, value],
   );
+
+  // Flip the menu upward when there is not enough room below the trigger so it
+  // never renders off-screen (e.g. when used inside the bottom action bar).
+  useLayoutEffect(() => {
+    if (!open) return;
+
+    const measure = () => {
+      const rect = wrapRef.current?.getBoundingClientRect();
+      const menuEl = menuRef.current;
+
+      if (!rect || !menuEl) return;
+
+      const menuHeight = menuEl.offsetHeight;
+
+      setMenuUp(
+        rect.bottom + menuHeight + 8 > window.innerHeight &&
+          rect.top - menuHeight - 8 >= 0,
+      );
+    };
+
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -58,7 +84,7 @@ const Select = ({ value, options, onChange, style, ariaLabel }) => {
         }}
       >
         <span style={{ whiteSpace: "nowrap" }}>
-          {selected?.label ?? value}
+          {selected?.label ?? value ?? placeholder}
         </span>
         <ChevronDown
           size={14}
@@ -72,10 +98,13 @@ const Select = ({ value, options, onChange, style, ariaLabel }) => {
 
       {open && (
         <div
+          ref={menuRef}
           role="listbox"
           style={{
             position: "absolute",
-            top: "calc(100% + 4px)",
+            ...(menuUp
+              ? { bottom: "calc(100% + 4px)", top: "auto" }
+              : { top: "calc(100% + 4px)", left: 0 }),
             left: 0,
             minWidth: "100%",
             zIndex: 1000,

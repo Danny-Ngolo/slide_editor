@@ -27,7 +27,7 @@ export function useEditorKeyboard() {
     duplicateSelectedSlides,
     deleteSelectedSlides,
   } = useClipboard();
-  const { activeSlideId, setActiveSlideId, effectiveActiveSlideId, addBlock } =
+  const { activeSlideId, setActiveSlideId, effectiveActiveSlideId, addBlock, moveBlocksToSlide } =
     useSlides();
   const slides = slidesHistory.present;
 
@@ -150,6 +150,55 @@ export function useEditorKeyboard() {
     addBlock(selected.slideId, "text", index + 1);
   }, [selectedBlocks, selectedBlock, slides, addBlock]);
 
+  const moveSelectedBlocksToSlide = useCallback(
+    (dir) => {
+      if (!selectedBlocks.length || slides.length < 2) return;
+
+      const groups = new Map();
+
+      selectedBlocks.forEach((block) => {
+        if (!groups.has(block.slideId)) groups.set(block.slideId, []);
+        groups.get(block.slideId).push(block.blockId);
+      });
+
+      const moved = [];
+
+      groups.forEach((blockIds, sourceSlideId) => {
+        const sourceIndex = slides.findIndex(
+          (slide) => slide.id === sourceSlideId,
+        );
+
+        if (sourceIndex === -1) return;
+
+        const targetIndex = Math.max(
+          0,
+          Math.min(slides.length - 1, sourceIndex + dir),
+        );
+
+        if (targetIndex === sourceIndex) return;
+
+        const targetSlideId = slides[targetIndex].id;
+
+        moveBlocksToSlide(sourceSlideId, blockIds, targetSlideId);
+        blockIds.forEach((blockId) =>
+          moved.push({ slideId: targetSlideId, blockId }),
+        );
+      });
+
+      if (moved.length) {
+        setActiveSlideId(moved[moved.length - 1].slideId);
+        setSelectedBlocks(moved);
+      }
+    },
+    [
+      selectedBlocks,
+      slides,
+      moveBlocksToSlide,
+      setActiveSlideId,
+      setSelectedBlocks,
+    ],
+  );
+
   const handleKeyDown = (e) => {
     const isEditingText = !!activeEditor;
 
@@ -249,6 +298,18 @@ export function useEditorKeyboard() {
     }
 
     if (selectedSlides.length) return;
+
+    if (e.altKey && e.shiftKey && key === "arrowup") {
+      e.preventDefault();
+      moveSelectedBlocksToSlide(-1);
+      return;
+    }
+
+    if (e.altKey && e.shiftKey && key === "arrowdown") {
+      e.preventDefault();
+      moveSelectedBlocksToSlide(1);
+      return;
+    }
 
     if (e.altKey && key === "arrowup") {
       e.preventDefault();

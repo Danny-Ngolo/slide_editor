@@ -17,6 +17,7 @@ import { useSelection } from "../../hooks/useSelection";
 import { useLongPress } from "../../hooks/useLongPress";
 import { useSlides } from "../../hooks/useSlides";
 import { useClipboard } from "../../hooks/useClipboard";
+import { useHistory } from "../../hooks/useHistory";
 import TableBlock from "./Table/TableBlock";
 import { COLORS, RADIUS } from "./shared/styles";
 
@@ -24,10 +25,18 @@ const BlockRenderer = ({ block, slideId }) => {
   const [showActions, setShowActions] = useState(false);
   const { handleSelectBlock, isBlockSelected, toggleBlockSelection } =
     useSelection();
-  const { selectedBlocks } = useEditorContext();
-  const { deleteBlock, transformBlock, toggleImportant } = useSlides();
-
+  const { selectedBlocks, setSelectedBlock } = useEditorContext();
+  const {
+    deleteBlock,
+    transformBlock,
+    toggleImportant,
+    moveBlocksToSlide,
+    setActiveSlideId,
+  } = useSlides();
+  const { slidesHistory } = useHistory();
   const { copyBlock, pasteBlock, duplicateBlock } = useClipboard();
+
+  const slides = slidesHistory?.present || [];
 
   const longPressHandlers = useLongPress({
     onLongPress: () => toggleBlockSelection(slideId, block.id),
@@ -104,6 +113,14 @@ const BlockRenderer = ({ block, slideId }) => {
           }}
           setShowActions={setShowActions}
           important={block.important}
+          slides={slides}
+          sourceSlideId={slideId}
+          onMoveToSlide={(targetSlideId) => {
+            moveBlocksToSlide(slideId, [block.id], targetSlideId);
+            setActiveSlideId(targetSlideId);
+            setSelectedBlock({ slideId: targetSlideId, blockId: block.id });
+            setShowActions(false);
+          }}
           hideTransform={
             block.type === "exercise" ||
             block.type === "quiz" ||

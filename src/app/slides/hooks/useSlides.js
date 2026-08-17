@@ -186,6 +186,53 @@ export function useSlides() {
     }
   };
 
+  const moveBlocksToSlide = (
+    sourceSlideId,
+    blockIds,
+    targetSlideId,
+    targetIndex = null,
+  ) => {
+    if (sourceSlideId === targetSlideId) return;
+
+    setSlides((prev) => {
+      const sourceSlide = prev.find((slide) => slide.id === sourceSlideId);
+      const targetSlide = prev.find((slide) => slide.id === targetSlideId);
+
+      if (!sourceSlide || !targetSlide) return prev;
+
+      const blocksToMove = sourceSlide.blocks.filter((block) =>
+        blockIds.includes(block.id),
+      );
+
+      if (!blocksToMove.length) return prev;
+
+      return prev.map((slide) => {
+        if (slide.id === sourceSlideId) {
+          return {
+            ...slide,
+            blocks: slide.blocks.filter(
+              (block) => !blockIds.includes(block.id),
+            ),
+          };
+        }
+
+        if (slide.id === targetSlideId) {
+          const blocks = [...slide.blocks];
+
+          if (targetIndex === null) {
+            blocks.push(...blocksToMove);
+          } else {
+            blocks.splice(targetIndex, 0, ...blocksToMove);
+          }
+
+          return { ...slide, blocks };
+        }
+
+        return slide;
+      });
+    });
+  };
+
   const toggleImportant = (slideId, blockId) => {
     const updatedSlides = slides.map((slide) => {
       if (slide.id === slideId) {
@@ -221,5 +268,6 @@ export function useSlides() {
     toggleImportant,
     transformBlock,
     replaceBlock,
+    moveBlocksToSlide,
   };
 }

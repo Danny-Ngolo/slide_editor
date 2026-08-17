@@ -1,6 +1,19 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  DndContext,
+  closestCenter,
+  pointerWithin,
+  rectIntersection,
+} from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 import SlidesSidebar from "./SlidesSidebar";
 import SlideCanvas from "./SlideCanvas";
 import { useEditorContext } from "./EditorContext";
@@ -22,7 +35,8 @@ import { COLORS, RADIUS, SHADOWS } from "./blocks/shared/styles";
 const SlideEditor = ({ lessonId }) => {
   const [isDataAlreadyFetched, setIsDataAlreadyFetched] = useState(false);
   const [currentLesson, setCurrentLesson] = useState(null);
-  const { isUndoRedoRef } = useEditorContext();
+  const { isUndoRedoRef, setSelectedBlock, setSelectedBlocks } =
+    useEditorContext();
 
   const {
     activeSlideId,
@@ -31,6 +45,7 @@ const SlideEditor = ({ lessonId }) => {
     initializeSlides,
     addSlide,
     deleteSlide,
+    moveBlocksToSlide,
   } = useSlides();
   const { setSlides, slidesHistory } = useHistory();
   const { handleKeyDown } = useEditorKeyboard();
@@ -39,6 +54,7 @@ const SlideEditor = ({ lessonId }) => {
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
   const saveTimeoutRef = useRef(null);
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [activeDragType, setActiveDragType] = useState(null);
 
   const handleSave = useCallback(async () => {
     try {
@@ -124,6 +140,129 @@ const SlideEditor = ({ lessonId }) => {
     (slide) => slide.id === effectiveActiveSlideId,
   );
 
+  /**
+   * Custom collision detection strategy.
+   * For block dragging, pointerWithin is much more intuitive than closestCenter
+   * because it allows dragging directly onto a small sidebar item.
+   */
+  const collisionDetectionStrategy = useCallback(
+    (args) => {
+      if (activeDragType === "block") {
+        const pointerCollisions = pointerWithin(args);
+        if (pointerCollisions.length > 0) return pointerCollisions;
+
+        return rectIntersection(args);
+      }
+
+      return closestCenter(args);
+    },
+    [activeDragType],
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const activeData = active.data.current;
+    const overData = over.data.current;
+
+    // Reorder slides in the sidebar.
+    if (activeData?.type === "slide" && overData?.type === "slide") {
+      const oldIndex = slides.findIndex((s) => s.id === activeData.slideId);
+      const newIndex = slides.findIndex((s) => s.id === overData.slideId);
+
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      setSlides(arrayMove(slides, oldIndex, newIndex));
+      return;
+    }
+
+    // Reorder blocks within the same slide.
+    if (activeData?.type === "block" && overData?.type === "block") {
+      if (activeData.slideId === overData.slideId) {
+        setSlides((prev) =>
+          prev.map((slideItem) => {
+            if (slideItem.id !== activeData.slideId) return slideItem;
+
+            const oldIndex = slideItem.blocks.findIndex(
+              (b) => b.id === activeData.blockId,
+            );
+            const newIndex = slideItem.blocks.findIndex(
+              (b) => b.id === overData.blockId,
+            );
+
+            if (oldIndex === -1 || newIndex === -1) return slideItem;
+
+            return {
+              ...slideItem,
+              blocks: arrayMove(slideItem.blocks, oldIndex, newIndex),
+            };
+          }),
+        );
+        return;
+      }
+
+      // Move a block to another slide (drop onto a block of a visible slide).
+      moveBlocksToSlide(
+        activeData.slideId,
+        [activeData.blockId],
+        overData.slideId,
+      );
+      setActiveSlideId(overData.slideId);
+      setSelectedBlock({
+        slideId: overData.slideId,
+        blockId: activeData.blockId,
+      });
+      setSelectedBlocks((prev) => [
+        ...prev.filter(
+          (sel) =>
+            !(
+              sel.slideId === activeData.slideId &&
+              sel.blockId === activeData.blockId
+            ),
+        ),
+        { slideId: overData.slideId, blockId: activeData.blockId },
+      ]);
+      return;
+    }
+
+    // Drop a block onto a slide in the sidebar: move it to that slide.
+    if (
+      activeData?.type === "block" &&
+      (overData?.type === "slide" || over.id.toString().startsWith("slide-"))
+    ) {
+      const targetSlideId =
+        overData?.slideId ||
+        over.id
+          .toString()
+          .replace("slide-droppable-", "")
+          .replace("slide-", "");
+      if (activeData.slideId === targetSlideId) return;
+
+      moveBlocksToSlide(
+        activeData.slideId,
+        [activeData.blockId],
+        targetSlideId,
+      );
+      setActiveSlideId(targetSlideId);
+      setSelectedBlock({
+        slideId: targetSlideId,
+        blockId: activeData.blockId,
+      });
+      setSelectedBlocks((prev) => [
+        ...prev.filter(
+          (sel) =>
+            !(
+              sel.slideId === activeData.slideId &&
+              sel.blockId === activeData.blockId
+            ),
+        ),
+        { slideId: targetSlideId, blockId: activeData.blockId },
+      ]);
+    }
+  };
+
   return currentLesson ? (
     <div
       style={{
@@ -178,27 +317,39 @@ const SlideEditor = ({ lessonId }) => {
         </span>
       </header>
 
-      <div
-        style={{
-          display: "flex",
-          flex: 1,
-          minHeight: 0,
-          overflow: "hidden",
+      <DndContext
+        onDragStart={(event) =>
+          setActiveDragType(event.active?.data?.current?.type ?? null)
+        }
+        onDragCancel={() => setActiveDragType(null)}
+        onDragEnd={(event) => {
+          handleDragEnd(event);
+          setActiveDragType(null);
         }}
+        collisionDetection={collisionDetectionStrategy}
       >
-        {sidebarVisible && (
-          <SlidesSidebar
-            slides={slides}
-            setSlides={setSlides}
-            activeSlideId={effectiveActiveSlideId}
-            setActiveSlideId={setActiveSlideId}
-            addSlide={addSlide}
-            deleteSlide={deleteSlide}
-          />
-        )}
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
+          }}
+        >
+          {sidebarVisible && (
+            <SlidesSidebar
+              slides={slides}
+              activeSlideId={effectiveActiveSlideId}
+              setActiveSlideId={setActiveSlideId}
+              addSlide={addSlide}
+              deleteSlide={deleteSlide}
+              activeDragType={activeDragType}
+            />
+          )}
 
-        <SlideCanvas slide={activeSlide} slides={slides} />
-      </div>
+          <SlideCanvas slide={activeSlide} slides={slides} />
+        </div>
+      </DndContext>
       <SelectionActionsBar />
       <button
         onClick={handleManualSave}

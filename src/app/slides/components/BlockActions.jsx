@@ -11,7 +11,7 @@ import {
 import ActionButton from "./ActionButton";
 import { useEditorContext } from "./EditorContext";
 import { transformOptions } from "../editor/transformBlockOptions";
-import { useSlides } from "../hooks/useSlides";
+import Select from "./blocks/shared/Select";
 import { COLORS, LABEL_STYLE, menuStyle } from "./blocks/shared/styles";
 
 const BlockActions = ({
@@ -24,6 +24,9 @@ const BlockActions = ({
   important = false,
   setShowActions,
   hideTransform = false,
+  slides = [],
+  sourceSlideId,
+  onMoveToSlide,
 }) => {
   const { copiedBlock } = useEditorContext();
   const actionsRef = useRef(null);
@@ -43,6 +46,13 @@ const BlockActions = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [setShowActions]);
+
+  const moveOptions = (slides || [])
+    .filter((slide) => slide.id !== sourceSlideId)
+    .map((slide) => ({
+      value: slide.id,
+      label: slide.title || "Untitled slide",
+    }));
 
   return (
     <div
@@ -109,6 +119,35 @@ const BlockActions = ({
               onClick={() => onTransform(option)}
             />
           ))}
+        </>
+      )}
+
+      {moveOptions.length > 0 && (
+        <>
+          <div
+            style={{
+              height: "1px",
+              background: COLORS.border,
+              margin: "6px 4px",
+            }}
+          />
+          <div
+            style={{
+              ...LABEL_STYLE,
+              margin: "0 0 4px 12px",
+              paddingTop: "2px",
+            }}
+          >
+            Move to slide
+          </div>
+          <Select
+            placeholder="Select a slide…"
+            value={null}
+            options={moveOptions}
+            onChange={(targetSlideId) => onMoveToSlide(targetSlideId)}
+            ariaLabel="Move block to slide"
+            style={{ margin: "0 8px 6px", width: "164px" }}
+          />
         </>
       )}
     </div>

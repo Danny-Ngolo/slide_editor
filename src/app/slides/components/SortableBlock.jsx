@@ -1,16 +1,14 @@
 import { GripVertical } from "lucide-react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { useEditorSortable } from "../hooks/dnd/useEditorSortable";
 import { dragHandleStyle } from "./blocks/shared/styles";
 
-export default function SortableBlock({ block, children }) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: block.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+export default function SortableBlock({ slideId, block, children }) {
+  const { attributes, listeners, setNodeRef, style } = useEditorSortable({
+    id: `block-${block.id}`,
+    type: "block",
+    slideId,
+    blockId: block.id,
+  });
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
