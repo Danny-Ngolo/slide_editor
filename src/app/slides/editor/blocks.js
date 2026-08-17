@@ -12,6 +12,7 @@ import {
   ListChecks,
   Table2,
   Sigma,
+  Code,
 } from "lucide-react";
 
 export const blocks_groups = [
@@ -93,6 +94,12 @@ export const blocks_groups = [
         label: "Math",
         desc: "Add LaTeX expressions",
         icon: Sigma,
+      },
+      {
+        type: "code",
+        label: "Code",
+        desc: "Add source code",
+        icon: Code,
       },
     ],
   },

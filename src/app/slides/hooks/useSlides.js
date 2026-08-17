@@ -6,6 +6,7 @@ import { useTable } from "./useTable";
 import { createExerciseBlock } from "./exerciseUtils";
 import { createQuizBlock } from "./quizUtils";
 import { createMathBlock } from "./mathUtils";
+import { createCodeBlock } from "./codeUtils";
 
 export function useSlides() {
   const { setSlides, slidesHistory, setSlidesWithoutHistory } = useHistory();
@@ -68,7 +69,9 @@ export function useSlides() {
             ? createQuizBlock()
             : type === "math"
               ? createMathBlock()
-              : {
+              : type === "code"
+                ? createCodeBlock()
+                : {
                   id: generateId(),
                   type: type,
                   content: initialContent || {},

@@ -1,13 +1,15 @@
 # Math Block Architecture
 
-> **Status:** Proposed (pending agreement)
+> **Status:** V1 implemented (2026-08); V2/V3 postponed (MVP-first).
 >
-> This document is the deliverable of `MATH_PROMPT.md`: a recommended long-term architecture
+> This document was the deliverable of `MATH_PROMPT.md`: a recommended long-term architecture
 > for mathematical editing inside VipiClass, designed after studying the existing Slide Editor
 > (EditorContext, useRichTextEditor, BlockRenderer, history, autosave, toolbar, slash menu,
 > clipboard, drag-and-drop, persistence, block factories, and the ADRs).
 >
-> No implementation code is written yet. The objective is architectural agreement before coding.
+> The recommended architecture was agreed and **V1 has been implemented** (commits `228a93a` →
+> `d6b114f`). The editor now proceeds to the Code Block; M3/M4/M5 below are postponed so the
+> platform can serve its MVP first.
 
 ---
 
@@ -456,7 +458,7 @@ existing `setSlides`/clipboard/dnd/history/autosave machinery. "Turn into" is hi
 Mirrors `MATH_BLOCK_PLAN.md` V1→V3 while following the project's progressive philosophy
 (make it work → debug → refactor → modularize).
 
-### M0 — Skeleton & lifecycle integration
+### M0 — Skeleton & lifecycle integration ✅
 - Add deps: `katex` (+ CSS/fonts import), pick `lucide-react` math icons.
 - Create `components/blocks/math/` skeleton: `MathRenderer`, minimal `MathEditor`,
   `mathUtils.js` (`createMathBlock`, `withDefaults`, `createExpression`), `useMath`.
@@ -465,7 +467,7 @@ Mirrors `MATH_BLOCK_PLAN.md` V1→V3 while following the project's progressive p
 - Verify end-to-end: insert via `+`, between-menu, `/math`; autosave persists LaTeX; undo/redo,
   duplicate, copy/paste, drag-drop all work.
 
-### M1 — Math V1 editing (Basic Operators → Roots)
+### M1 — Math V1 editing (Basic Operators → Roots) ✅
 - `MathSourceInput` + debounced `MathPreview`.
 - `MathSymbolToolbar` with categories: Basic, Fractions, Roots, Powers, Parentheses, Greek,
   Symbols — each button inserts a LaTeX snippet/placeholder (operators `± × ÷ ≤ ≥ ≈ …`,
@@ -473,13 +475,13 @@ Mirrors `MATH_BLOCK_PLAN.md` V1→V3 while following the project's progressive p
 - Preview error indicator (KaTeX `throwOnError: false` + message).
 - History policy wired (`updateExpression` → `setSlidesWithoutHistory`; structural ops recorded).
 
-### M2 — Expressions lifecycle & polish
+### M2 — Expressions lifecycle & polish ✅
 - Add/remove/duplicate/reorder expressions (CRUD buttons mirroring QuestionCard).
 - Editable title (reuse `EditableTitle`).
 - Focus management: click on preview focuses the source; Escape blurs back to block level.
 - `React.memo` on `MathRenderer`; render preview only for the focused expression.
 
-### M3 — Math V2 scientific sets
+### M3 — Math V2 scientific sets ⬜ POSTPONED (MVP-first)
 - Symbol sets: Calculus (integrals, limits, summations, products, derivatives, partials), Linear
   Algebra (matrix/determinant/vector environments), Logic, Sets, Geometry — as additional grouped
   panels.
@@ -487,13 +489,13 @@ Mirrors `MATH_BLOCK_PLAN.md` V1→V3 while following the project's progressive p
   snippets.
 - Import/Export LaTeX actions on the block menu.
 
-### M4 — Reuse surface & accessibility
+### M4 — Reuse surface & accessibility ⬜ POSTPONED (MVP-first)
 - Embed the engine in other blocks (first target: math inside Exercise prompts / Quiz prompts, then
   Callout). This is the payoff of §10 — no duplicated math logic.
 - Symbol search + favorites (V3), custom templates, keyboard shortcuts.
 - Accessibility pass on `MathRenderer` (MathML/ARIA); evaluate MathJax fallback for rare content.
 
-### M5 — Platform integration (future)
+### M5 — Platform integration ⬜ POSTPONED (MVP-first)
 - SSR KaTeX rendering for export/PDF and read-only lesson view.
 - AI-generated formulas harness (Phase 9) producing canonical LaTeX.
 - Evaluate MathLive as an optional visual authoring surface; graph plotting later (non-goal now).

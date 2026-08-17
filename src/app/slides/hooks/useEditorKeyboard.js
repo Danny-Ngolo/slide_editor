@@ -22,6 +22,8 @@ export function useEditorKeyboard() {
 
     if (isEditingText) return;
 
+    if (e.target?.closest?.("[data-code-editor]")) return;
+
     const key = e.key.toLowerCase();
 
     if (e.ctrlKey && key === "z") {

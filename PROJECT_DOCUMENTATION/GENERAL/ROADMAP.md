@@ -258,11 +258,17 @@ Callout
 
 Implementation:
 
-- [ ] Central BLOCK_TYPES registry
-- [ ] replaceBlock utility
-- [ ] transformBlock utility
-- [ ] Preserve HTML/content during transformation
-- [ ] Transformation menu
+- [x] Central BLOCK_TYPES registry
+- [x] replaceBlock utility
+- [x] transformBlock utility
+- [x] Preserve HTML/content during transformation
+- [x] Transformation menu
+
+> **Future concern — data consistency on complex blocks.** `transformBlock` flattens content to
+> `{ html }`, which is safe only for single-field rich-text blocks. For structured-content blocks
+> (math `latex`, code `code`/`language`, exercise, quiz, table) "Turn into" is currently **hidden**
+> (`hideTransform` in `BlockRenderer.jsx`) to avoid silent data loss. Re-enabling it for those
+> blocks requires a per-block content-mapping strategy and is tracked as ADR-016.
 
 ---
 
@@ -274,6 +280,16 @@ Implementation:
 > That pass only _touched_ Phase 10 (Mobile Experience); those items remain open and we will come
 > back to them when the roadmap reaches that phase. Development now resumes here on the remaining
 > educational blocks.
+>
+> **2026-08 — Math Block V1 shipped.** Quiz and Exercise authoring shipped earlier (see their
+> sections); the Equation / Math Block V1 authoring is now complete (commits `228a93a` →
+> `d6b114f`). Remaining math capabilities (Math V2/V3 from `MATH_BLOCK_PLAN.md`) are **postponed**
+> so we can serve the MVP first.
+>
+> **2026-08 — Code Block teacher-facing MVP shipped.** The CodeBlock authoring (Phases 0–8 of
+> `CODE_BLOCK_PLAN.md`) is complete (see the Code Block section below). The remaining CodeBlock
+> phases (9–11: student-facing rendering, edge-case testing, UX polish) are **deferred** until the
+> VipiClass student/lesson rendering flow exists.
 
 ## Educational Content Blocks
 
@@ -318,7 +334,17 @@ V1 authoring (shipped): see `EXCERCISE_BLOCK_PLAN.md` M1–M3.
 
 ## Code Block
 
-- [ ] Syntax highlighting
+Teacher-facing authoring MVP shipped (2026-08): see `CODE_BLOCK_PLAN.md` (Phases 0–8).
+
+- [x] Insert via `+` menu, Insert-Menu-Between, and slash menu (`/code`)
+- [x] Overlay code editor: line numbers, Tab/Shift+Tab indentation, native undo/redo, `Ctrl+/` toggle comment for selected lines
+- [x] Language selection (Plain text + 22 languages)
+- [x] Syntax highlighting (highlight.js, github theme)
+- [x] Two-tier history, autosave, clipboard/duplicate integration
+- [x] Copy source code (raw, no line numbers/markup)
+- [x] No "Turn into" (content is not a single `{html}` field)
+- [ ] Student-facing rendering — deferred until the student/lesson flow exists
+- [ ] Edge-case/integration testing (Phase 10) and UX polish (Phase 11) — after student flow
 - [ ] Code formatting
 - [ ] Programming lessons support
 
@@ -334,9 +360,25 @@ V1 authoring (shipped): see `EXCERCISE_BLOCK_PLAN.md` M1–M3.
 
 ## Equation / Math Block
 
-- [ ] Mathematical expressions
-- [x] LaTeX support
-- [ ] Scientific content support
+Math Block V1 shipped: see `MATH_BLOCK_PLAN.md` (V1) and `MATH_BLOCK_ARCHITECTURE.md`.
+
+- [x] LaTeX canonical storage + KaTeX rendering
+- [x] Live editing with source and visual (slot) modes
+- [x] Symbol toolbar (Basic, Parentheses, Greek, Powers, Subscripts, Fractions, Roots, Calculus, Templates, Miscellaneous)
+- [x] Template system with slots (fraction, sqrt, n-th root, integral, sum, quadratic formula, binomial, superscript, subscript)
+- [x] Slot navigation (SHIFT/TAB) and nested template insertion
+- [x] Whole-template deletion and bare `^`/`_` template insertion in visual mode
+- [x] Two-tier history, autosave, clipboard/duplicate integration
+- [x] No "Turn into" (content is not a single `{html}` field)
+
+Postponed (MVP-first) — Math V2/V3:
+
+- [ ] Powers/superscripts polish
+- [ ] Calculus (derivatives, limits, double/triple/contour integrals)
+- [ ] Linear algebra (matrices, determinants, vectors)
+- [ ] Logic, set theory, geometry symbol sets
+- [ ] Formula templates / symbol search / favorites / custom templates
+- [ ] Keyboard shortcuts, LaTeX import/export, inline math in prose
 
 ---
 
@@ -529,7 +571,8 @@ Optimization
 
 # Current Priority Order
 
-> **Next:** return to the remaining Phase 6 educational blocks (Code, Flashcard, Equation / Math).
+> **Next:** the **Code Block** (Phase 6 remaining block). Math Block V1 is shipped; the rest of
+> the math roadmap (V2/V3) is postponed to serve the MVP first.
 
 ## Immediate
 

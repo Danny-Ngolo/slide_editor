@@ -598,3 +598,53 @@ Centralize the gesture in `useLongPress()` with target-based routing:
 
 * if text selection inside text blocks must be restored on touch, add per-block opt-out in the hook
   without redesigning it
+
+---
+
+# ADR-016: "Turn Into" on Complex Blocks Is a Future Data-Consistency Concern
+
+**Status:** Accepted (as a deferred concern; not implemented)
+
+## Context
+
+`transformBlock` (`useSlides.js`) transforms a block by rewriting it as:
+
+```js
+{
+  ...block,
+  type: target.type,
+  content: { html: block.content.html },
+}
+```
+
+This only preserves content when the block's content is a single HTML-rich field. Math (`content.latex`),
+code (`content.code`/`content.language`), exercise, quiz, and table blocks carry structured content that
+cannot survive the flatten-to-`{ html }` mapping without data loss. Phase 5 (Block Transformation System)
+still lists transformation as partially open.
+
+## Decision
+
+- The **MVP hides "Turn into" for complex blocks** (`hideTransform` in `BlockRenderer.jsx` for
+  `math`, `code`, `exercise`, `quiz`) and only exposes it where the `{ html }` mapping is safe.
+- Re-enabling transformation for complex blocks is **deferred**; when it is tackled it must ship a
+  per-block content-mapping strategy (e.g. math latex → `{ html: renderedLatex }`, code → `<pre>`),
+  not a blind flatten.
+
+## Rationale
+
+Transforming a math block into plain text by discarding its LaTeX would silently destroy teacher
+content — a worse outcome than hiding the menu entry. The current approach guarantees no data loss
+at the cost of a temporarily missing feature.
+
+## Consequences
+
+### Advantages
+
+* no silent data loss on transformation
+* the risk is explicitly tracked instead of discovered in production
+
+### Trade-offs
+
+* teachers cannot turn a math/code block into another type in the MVP
+* when re-enabled, each complex block needs a content-mapping path and round-trip verification
+  (transform out and transform back must be lossless enough for teaching content)

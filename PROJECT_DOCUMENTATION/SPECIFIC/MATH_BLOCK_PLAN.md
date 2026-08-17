@@ -1,6 +1,10 @@
 # Math Block Development Plan
 
-> Status: In process
+> Status: **Math V1 shipped (2026-08); Math V2/V3 postponed (MVP-first).**
+>
+> V1 authoring is implemented (commits `228a93a` → `d6b114f`). The editor now proceeds to the
+> Code Block; the remaining math capabilities defined in this document (V2 — scientific sets,
+> V3 — advanced authoring) are deliberately postponed so the platform can serve its MVP first.
 >
 > This document defines the vision, scope, architecture, and implementation roadmap for the Math Block.
 >
@@ -159,13 +163,13 @@ Reasons:
 - ±
 - ≈
 
-### Powers
+### Powers [ok]
 
 - x²
 - x³
 - xⁿ
 
-### Subscripts
+### Subscripts [ok]
 
 - x₁
 - a₂
@@ -180,14 +184,14 @@ Reasons:
 - Square root
 - n-th root
 
-### Parentheses
+### Parentheses [ok]
 
 - ()
 - []
 - {}
 - ||
 
-### Greek Symbols
+### Greek Symbols [ok]
 
 - α
 - β
@@ -203,7 +207,7 @@ Reasons:
 - Δ
 - Ω
 
-### Miscellaneous
+### Miscellaneous [ok]
 
 - Infinity
 - Degree

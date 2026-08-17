@@ -181,21 +181,31 @@ Implemented features currently include:
 
 The editor has reached a stable architectural foundation.
 
-Most ongoing work focuses on completing the Table V1 feature set before expanding the editor with additional block types and more advanced editing capabilities.
+Most ongoing work focuses on completing the remaining Phase 6 educational blocks.
 
 > **2026-08 — Styling & mobile pass shipped (Phase 10 only touched).** A focused pass added touch
 > long-press multi-selection for slides and blocks, restored native long-press text selection inside
 > table cells, and replaced native `<select>`s with custom dropdowns. This touched Phase 10 (Mobile
-> Experience) items without completing them; the roadmap will return to that phase later. Development
-> now returns to the remaining educational blocks (Phase 6).
+> Experience) items without completing them; the roadmap will return to that phase later.
+>
+> **2026-08 — Math Block V1 shipped.** The Equation / Math Block V1 authoring is complete (source +
+> visual slot editing, KaTeX rendering, symbol/template toolbar, template slots, keyboard navigation).
+> The remaining math capabilities (V2/V3) are postponed so the platform can serve its MVP first.
+>
+> **2026-08 — Code Block teacher-facing MVP shipped.** The CodeBlock authoring is complete (Phases
+> 0–8 of `CODE_BLOCK_PLAN.md`): insertion via `+` menu / Insert-Menu-Between / slash menu, an overlay
+> code editor (line numbers, Tab/Shift+Tab indentation, `Ctrl+/` toggle comment for selected lines),
+> language selection (Plain text + 22 languages), highlight.js syntax highlighting, two-tier
+> history/autosave integration, and a copy button that copies the raw source. The remaining CodeBlock
+> phases (9–11: student-facing rendering, edge-case testing, UX polish) are deferred and will be
+> implemented when the VipiClass student/lesson rendering flow exists.
 
 Current active work includes:
 
-- cell selection
-- multi-cell selection
-- merge and split cells
-- internal clipboard improvements
-- keyboard interaction refinement
+- Future: block transformation ("Turn into") on complex blocks — a known data-consistency concern:
+  `transformBlock` flattens content to `{ html }`, so transforming blocks whose content is not a
+  single HTML field (math, code, exercise, quiz, table) is currently hidden via `hideTransform`.
+  Re-enabling it requires a content-mapping strategy and is deferred.
 
 ---
 
