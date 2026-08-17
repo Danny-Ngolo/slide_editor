@@ -19,7 +19,7 @@ export function useClipboard() {
     selectedSlides,
     setSelectedSlides,
   } = useEditorContext();
-  const { recordedActiveSlideId } = useSlides();
+  const { recordedActiveSlideId, setActiveSlideId } = useSlides();
   const { setSlides, slidesHistory } = useHistory();
   const slides = slidesHistory.present;
 
@@ -219,10 +219,11 @@ export function useClipboard() {
   const duplicateSelectedSlides = useCallback(() => {
     if (selectedSlides.length === 0) return;
 
+    const duplicates = slides
+      .filter((slide) => selectedSlides.includes(slide.id))
+      .map((slide) => cloneSlide(slide));
+
     setSlides((prev) => {
-      const duplicates = prev
-        .filter((slide) => selectedSlides.includes(slide.id))
-        .map((slide) => cloneSlide(slide));
       const result = [...prev];
       let dupIndex = 0;
       let offset = 0;
@@ -237,7 +238,12 @@ export function useClipboard() {
 
       return result;
     });
-  }, [selectedSlides, setSlides]);
+
+    if (duplicates.length) {
+      setSelectedSlides(duplicates.map((slide) => slide.id));
+      setActiveSlideId(duplicates[duplicates.length - 1].id);
+    }
+  }, [slides, selectedSlides, setSlides, setSelectedSlides, setActiveSlideId]);
 
   const deleteSelectedSlides = useCallback(() => {
     if (selectedSlides.length === 0) return;
@@ -285,6 +291,8 @@ export function useClipboard() {
 
     if (!slide) return;
 
+    const copy = cloneSlide(slide);
+
     setSlides((prev) => {
       const anchorIndex = prev.findIndex((s) => s.id === slideId);
 
@@ -292,10 +300,13 @@ export function useClipboard() {
 
       const updated = [...prev];
 
-      updated.splice(anchorIndex + 1, 0, cloneSlide(slide));
+      updated.splice(anchorIndex + 1, 0, copy);
 
       return updated;
     });
+
+    setSelectedSlides([copy.id]);
+    setActiveSlideId(copy.id);
   };
 
   return {

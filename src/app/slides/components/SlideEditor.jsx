@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import {
   DndContext,
+  DragOverlay,
   closestCenter,
   pointerWithin,
   rectIntersection,
@@ -16,6 +17,7 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import SlidesSidebar from "./SlidesSidebar";
 import SlideCanvas from "./SlideCanvas";
+import BlockRenderer from "./blocks/BlockRenderer";
 import { useEditorContext } from "./EditorContext";
 import SelectionActionsBar from "./SelectionActionsBar";
 import lessonService from "@/services/lessonService";
@@ -35,7 +37,7 @@ import { COLORS, RADIUS, SHADOWS } from "./blocks/shared/styles";
 const SlideEditor = ({ lessonId }) => {
   const [isDataAlreadyFetched, setIsDataAlreadyFetched] = useState(false);
   const [currentLesson, setCurrentLesson] = useState(null);
-  const { isUndoRedoRef, setSelectedBlock, setSelectedBlocks } =
+  const { isUndoRedoRef, setSelectedBlock, setSelectedBlocks, selectedBlocks } =
     useEditorContext();
 
   const {
@@ -55,6 +57,7 @@ const SlideEditor = ({ lessonId }) => {
   const saveTimeoutRef = useRef(null);
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [activeDragType, setActiveDragType] = useState(null);
+  const [activeDragGroup, setActiveDragGroup] = useState(null);
 
   const handleSave = useCallback(async () => {
     try {
@@ -178,56 +181,74 @@ const SlideEditor = ({ lessonId }) => {
       return;
     }
 
-    // Reorder blocks within the same slide.
+    // Reorder blocks within the same slide, or move a group to another slide.
     if (activeData?.type === "block" && overData?.type === "block") {
+      const group =
+        activeDragGroup ??
+        [{ slideId: activeData.slideId, blockId: activeData.blockId }];
+
       if (activeData.slideId === overData.slideId) {
+        const groupIds = group.map((g) => g.blockId);
+
         setSlides((prev) =>
           prev.map((slideItem) => {
             if (slideItem.id !== activeData.slideId) return slideItem;
 
-            const oldIndex = slideItem.blocks.findIndex(
-              (b) => b.id === activeData.blockId,
+            const selectedIds = new Set(groupIds);
+            const moving = slideItem.blocks.filter((b) =>
+              selectedIds.has(b.id),
             );
-            const newIndex = slideItem.blocks.findIndex(
-              (b) => b.id === overData.blockId,
+            const remaining = slideItem.blocks.filter(
+              (b) => !selectedIds.has(b.id),
             );
 
-            if (oldIndex === -1 || newIndex === -1) return slideItem;
+            if (!moving.length) return slideItem;
+
+            const overIndex = remaining.findIndex(
+              (b) => b.id === overData.blockId,
+            );
+            const insertAt = overIndex === -1 ? remaining.length : overIndex;
 
             return {
               ...slideItem,
-              blocks: arrayMove(slideItem.blocks, oldIndex, newIndex),
+              blocks: [
+                ...remaining.slice(0, insertAt),
+                ...moving,
+                ...remaining.slice(insertAt),
+              ],
             };
           }),
         );
         return;
       }
 
-      // Move a block to another slide (drop onto a block of a visible slide).
+      // Move the group to another slide (drop onto a block of a visible slide).
       moveBlocksToSlide(
         activeData.slideId,
-        [activeData.blockId],
+        group.map((g) => g.blockId),
         overData.slideId,
       );
       setActiveSlideId(overData.slideId);
       setSelectedBlock({
         slideId: overData.slideId,
-        blockId: activeData.blockId,
+        blockId: group[0].blockId,
       });
       setSelectedBlocks((prev) => [
         ...prev.filter(
           (sel) =>
-            !(
-              sel.slideId === activeData.slideId &&
-              sel.blockId === activeData.blockId
+            !group.some(
+              (g) => g.slideId === sel.slideId && g.blockId === sel.blockId,
             ),
         ),
-        { slideId: overData.slideId, blockId: activeData.blockId },
+        ...group.map((g) => ({
+          slideId: overData.slideId,
+          blockId: g.blockId,
+        })),
       ]);
       return;
     }
 
-    // Drop a block onto a slide in the sidebar: move it to that slide.
+    // Drop a block (or group) onto a slide in the sidebar: move it to that slide.
     if (
       activeData?.type === "block" &&
       (overData?.type === "slide" || over.id.toString().startsWith("slide-"))
@@ -238,30 +259,50 @@ const SlideEditor = ({ lessonId }) => {
           .toString()
           .replace("slide-droppable-", "")
           .replace("slide-", "");
+
       if (activeData.slideId === targetSlideId) return;
+
+      const group =
+        activeDragGroup ??
+        [{ slideId: activeData.slideId, blockId: activeData.blockId }];
 
       moveBlocksToSlide(
         activeData.slideId,
-        [activeData.blockId],
+        group.map((g) => g.blockId),
         targetSlideId,
       );
       setActiveSlideId(targetSlideId);
       setSelectedBlock({
         slideId: targetSlideId,
-        blockId: activeData.blockId,
+        blockId: group[0].blockId,
       });
       setSelectedBlocks((prev) => [
         ...prev.filter(
           (sel) =>
-            !(
-              sel.slideId === activeData.slideId &&
-              sel.blockId === activeData.blockId
+            !group.some(
+              (g) => g.slideId === sel.slideId && g.blockId === sel.blockId,
             ),
         ),
-        { slideId: targetSlideId, blockId: activeData.blockId },
+        ...group.map((g) => ({
+          slideId: targetSlideId,
+          blockId: g.blockId,
+        })),
       ]);
     }
   };
+
+  const activeDragBlock = useMemo(() => {
+    if (activeDragType !== "block" || !activeDragGroup?.length) return null;
+
+    const first = activeDragGroup[0];
+    const slide = slides.find((s) => s.id === first.slideId);
+
+    if (!slide) return null;
+
+    const block = slide.blocks.find((b) => b.id === first.blockId);
+
+    return block ? { slide, block } : null;
+  }, [activeDragType, activeDragGroup, slides]);
 
   return currentLesson ? (
     <div
@@ -318,13 +359,42 @@ const SlideEditor = ({ lessonId }) => {
       </header>
 
       <DndContext
-        onDragStart={(event) =>
-          setActiveDragType(event.active?.data?.current?.type ?? null)
-        }
-        onDragCancel={() => setActiveDragType(null)}
+        onDragStart={(event) => {
+          const activeData = event.active?.data?.current;
+          const type = activeData?.type ?? null;
+
+          setActiveDragType(type);
+          setActiveDragGroup(null);
+
+          if (type === "block") {
+            const draggedInSelection = selectedBlocks.some(
+              (sel) =>
+                sel.slideId === activeData.slideId &&
+                sel.blockId === activeData.blockId,
+            );
+
+            setActiveDragGroup(
+              draggedInSelection
+                ? selectedBlocks.filter(
+                    (sel) => sel.slideId === activeData.slideId,
+                  )
+                : [
+                    {
+                      slideId: activeData.slideId,
+                      blockId: activeData.blockId,
+                    },
+                  ],
+            );
+          }
+        }}
+        onDragCancel={() => {
+          setActiveDragType(null);
+          setActiveDragGroup(null);
+        }}
         onDragEnd={(event) => {
           handleDragEnd(event);
           setActiveDragType(null);
+          setActiveDragGroup(null);
         }}
         collisionDetection={collisionDetectionStrategy}
       >
@@ -349,6 +419,44 @@ const SlideEditor = ({ lessonId }) => {
 
           <SlideCanvas slide={activeSlide} slides={slides} />
         </div>
+
+        <DragOverlay dropAnimation={null}>
+          {activeDragBlock && (
+            <div
+              style={{
+                position: "relative",
+                pointerEvents: "none",
+                opacity: 0.9,
+                borderRadius: RADIUS.lg,
+                boxShadow: SHADOWS.float,
+              }}
+            >
+              <BlockRenderer
+                block={activeDragBlock.block}
+                slideId={activeDragBlock.slide.id}
+                slides={slides}
+              />
+              {activeDragGroup.length > 1 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: -10,
+                    right: -10,
+                    background: COLORS.accent,
+                    color: "#fff",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    borderRadius: RADIUS.pill,
+                    padding: "2px 8px",
+                    boxShadow: SHADOWS.float,
+                  }}
+                >
+                  {activeDragGroup.length} selected
+                </div>
+              )}
+            </div>
+          )}
+        </DragOverlay>
       </DndContext>
       <SelectionActionsBar />
       <button

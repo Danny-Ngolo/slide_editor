@@ -26,6 +26,7 @@ export function useEditorKeyboard() {
     pasteSlides,
     duplicateSelectedSlides,
     deleteSelectedSlides,
+    duplicateSlide,
   } = useClipboard();
   const { activeSlideId, setActiveSlideId, effectiveActiveSlideId, addBlock, moveBlocksToSlide } =
     useSlides();
@@ -270,6 +271,21 @@ export function useEditorKeyboard() {
       e.preventDefault();
       setSelectedBlocks([]);
       setSelectedSlides([]);
+      return;
+    }
+
+    if (
+      e.ctrlKey &&
+      key === "d" &&
+      !selectedBlocks.length &&
+      !selectedSlides.length
+    ) {
+      e.preventDefault();
+
+      if (effectiveActiveSlideId) {
+        duplicateSlide(effectiveActiveSlideId);
+      }
+
       return;
     }
 
