@@ -16,7 +16,7 @@ const EditorProvider = ({ children }) => {
     future: [],
   });
 
-  const [recordedActiveSlideId, setRecordedActiveSlideId] = useState(null);
+  const [activeSlideId, setActiveSlideId] = useState(null);
 
   const [activeEditor, setActiveEditor] = useState(null);
   const [selectedBlock, setSelectedBlock] = useState({
@@ -113,8 +113,8 @@ const EditorProvider = ({ children }) => {
   return (
     <EditorContext.Provider
       value={{
-        recordedActiveSlideId,
-        setRecordedActiveSlideId,
+        activeSlideId,
+        setActiveSlideId,
         activeEditor,
         setActiveEditor,
         editorState,

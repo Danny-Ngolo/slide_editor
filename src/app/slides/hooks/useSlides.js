@@ -10,10 +10,11 @@ import { createCodeBlock } from "./codeUtils";
 
 export function useSlides() {
   const { setSlides, slidesHistory, setSlidesWithoutHistory } = useHistory();
-  const { setSlidesHistory, recordedActiveSlideId, setRecordedActiveSlideId } =
+  const { setSlidesHistory, activeSlideId, setActiveSlideId } =
     useEditorContext();
   const { createTableBlock } = useTable();
   const slides = slidesHistory.present;
+  const effectiveActiveSlideId = activeSlideId ?? slides[0]?.id;
 
   const initializeSlides = useCallback(
     (slides) => {
@@ -51,13 +52,6 @@ export function useSlides() {
       ),
     );
   };
-
-  const recordActiveSlideId = useCallback(
-    (newActiveSlideId) => {
-      setRecordedActiveSlideId(newActiveSlideId);
-    },
-    [setRecordedActiveSlideId],
-  );
 
   const addBlock = (slideId, type, index = null, initialContent) => {
     const newBlock =
@@ -213,8 +207,10 @@ export function useSlides() {
   };
 
   return {
-    recordedActiveSlideId,
-    recordActiveSlideId,
+    activeSlideId,
+    setActiveSlideId,
+    effectiveActiveSlideId,
+    recordedActiveSlideId: effectiveActiveSlideId,
     initializeSlides,
     addSlide,
     deleteSlide,

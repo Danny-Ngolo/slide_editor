@@ -25,8 +25,9 @@ const SlideEditor = ({ lessonId }) => {
   const { isUndoRedoRef } = useEditorContext();
 
   const {
-    recordActiveSlideId,
-    recordedActiveSlideId,
+    activeSlideId,
+    setActiveSlideId,
+    effectiveActiveSlideId,
     initializeSlides,
     addSlide,
     deleteSlide,
@@ -35,8 +36,6 @@ const SlideEditor = ({ lessonId }) => {
   const { handleKeyDown } = useEditorKeyboard();
 
   const slides = useMemo(() => slidesHistory?.present || [], [slidesHistory]);
-  const [activeSlideId, setActiveSlideId] = useState(null);
-  const effectiveActiveSlideId = activeSlideId ?? slides[0]?.id;
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
   const saveTimeoutRef = useRef(null);
   const [sidebarVisible, setSidebarVisible] = useState(true);
@@ -120,10 +119,6 @@ const SlideEditor = ({ lessonId }) => {
 
     return () => clearTimeout(saveTimeoutRef);
   }, [slides, handleSave, isDataAlreadyFetched, isUndoRedoRef]);
-
-  useEffect(() => {
-    recordActiveSlideId(effectiveActiveSlideId);
-  }, [effectiveActiveSlideId, recordActiveSlideId]);
 
   const activeSlide = slides.find(
     (slide) => slide.id === effectiveActiveSlideId,
