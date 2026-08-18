@@ -199,6 +199,17 @@ Most ongoing work focuses on completing the remaining Phase 6 educational blocks
 > history/autosave integration, and a copy button that copies the raw source. The remaining CodeBlock
 > phases (9–11: student-facing rendering, edge-case testing, UX polish) are deferred and will be
 > implemented when the VipiClass student/lesson rendering flow exists.
+>
+> **2026-08 — Table editor experience pass shipped (Phase 7 scope, closes Phase 4 gaps).**
+> Excel-style table editing: first click selects a cell, second click enters its editor, Shift-click
+> extends a rectangular range; row/column selection via the `+` handles; keyboard navigation
+> (arrows/Tab/Enter), `Ctrl+M` merge, `Ctrl+S` split, and Delete clears per selection type. The
+> internal table clipboard (cell/row/column) coexists with the OS clipboard without overriding it:
+> **the OS clipboard is the source of truth for paste** — the persisted/in-memory snapshot is used
+> only when the OS text is empty or matches our own copy, so content copied and modified in Excel
+> pastes back correctly (see ADR-017). The row/column `+` and drag handles no longer select the whole
+> block, the table action menu stays inside the viewport, and selection highlights remain visible on
+> header cells. These are the first items from Phase 7 (Editor Experience Improvements) to ship.
 
 Current active work includes:
 

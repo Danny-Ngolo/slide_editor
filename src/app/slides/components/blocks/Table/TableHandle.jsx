@@ -6,7 +6,13 @@ import "./table.css";
 
 const TableHandle = ({ onClick }) => {
   return (
-    <button className="table-handle" onClick={onClick}>
+    <button
+      className="table-handle"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.(e);
+      }}
+    >
       <Plus size={14} />
     </button>
   );

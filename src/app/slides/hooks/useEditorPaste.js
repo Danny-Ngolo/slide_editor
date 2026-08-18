@@ -3,12 +3,11 @@ import { useEditorContext } from "../components/EditorContext";
 import {
   CLIPBOARD_MIME,
   deserializeClipboard,
+  normalizeClipboardText,
   readPersistedClipboard,
   serializeClipboard,
 } from "../utils/clipboardFormat";
 import { useClipboard } from "./useClipboard";
-
-const normalizeClipboardText = (s) => (s || "").replace(/\r\n/g, "\n").trim();
 
 export function useEditorPaste() {
   const {
@@ -70,27 +69,35 @@ export function useEditorPaste() {
 
     const onPaste = (e) => {
       // Import OS clipboard table text (e.g. copied from Excel) as a cell grid
-      // when a range of cells is currently selected.
+      // when a range of cells is currently selected. Also lets the table's own
+      // paste handler fall back to its in-memory clipboard when the OS clipboard
+      // holds no text at all.
       if (selectedCells.size > 0 && tablePasteHandlerRef.current) {
-        const text = e.clipboardData?.getData("text/plain");
+        const text = e.clipboardData?.getData("text/plain") || "";
 
-        if (text) {
-          const coords = Array.from(selectedCells)
-            .map((s) => s.split(",").map(Number))
-            .filter((c) => Number.isInteger(c[0]) && Number.isInteger(c[1]));
+        const coords = Array.from(selectedCells)
+          .map((s) => s.split(",").map(Number))
+          .filter((c) => Number.isInteger(c[0]) && Number.isInteger(c[1]));
 
-          if (coords.length > 0) {
-            e.preventDefault();
+        if (coords.length > 0) {
+          const blockId =
+            tableSelection.blockId ||
+            e.target
+              ?.closest?.("[data-block-id]")
+              ?.getAttribute("data-block-id");
 
-            tablePasteHandlerRef.current({
-              blockId: tableSelection.blockId,
-              targetRow: Math.min(...coords.map((c) => c[0])),
-              targetCol: Math.min(...coords.map((c) => c[1])),
-              text,
-            });
+          if (!blockId) return;
 
-            return;
-          }
+          e.preventDefault();
+
+          tablePasteHandlerRef.current({
+            blockId,
+            targetRow: Math.min(...coords.map((c) => c[0])),
+            targetCol: Math.min(...coords.map((c) => c[1])),
+            text,
+          });
+
+          return;
         }
       }
 
@@ -115,47 +122,58 @@ export function useEditorPaste() {
       }
 
       // The OS clipboard may not carry our custom MIME type (non-secure
-      // context, Safari). Fall back to the persisted copy so copy -> refresh
-      // -> paste still works. We only use it when the OS clipboard holds no
-      // text, or text that matches our own copy (so we never override content
-      // copied elsewhere). Both sides are normalized because the OS clipboard
-      // may rewrite line endings (CRLF) or append a trailing newline.
+      // context, Safari), and in-memory state is lost on refresh. We keep a
+      // local snapshot (persisted + in-memory) so copy -> refresh -> paste
+      // still works. It is ONLY used when the OS clipboard holds no text, or
+      // text that matches our snapshot — otherwise the clipboard holds external
+      // content and must not be overridden with a stale internal copy.
+      const osText = e.clipboardData?.getData("text/plain") || "";
+      const normalizedOs = normalizeClipboardText(osText);
+
+      const candidates = [];
+
       const saved = readPersistedClipboard();
 
       if (saved) {
         const data = deserializeClipboard(saved);
 
         if (data) {
-          const osText = e.clipboardData?.getData("text/plain") || "";
-          const persistedPlain = serializeClipboard(data.kind, data.items).plain;
-
-          if (
-            !osText ||
-            normalizeClipboardText(osText) ===
-              normalizeClipboardText(persistedPlain)
-          ) {
-            e.preventDefault();
-
-            if (data.kind === "block") {
-              pasteBlocksFrom(data.items);
-            } else if (data.kind === "slide") {
-              pasteSlidesFrom(data.items);
-            }
-
-            return;
-          }
+          candidates.push({
+            kind: data.kind,
+            items: data.items,
+            plain: serializeClipboard(data.kind, data.items).plain,
+          });
         }
       }
 
-      if (selectedBlocks.length) {
-        e.preventDefault();
-        pasteBlocksFrom(copiedBlocks);
-        return;
+      if (copiedBlocks.length) {
+        candidates.push({
+          kind: "block",
+          items: copiedBlocks,
+          plain: serializeClipboard("block", copiedBlocks).plain,
+        });
       }
 
-      if (selectedSlides.length) {
+      if (copiedSlides.length) {
+        candidates.push({
+          kind: "slide",
+          items: copiedSlides,
+          plain: serializeClipboard("slide", copiedSlides).plain,
+        });
+      }
+
+      const match = candidates.find(
+        (c) => !osText || normalizedOs === normalizeClipboardText(c.plain),
+      );
+
+      if (match) {
         e.preventDefault();
-        pasteSlidesFrom(copiedSlides);
+
+        if (match.kind === "block") {
+          pasteBlocksFrom(match.items);
+        } else if (match.kind === "slide") {
+          pasteSlidesFrom(match.items);
+        }
       }
     };
 

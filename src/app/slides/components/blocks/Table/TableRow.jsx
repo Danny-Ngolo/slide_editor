@@ -51,7 +51,6 @@ table-row
         <TableHandle
           onClick={(e) => {
             setSelectedBlock({ slideId, blockId: block.id });
-            setSelectedBlocks([{ slideId, blockId: block.id }]);
 
             handleRowHandleClick(e, block, setTableMenu, rowIndex);
           }}

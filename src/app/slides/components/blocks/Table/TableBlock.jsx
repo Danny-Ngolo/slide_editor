@@ -189,7 +189,13 @@ const TableBlock = ({ slideId, block }) => {
         })
       }
     >
-      <table ref={tableRef} className="table-block" data-cell-drag={cellDragActive}>
+      <table
+        ref={tableRef}
+        className="table-block"
+        data-cell-drag={cellDragActive}
+        data-block-id={block.id}
+        onClick={(e) => e.stopPropagation()}
+      >
         <TableHeader
           slideId={slideId}
           block={block}

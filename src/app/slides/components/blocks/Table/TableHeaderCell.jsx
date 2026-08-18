@@ -9,7 +9,7 @@ import { useEditorContext } from "../../EditorContext";
 
 const TableHeaderCell = ({ slideId, block, cell, columnIndex }) => {
   const { handleColumnHandleClick } = useTable();
-  const { setSelectedBlock, setSelectedBlocks, setTableMenu } =
+  const { setSelectedBlock, setTableMenu } =
     useEditorContext();
 
   const { attributes, listeners, setNodeRef, style } = useEditorSortable({
@@ -23,7 +23,6 @@ const TableHeaderCell = ({ slideId, block, cell, columnIndex }) => {
       <TableHandle
         onClick={(e) => {
           setSelectedBlock({ slideId, blockId: block.id });
-          setSelectedBlocks([{ slideId, blockId: block.id }]);
 
           handleColumnHandleClick(e, block, setTableMenu, columnIndex);
         }}

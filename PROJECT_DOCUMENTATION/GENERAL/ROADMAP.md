@@ -144,6 +144,13 @@ Future improvements:
 
 The table system is treated as an independent advanced editor inside the editor.
 
+> **2026-08 — Table editing/selection pass shipped (Phase 7 scope, also closes the Phase 4 gaps).**
+> Excel-style cell selection (select-first click, second click focuses the cell editor, Shift-click
+> extends a rectangular range), row/column selection, table keyboard shortcuts (arrows/Tab/Enter
+> navigation, `Ctrl+M` merge, `Ctrl+S` split, Delete clears per selection type), an internal table
+> clipboard (copy/paste cell/row/column) that never overrides external OS-clipboard content, and
+> merge/split are all complete. All unchecked Phase 4 items below are now shipped.
+
 ---
 
 ## Table Foundation ✅
@@ -178,18 +185,18 @@ The table system is treated as an independent advanced editor inside the editor.
 
 ## Table V1 Completion ✅
 
-- [ ] Cell selection
-- [ ] Active cell highlighting
-- [ ] Row selection improvements
-- [ ] Column selection improvements
-- [ ] Table keyboard shortcuts
-- [ ] Delete behavior depending on selection type
+- [x] Cell selection
+- [x] Active cell highlighting
+- [x] Row selection improvements
+- [x] Column selection improvements
+- [x] Table keyboard shortcuts
+- [x] Delete behavior depending on selection type
 
 ---
 
 ## Table Advanced Features ✅
 
-- [ ] Internal table clipboard
+- [x] Internal table clipboard
 
 Supported operations:
 
@@ -202,7 +209,7 @@ Supported operations:
 
 ---
 
-- [ ] Multi-cell selection
+- [x] Multi-cell selection
 
 Features:
 
@@ -213,7 +220,7 @@ Features:
 
 ---
 
-- [ ] Merge cells
+- [x] Merge cells
 
 Requirements:
 
@@ -224,7 +231,7 @@ Requirements:
 
 ---
 
-- [ ] Split cells
+- [x] Split cells
 
 Requirements:
 
@@ -408,13 +415,13 @@ Postponed (MVP-first) — Math V2/V3:
 Current:
 
 - [x] Basic block clipboard
+- [x] Table clipboard (cell / row / column copy-paste, see Phase 4)
+- [x] External paste support (OS clipboard grid import into selected cells, e.g. from Excel)
 
 Future:
 
 - [ ] Cross-slide copy/paste
-- [ ] Table clipboard
 - [ ] Multi-block clipboard
-- [ ] External paste support
 
 ---
 

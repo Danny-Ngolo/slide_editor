@@ -10,6 +10,12 @@ export function htmlToPlainText(html = "") {
     .trim();
 }
 
+// The OS clipboard may rewrite line endings (CRLF) or append a trailing
+// newline; normalize both sides before comparing clipboard content.
+export function normalizeClipboardText(s) {
+  return (s || "").replace(/\r\n/g, "\n").trim();
+}
+
 function blockToPlainText(block) {
   switch (block.type) {
     case "divider":

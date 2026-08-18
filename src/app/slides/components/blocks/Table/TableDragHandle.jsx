@@ -8,6 +8,7 @@ const TableDragHandle = ({ listeners, attributes }) => {
       className="table-drag-handle"
       {...listeners}
       {...attributes}
+      onClick={(e) => e.stopPropagation()}
       type="button"
     >
       ⠿

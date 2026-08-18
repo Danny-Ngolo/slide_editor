@@ -57,11 +57,18 @@ export function useTableClipboard({ updateTable }) {
       maxRow + 1,
     );
 
-    setTableClipboard({ type: "cell", blockId, grid, columnWidths, rowHeights });
-
     const tsv = grid
       .map((row) => row.map((html) => htmlToPlainText(html)).join("\t"))
       .join("\n");
+
+    setTableClipboard({
+      type: "cell",
+      blockId,
+      grid,
+      columnWidths,
+      rowHeights,
+      plain: tsv,
+    });
 
     writeOsText(tsv);
   };
@@ -77,7 +84,14 @@ export function useTableClipboard({ updateTable }) {
     const rowHeights = [
       block.content.rowHeights?.[rowIndex] ?? MIN_ROW_HEIGHT,
     ];
-    setTableClipboard({ type: "row", blockId, htmlCells, columnWidths, rowHeights });
+    setTableClipboard({
+      type: "row",
+      blockId,
+      htmlCells,
+      columnWidths,
+      rowHeights,
+      plain: htmlCells.map((html) => htmlToPlainText(html)).join("\t"),
+    });
 
     writeOsText(htmlCells.map((html) => htmlToPlainText(html)).join("\t"));
   };
@@ -93,7 +107,14 @@ export function useTableClipboard({ updateTable }) {
       block.content.columnWidths?.[columnIndex] ?? MIN_COLUMN_WIDTH,
     ];
     const rowHeights = [...(block.content.rowHeights || [])];
-    setTableClipboard({ type: "column", blockId, htmlCells, columnWidths, rowHeights });
+    setTableClipboard({
+      type: "column",
+      blockId,
+      htmlCells,
+      columnWidths,
+      rowHeights,
+      plain: htmlCells.map((html) => htmlToPlainText(html)).join("\n"),
+    });
 
     writeOsText(htmlCells.map((html) => htmlToPlainText(html)).join("\n"));
   };

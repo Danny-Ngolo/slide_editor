@@ -76,8 +76,6 @@ export function useClipboard() {
   };
 
   const duplicateBlock = (slideId, blockId) => {
-    console.log("duplicating a block...");
-
     setSlides((prevSlides) => {
       return prevSlides.map((slide) => {
         if (slide.id !== slideId) return slide;
@@ -166,9 +164,7 @@ export function useClipboard() {
     }
 
     if (selectedSlides.length) {
-      const items = slides.filter((slide) =>
-        selectedSlides.includes(slide.id),
-      );
+      const items = slides.filter((slide) => selectedSlides.includes(slide.id));
 
       return items.length ? { kind: "slide", items } : null;
     }

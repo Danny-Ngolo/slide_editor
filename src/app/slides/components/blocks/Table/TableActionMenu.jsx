@@ -1,10 +1,12 @@
 "use client";
 
 import { Plus, Copy, Trash2, Headset, Combine, Split, ClipboardPaste, Eraser } from "lucide-react";
+import { useLayoutEffect, useState } from "react";
 
 import "./table.css";
 import { useTable } from "@/app/slides/hooks/useTable";
 import { useEditorContext } from "../../EditorContext";
+import { computeFixedMenuPosition } from "../../../utils/menuPosition";
 
 const TableActionMenu = ({ tableMenu, closeMenu }) => {
   const {
@@ -33,14 +35,36 @@ const TableActionMenu = ({ tableMenu, closeMenu }) => {
 
   const { blockId, slideId } = selectedBlock || {};
 
+  // Position the menu within the viewport, flipping above / clamping left when
+  // the anchor is near the bottom / right edge. The real menu size is measured
+  // on mount so the height matches the current menu type.
+  const [position, setPosition] = useState(() => ({
+    top: tableMenu?.anchor?.top ?? 0,
+    left: (tableMenu?.anchor?.right ?? tableMenu?.anchor?.left ?? 0) + 6,
+  }));
+
+  useLayoutEffect(() => {
+    const menu = tableMenuRef.current;
+    if (!menu) return;
+
+    setPosition(
+      computeFixedMenuPosition({
+        anchorTop: tableMenu?.anchor?.top ?? 0,
+        anchorLeft: tableMenu?.anchor?.left ?? tableMenu?.anchor?.right ?? 0,
+        menuWidth: menu.offsetWidth,
+        menuHeight: menu.offsetHeight,
+      }),
+    );
+  }, [tableMenu, tableMenuRef]);
+
   return (
     <div
       ref={tableMenuRef}
       className="table-action-menu"
       style={{
         position: "fixed",
-        left: (tableMenu?.anchor?.right ?? tableMenu?.anchor?.left ?? 0) + 6,
-        top: tableMenu?.anchor?.top ?? 0,
+        left: position.left,
+        top: position.top,
       }}
       onClick={(e) => e.stopPropagation()}
     >

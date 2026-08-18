@@ -648,3 +648,62 @@ at the cost of a temporarily missing feature.
 * teachers cannot turn a math/code block into another type in the MVP
 * when re-enabled, each complex block needs a content-mapping path and round-trip verification
   (transform out and transform back must be lossless enough for teaching content)
+
+---
+
+# ADR-017: The OS Clipboard Is the Source of Truth for Paste
+
+**Status:** Accepted
+
+## Context
+
+The editor keeps its own internal clipboard state: a persisted snapshot plus in-memory copies
+(`copiedBlocks`, `copiedSlides`, and the table's `tableClipboard`). Early versions treated those
+internal states as the paste source whenever they were non-empty, which silently overrode content a
+teacher had copied and edited in an external app (e.g. Excel): copy in the editor → paste into Excel →
+modify → copy from Excel → paste back into the editor would re-insert the *old* in-app copy. The table
+keyboard handler was the worst offender — it intercepted `Ctrl+V` inside a cell and pasted from the
+in-memory `tableClipboard` without ever consulting the OS clipboard.
+
+## Decision
+
+**Paste always treats the OS clipboard as the decision-maker.** All paste flows (block/slide paste in
+`useEditorPaste`, table paste through the registered table handler) use the same rule:
+
+- If the OS clipboard holds content that is **not** our own snapshot (comparison via
+  `normalizeClipboardText`), import the OS content — internal state must never clobber it.
+- The internal persisted/in-memory snapshot is used **only** when the OS text is empty (restricted
+  clipboard access) or normalizes to equal our own copy.
+
+Implementation details:
+
+- The table's `handleCellKeyDown` no longer intercepts `Ctrl+V`; the native `paste` event reaches the
+  global handler, which decides between the in-memory table clipboard and external grid import.
+- `tableClipboard` stores a `plain` representation of what was written to the OS at copy time so the
+  equality check is exact.
+- Copy is unchanged: copying always (re)writes the OS clipboard from app state.
+
+## Rationale
+
+- The OS clipboard is the user's single clipboard across apps; content in it is by definition what
+  they most recently copied. Prioritizing internal snapshots over it breaks the common
+  copy-into-Excel/edit/copy-back workflow and loses teacher data.
+- Reading `clipboardData` is only possible on the synchronous `paste` event (not `keydown`), which is
+  why the interception moved out of the keydown handler.
+
+## Consequences
+
+### Advantages
+
+* copy → external edit → paste-back works (grid import for tables, e.g. from Excel)
+* internal clipboard still works for same-session copy/paste, and survives refresh when the OS text
+  matches the snapshot
+* no data loss from a stale internal copy shadowing newer OS content
+
+### Trade-offs
+
+* in-app copy/paste relies on the OS clipboard round-tripping plain text (TSV for tables); on
+  platforms with restricted clipboard access the internal snapshot is the fallback only when no OS
+  text is present
+* the table paste path now flows through the native paste event, so paste must happen with a cell
+  selection (first-click select) rather than while editing a single cell (which stays native)

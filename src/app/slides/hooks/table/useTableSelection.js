@@ -2,12 +2,6 @@ import { useCallback } from "react";
 import { useEditorContext } from "../../components/EditorContext";
 import { getRangeSet } from "./tableUtils";
 
-// Last pointer type seen on a cell press. The contextmenu event is a MouseEvent
-// (no pointerType), but Android fires it on long-press — we use this to tell a
-// real right-click apart from a touch long-press so long-press can keep doing
-// native text selection instead of selecting the cell.
-let lastPointerType = "mouse";
-
 export function useTableSelection({ updateTable }) {
   const {
     selectionAnchor,
@@ -21,11 +15,24 @@ export function useTableSelection({ updateTable }) {
     focusEditor,
     setTableMenu,
     tableDragRef,
+    lastPointerTypeRef,
+    activeEditor,
+    setActiveEditor,
+    setShowSlashMenu,
   } = useEditorContext();
+
+  // Leave cell edit mode: blur the active editor's DOM and clear the toolbar /
+  // slash-menu state so a later paste targets the (focused) cell div instead of
+  // the contenteditable.
+  const exitCellEditing = useCallback(() => {
+    activeEditor?.view?.dom?.blur?.();
+    setActiveEditor(null);
+    setShowSlashMenu(false);
+  }, [activeEditor, setActiveEditor, setShowSlashMenu]);
 
   const handleCellMouseDown = (row, col, cellId, shiftKey = false, blockId, e) => {
     const pointerType = e?.pointerType || "mouse";
-    lastPointerType = pointerType;
+    lastPointerTypeRef.current = pointerType;
     // Shared drag state so the press cell, dragged-over cells and release cell
     // all agree on what happened during this drag.
     tableDragRef.current = {
@@ -36,21 +43,42 @@ export function useTableSelection({ updateTable }) {
     // A fresh pointer-down on a cell starts a new interaction: close any open
     // table menu (right-click/long-press/drag-release) so it doesn't linger.
     setTableMenu(null);
-    let anchor = selectionAnchor;
-    if (shiftKey && anchor) {
-      const newSet = getRangeSet(anchor, { row, col });
+
+    // Shift-click always extends the existing anchor range without entering
+    // edit mode — mirrors Excel.
+    if (shiftKey && selectionAnchor) {
+      const newSet = getRangeSet(selectionAnchor, { row, col });
       setSelectedCells(newSet);
-    } else {
-      anchor = { row, col };
-      setSelectionAnchor(anchor);
-      // A fresh pointer-down starts clean: clear any previous selection so it
-      // is deselected the moment we click/drag elsewhere. Only an actual drag
-      // crossing cells re-selects.
-      setSelectedCells(new Set());
+      setSelectionAnchor(selectionAnchor);
+      setIsSelecting(true);
+      setCellDragActive(false);
+      exitCellEditing();
+      return;
     }
+
+    const coord = `${row},${col}`;
+
+    // Second click on an already-selected single cell enters edit mode (Excel):
+    // drop the selection and focus that cell's editor.
+    if (!shiftKey && selectedCells.size === 1 && selectedCells.has(coord)) {
+      clearCellSelection();
+      if (cellId) focusEditor(cellId);
+      return;
+    }
+
+    // First click selects the single cell without focusing the editor.
+    setSelectionAnchor({ row, col });
+    setSelectedCells(new Set([coord]));
     setIsSelecting(true);
     setCellDragActive(false);
-    if (cellId) focusEditor(cellId);
+    // The pointerdown default would move focus into the cell's contenteditable
+    // and immediately start editing. Cancel it and focus the cell div instead
+    // (a div summons no mobile keyboard, and pasting still targets the table).
+    // Canceling pointerdown also suppresses the compatibility mouse events, so
+    // ProseMirror never gets a chance to focus its editor.
+    e?.preventDefault?.();
+    exitCellEditing();
+    e?.currentTarget?.focus?.({ preventScroll: true });
   };
 
   const handleCellMouseEnter = (row, col) => {
@@ -106,10 +134,11 @@ export function useTableSelection({ updateTable }) {
   const handleCellContextMenu = (e, blockId, rowIndex, columnIndex) => {
     // On touch, a long-press is the native gesture for text selection (Android
     // fires contextmenu on long-press). Let the browser keep it: no cell select,
-    // no menu, no preventDefault — the cell stays unselected until the drag
-    // actually crosses into a second cell. Right-click keeps the menu.
+    // no menu, no preventDefault. A tap already selects the cell (first click),
+    // so long-press keeps native text selection on top of it. Right-click keeps
+    // the menu.
     const isTouch =
-      lastPointerType === "touch" ||
+      lastPointerTypeRef.current === "touch" ||
       e?.pointerType === "touch" ||
       e?.sourceCapabilities?.firesTouchEvents;
     if (isTouch) return;

@@ -34,6 +34,8 @@ th {
   flex-direction: column;
   gap: 4px;
   min-width: 190px;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
   padding: 6px;
   border-radius: 8px;
   background: white;
@@ -74,6 +76,15 @@ th {
   font-weight: 600;
   background: #b6c1ce;
   color: #235;
+}
+
+/* Selection must win over the header background even when a cell is both a
+   header and selected (the generic .selected-* rules come earlier / tie on
+   specificity, so a header cell used to hide its selection highlight). */
+.table-block .selected-row td,
+.table-block .selected-column,
+.table-block .selected-cell {
+  background: #dbeafe99;
 }
 
 .table-cell {

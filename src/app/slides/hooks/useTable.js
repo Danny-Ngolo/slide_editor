@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useEditorContext } from "../components/EditorContext";
 import { useHistory } from "./useHistory";
+import { normalizeClipboardText } from "../utils/clipboardFormat";
 import {
   MIN_COLUMN_WIDTH,
   MIN_ROW_HEIGHT,
@@ -46,17 +47,41 @@ export function useTable() {
 
   // Expose the OS-clipboard grid import to the global paste handler. Registered
   // per active table block; the handler itself is generic over slide/block ids.
+  // The in-memory clipboard only wins when the OS clipboard holds no text, or
+  // text that matches our own copy — otherwise the OS clipboard holds external
+  // content (e.g. modified Excel data) and must be imported as a grid instead.
   useEffect(() => {
     registerTablePasteHandler(({ blockId, targetRow, targetCol, text }) => {
       const slideId = findSlideByBlockId(slides, blockId)?.id;
 
-      if (slideId) {
-        clipboard.pasteTextGrid(slideId, blockId, targetRow, targetCol, text);
+      if (!slideId) return;
+
+      const osText = text || "";
+      const internalPlain = tableClipboard?.plain;
+
+      const useInternal =
+        internalPlain &&
+        (!osText ||
+          normalizeClipboardText(osText) === normalizeClipboardText(internalPlain));
+
+      if (useInternal) {
+        if (tableClipboard.type === "row") {
+          clipboard.pasteRow(slideId, blockId, targetRow);
+        } else if (tableClipboard.type === "column") {
+          clipboard.pasteColumn(slideId, blockId, targetCol);
+        } else {
+          clipboard.pasteCell(slideId, blockId, targetRow, targetCol);
+        }
+        return;
+      }
+
+      if (osText) {
+        clipboard.pasteTextGrid(slideId, blockId, targetRow, targetCol, osText);
       }
     });
 
     return () => registerTablePasteHandler(null);
-  }, [registerTablePasteHandler, clipboard, slides]);
+  }, [registerTablePasteHandler, clipboard, slides, tableClipboard]);
 
   // Keyboard navigation and selection
   const handleCellKeyDown = (e, row, col, block) => {
@@ -78,24 +103,9 @@ export function useTable() {
       if (slideId) clipboard.copyCell(slideId, block.id);
       return;
     }
-    if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "v") {
-      if (!slideId || !tableClipboard) {
-        // Nothing in the in-memory clipboard: let the native paste event fire
-        // so the global paste handler can import text/plain (e.g. from Excel).
-        return;
-      }
-
-      e.preventDefault();
-      e.stopPropagation();
-      if (tableClipboard.type === "row") {
-        clipboard.pasteRow(slideId, block.id, row);
-      } else if (tableClipboard.type === "column") {
-        clipboard.pasteColumn(slideId, block.id, col);
-      } else {
-        clipboard.pasteCell(slideId, block.id, row, col);
-      }
-      return;
-    }
+    // Ctrl+V is intentionally NOT handled here: letting the native paste event
+    // fire lets the global paste handler import text/plain (e.g. from Excel)
+    // and decide between the in-memory clipboard and external content.
     if (
       !e.shiftKey &&
       (e.key === "ArrowRight" ||

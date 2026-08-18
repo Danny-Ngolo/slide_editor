@@ -67,6 +67,12 @@ const EditorProvider = ({ children }) => {
   // the press cell, the dragged-over cells, and the release cell would disagree).
   const tableDragRef = useRef(null);
 
+  // Pointer type of the most recent cell press. The contextmenu event is a
+  // MouseEvent (no pointerType), but Android fires it on long-press — we use
+  // this to tell a real right-click apart from a touch long-press so long-press
+  // can keep doing native text selection. Shared across table instances.
+  const lastPointerTypeRef = useRef("mouse");
+
   const [tableMenu, setTableMenu] = useState(null);
 
   const tableMenuRef = useRef(null);
@@ -169,6 +175,7 @@ const EditorProvider = ({ children }) => {
         cellDragActive,
         setCellDragActive,
         tableDragRef,
+        lastPointerTypeRef,
 
         tableMenu,
         setTableMenu,
