@@ -2,9 +2,11 @@ import { useCallback } from "react";
 import { useEditorContext } from "../components/EditorContext";
 import { cloneBlock } from "../utils/cloneBlock";
 import { cloneSlide } from "../utils/cloneSlide";
-import { generateId } from "../utils/generateId";
+import { serializeClipboard, persistClipboard } from "../utils/clipboardFormat";
+import { writeOsClipboardData } from "../utils/osClipboard";
 import { useHistory } from "./useHistory";
 import { useSlides } from "./useSlides";
+import { generateId } from "../utils/generateId";
 
 export function useClipboard() {
   const {
@@ -23,6 +25,14 @@ export function useClipboard() {
   const { setSlides, slidesHistory } = useHistory();
   const slides = slidesHistory.present;
 
+  const writeOsClipboard = useCallback((kind, items) => {
+    if (!items?.length) return;
+
+    const { json, plain } = serializeClipboard(kind, items);
+    writeOsClipboardData({ json, plain });
+    persistClipboard(json);
+  }, []);
+
   const copyBlock = (slideId, blockId) => {
     const slide = slides.find((slide) => slide.id === slideId);
 
@@ -33,6 +43,7 @@ export function useClipboard() {
     if (!block) return;
 
     setCopiedBlock(cloneBlock(block));
+    writeOsClipboard("block", [block]);
   };
 
   const pasteBlock = (slideId, targetBlockId) => {
@@ -132,28 +143,69 @@ export function useClipboard() {
     });
 
     setCopiedBlocks(blocksToCopy);
-  }, [slides, selectedBlocks, setCopiedBlocks]);
+    writeOsClipboard("block", blocksToCopy);
+  }, [slides, selectedBlocks, setCopiedBlocks, writeOsClipboard]);
+
+  const getSelectedCopyData = useCallback(() => {
+    if (selectedBlocks.length) {
+      const items = [];
+
+      slides.forEach((slide) => {
+        slide.blocks.forEach((block) => {
+          if (
+            selectedBlocks.some(
+              (s) => s.slideId === slide.id && s.blockId === block.id,
+            )
+          ) {
+            items.push(block);
+          }
+        });
+      });
+
+      return items.length ? { kind: "block", items } : null;
+    }
+
+    if (selectedSlides.length) {
+      const items = slides.filter((slide) =>
+        selectedSlides.includes(slide.id),
+      );
+
+      return items.length ? { kind: "slide", items } : null;
+    }
+
+    return null;
+  }, [slides, selectedBlocks, selectedSlides]);
+
+  const pasteBlocksFrom = useCallback(
+    (items) => {
+      if (!items?.length || !recordedActiveSlideId) return;
+
+      const copies = items.map((block) => cloneBlock(block));
+
+      setSlides((prev) =>
+        prev.map((slide) => {
+          if (slide.id !== recordedActiveSlideId) return slide;
+
+          return {
+            ...slide,
+            blocks: [...slide.blocks, ...copies],
+          };
+        }),
+      );
+
+      setSelectedBlocks(
+        copies.map((copy) => ({
+          slideId: recordedActiveSlideId,
+          blockId: copy.id,
+        })),
+      );
+    },
+    [recordedActiveSlideId, setSlides, setSelectedBlocks],
+  );
 
   const pasteBlocks = useCallback(() => {
-    if (copiedBlocks.length === 0) return;
-
-    setSlides((prev) =>
-      prev.map((slide) => {
-        if (slide.id !== recordedActiveSlideId) return slide;
-
-        return {
-          ...slide,
-          blocks: [
-            ...slide.blocks,
-            ...copiedBlocks.map((block) => ({
-              ...cloneBlock(block),
-              id: generateId(),
-            })),
-          ],
-        };
-      }),
-    );
-  }, [copiedBlocks, recordedActiveSlideId, setSlides]);
+    pasteBlocksFrom(copiedBlocks);
+  }, [copiedBlocks, pasteBlocksFrom]);
 
   const duplicateSelectedBlocks = useCallback(() => {
     const blocksToDuplicate = [];
@@ -196,25 +248,37 @@ export function useClipboard() {
       .map((slide) => cloneSlide(slide, { asCopy: false }));
 
     setCopiedSlides(slidesToCopy);
-  }, [slides, selectedSlides, setCopiedSlides]);
+    writeOsClipboard("slide", slidesToCopy);
+  }, [slides, selectedSlides, setCopiedSlides, writeOsClipboard]);
+
+  const pasteSlidesFrom = useCallback(
+    (items) => {
+      if (!items?.length) return;
+
+      const copies = items.map((slide) => cloneSlide(slide));
+
+      setSlides((prev) => {
+        const anchorIndex = prev.findIndex(
+          (slide) => slide.id === recordedActiveSlideId,
+        );
+
+        const insertIndex = anchorIndex === -1 ? prev.length : anchorIndex + 1;
+        const updated = [...prev];
+
+        updated.splice(insertIndex, 0, ...copies);
+
+        return updated;
+      });
+
+      setSelectedSlides(copies.map((slide) => slide.id));
+      setActiveSlideId(copies[copies.length - 1].id);
+    },
+    [recordedActiveSlideId, setSlides, setSelectedSlides, setActiveSlideId],
+  );
 
   const pasteSlides = useCallback(() => {
-    if (copiedSlides.length === 0) return;
-
-    setSlides((prev) => {
-      const anchorIndex = prev.findIndex(
-        (slide) => slide.id === recordedActiveSlideId,
-      );
-
-      const insertIndex = anchorIndex === -1 ? prev.length : anchorIndex + 1;
-      const copies = copiedSlides.map((slide) => cloneSlide(slide));
-      const updated = [...prev];
-
-      updated.splice(insertIndex, 0, ...copies);
-
-      return updated;
-    });
-  }, [copiedSlides, recordedActiveSlideId, setSlides]);
+    pasteSlidesFrom(copiedSlides);
+  }, [copiedSlides, pasteSlidesFrom]);
 
   const duplicateSelectedSlides = useCallback(() => {
     if (selectedSlides.length === 0) return;
@@ -269,6 +333,7 @@ export function useClipboard() {
     if (!slide) return;
 
     setCopiedSlides([cloneSlide(slide, { asCopy: false })]);
+    writeOsClipboard("slide", [slide]);
   };
 
   const pasteSlide = (slideId) => {
@@ -316,12 +381,15 @@ export function useClipboard() {
     deleteSelectedBlocks,
     copySelectedBlocks,
     duplicateSelectedBlocks,
+    getSelectedCopyData,
     pasteBlocks,
+    pasteBlocksFrom,
     copySlide,
     pasteSlide,
     duplicateSlide,
     copySelectedSlides,
     pasteSlides,
+    pasteSlidesFrom,
     duplicateSelectedSlides,
     deleteSelectedSlides,
   };

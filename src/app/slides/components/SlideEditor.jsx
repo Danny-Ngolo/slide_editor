@@ -24,6 +24,7 @@ import lessonService from "@/services/lessonService";
 import { useSlides } from "../hooks/useSlides";
 import { useHistory } from "../hooks/useHistory";
 import { useEditorKeyboard } from "../hooks/useEditorKeyboard";
+import { useEditorPaste } from "../hooks/useEditorPaste";
 import {
   AlertCircle,
   Check,
@@ -51,6 +52,7 @@ const SlideEditor = ({ lessonId }) => {
   } = useSlides();
   const { setSlides, slidesHistory } = useHistory();
   const { handleKeyDown } = useEditorKeyboard();
+  useEditorPaste();
 
   const slides = useMemo(() => slidesHistory?.present || [], [slidesHistory]);
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useEditorContext } from "../components/EditorContext";
 import { useHistory } from "./useHistory";
 import {
@@ -25,6 +26,7 @@ export function useTable() {
     tableClipboard,
     focusEditor,
     isSelecting,
+    registerTablePasteHandler,
   } = useEditorContext();
   const { slidesHistory } = useHistory();
   const slides = slidesHistory.present;
@@ -41,6 +43,20 @@ export function useTable() {
     clearTableSelection: structure.clearTableSelection,
     clearCellSelection: selection.clearCellSelection,
   });
+
+  // Expose the OS-clipboard grid import to the global paste handler. Registered
+  // per active table block; the handler itself is generic over slide/block ids.
+  useEffect(() => {
+    registerTablePasteHandler(({ blockId, targetRow, targetCol, text }) => {
+      const slideId = findSlideByBlockId(slides, blockId)?.id;
+
+      if (slideId) {
+        clipboard.pasteTextGrid(slideId, blockId, targetRow, targetCol, text);
+      }
+    });
+
+    return () => registerTablePasteHandler(null);
+  }, [registerTablePasteHandler, clipboard, slides]);
 
   // Keyboard navigation and selection
   const handleCellKeyDown = (e, row, col, block) => {
@@ -63,9 +79,14 @@ export function useTable() {
       return;
     }
     if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "v") {
+      if (!slideId || !tableClipboard) {
+        // Nothing in the in-memory clipboard: let the native paste event fire
+        // so the global paste handler can import text/plain (e.g. from Excel).
+        return;
+      }
+
       e.preventDefault();
       e.stopPropagation();
-      if (!slideId || !tableClipboard) return;
       if (tableClipboard.type === "row") {
         clipboard.pasteRow(slideId, block.id, row);
       } else if (tableClipboard.type === "column") {

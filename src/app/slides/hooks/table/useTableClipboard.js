@@ -1,5 +1,11 @@
 import { useEditorContext } from "../../components/EditorContext";
 import { generateId } from "../../utils/generateId";
+import {
+  htmlToPlainText,
+  parseTsvToGrid,
+  textToCellHtml,
+} from "../../utils/clipboardFormat";
+import { writeOsText } from "../../utils/osClipboard";
 import { useHistory } from "../useHistory";
 import {
   MIN_COLUMN_WIDTH,
@@ -52,6 +58,12 @@ export function useTableClipboard({ updateTable }) {
     );
 
     setTableClipboard({ type: "cell", blockId, grid, columnWidths, rowHeights });
+
+    const tsv = grid
+      .map((row) => row.map((html) => htmlToPlainText(html)).join("\t"))
+      .join("\n");
+
+    writeOsText(tsv);
   };
 
   const copyRow = (slideId, blockId, rowIndex) => {
@@ -66,6 +78,8 @@ export function useTableClipboard({ updateTable }) {
       block.content.rowHeights?.[rowIndex] ?? MIN_ROW_HEIGHT,
     ];
     setTableClipboard({ type: "row", blockId, htmlCells, columnWidths, rowHeights });
+
+    writeOsText(htmlCells.map((html) => htmlToPlainText(html)).join("\t"));
   };
 
   const copyColumn = (slideId, blockId, columnIndex) => {
@@ -80,10 +94,11 @@ export function useTableClipboard({ updateTable }) {
     ];
     const rowHeights = [...(block.content.rowHeights || [])];
     setTableClipboard({ type: "column", blockId, htmlCells, columnWidths, rowHeights });
+
+    writeOsText(htmlCells.map((html) => htmlToPlainText(html)).join("\n"));
   };
 
-  const pasteCell = (slideId, blockId, targetRow, targetCol) => {
-    const grid = clipboardGrid(tableClipboard);
+  const pasteGridIntoTable = (slideId, blockId, targetRow, targetCol, grid, widths = [], heights = []) => {
     if (!grid.length) return;
     const block = findBlock(slides, slideId, blockId);
     if (!block) return;
@@ -132,10 +147,10 @@ export function useTableClipboard({ updateTable }) {
         const rowHeights = b.content.rowHeights ? [...b.content.rowHeights] : [];
         while (rowHeights.length < requiredRows) rowHeights.push(MIN_ROW_HEIGHT);
 
-        (tableClipboard.columnWidths || []).forEach((width, dc) => {
+        widths.forEach((width, dc) => {
           columnWidths[targetCol + dc] = width;
         });
-        (tableClipboard.rowHeights || []).forEach((height, dr) => {
+        heights.forEach((height, dr) => {
           rowHeights[targetRow + dr] = height;
         });
 
@@ -146,6 +161,33 @@ export function useTableClipboard({ updateTable }) {
       },
       { recordHistory: true },
     );
+  };
+
+  const pasteCell = (slideId, blockId, targetRow, targetCol) => {
+    const grid = clipboardGrid(tableClipboard);
+    if (!grid.length) return;
+
+    pasteGridIntoTable(
+      slideId,
+      blockId,
+      targetRow,
+      targetCol,
+      grid,
+      tableClipboard.columnWidths || [],
+      tableClipboard.rowHeights || [],
+    );
+  };
+
+  const pasteTextGrid = (slideId, blockId, targetRow, targetCol, text) => {
+    if (!text) return;
+
+    const grid = parseTsvToGrid(text).map((row) =>
+      row.map((cell) => textToCellHtml(cell)),
+    );
+
+    if (!grid.length) return;
+
+    pasteGridIntoTable(slideId, blockId, targetRow, targetCol, grid);
   };
 
   const pasteRow = (slideId, blockId, targetRow) => {
@@ -260,5 +302,6 @@ export function useTableClipboard({ updateTable }) {
     pasteCell,
     pasteRow,
     pasteColumn,
+    pasteTextGrid,
   };
 }

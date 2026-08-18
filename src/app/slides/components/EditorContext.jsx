@@ -71,6 +71,14 @@ const EditorProvider = ({ children }) => {
 
   const tableMenuRef = useRef(null);
 
+  // Registered by the active table block so the global paste handler can import
+  // OS clipboard text (e.g. from Excel) as a cell grid.
+  const tablePasteHandlerRef = useRef(null);
+
+  const registerTablePasteHandler = useCallback((fn) => {
+    tablePasteHandlerRef.current = fn;
+  }, []);
+
   // Internal table clipboard — holds a snapshot of copied cells/rows/columns.
   // Single owner so copy/paste works across any component and keyboard handler.
   const [tableClipboard, setTableClipboard] = useState(null);
@@ -165,6 +173,9 @@ const EditorProvider = ({ children }) => {
         tableMenu,
         setTableMenu,
         tableMenuRef,
+
+        tablePasteHandlerRef,
+        registerTablePasteHandler,
 
         tableResizeState,
         setTableResizeState,

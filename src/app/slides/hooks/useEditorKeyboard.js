@@ -19,11 +19,7 @@ export function useEditorKeyboard() {
   const { slidesHistory } = useHistory();
   const {
     deleteSelectedBlocks,
-    copySelectedBlocks,
     duplicateSelectedBlocks,
-    pasteBlocks,
-    copySelectedSlides,
-    pasteSlides,
     duplicateSelectedSlides,
     deleteSelectedSlides,
     duplicateSlide,
@@ -232,14 +228,6 @@ export function useEditorKeyboard() {
         deleteSelectedBlocks();
       }
 
-      if (e.ctrlKey && key === "c") {
-        copySelectedBlocks();
-      }
-
-      if (e.ctrlKey && key === "v") {
-        pasteBlocks();
-      }
-
       if (e.ctrlKey && key === "d") {
         e.preventDefault();
         duplicateSelectedBlocks();
@@ -249,14 +237,6 @@ export function useEditorKeyboard() {
     if (selectedSlides.length) {
       if (key === "delete") {
         deleteSelectedSlides();
-      }
-
-      if (e.ctrlKey && key === "c") {
-        copySelectedSlides();
-      }
-
-      if (e.ctrlKey && key === "v") {
-        pasteSlides();
       }
 
       if (e.ctrlKey && key === "d") {
