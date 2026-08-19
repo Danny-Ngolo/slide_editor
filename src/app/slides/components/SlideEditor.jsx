@@ -28,12 +28,14 @@ import { useEditorPaste } from "../hooks/useEditorPaste";
 import {
   AlertCircle,
   Check,
+  Eye,
   Loader2,
   PanelLeft,
   PanelRight,
   Save as SaveIcon,
 } from "lucide-react";
 import { COLORS, RADIUS, SHADOWS } from "./blocks/shared/styles";
+import TeacherPreview from "@/app/presentation/components/TeacherPreview";
 
 const SlideEditor = ({ lessonId }) => {
   const [isDataAlreadyFetched, setIsDataAlreadyFetched] = useState(false);
@@ -60,6 +62,7 @@ const SlideEditor = ({ lessonId }) => {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [activeDragType, setActiveDragType] = useState(null);
   const [activeDragGroup, setActiveDragGroup] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleSave = useCallback(async () => {
     try {
@@ -86,13 +89,22 @@ const SlideEditor = ({ lessonId }) => {
     await handleSave();
   };
 
+  const editorKeyHandler = useCallback(
+    (e) => {
+      if (showPreview) return;
+
+      handleKeyDown(e);
+    },
+    [handleKeyDown, showPreview],
+  );
+
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", editorKeyHandler);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", editorKeyHandler);
     };
-  }, [handleKeyDown]);
+  }, [editorKeyHandler]);
 
   // Auto-hide the sidebar on narrow screens (still reopenable via the toggle).
   useEffect(() => {
@@ -348,6 +360,37 @@ const SlideEditor = ({ lessonId }) => {
           {sidebarVisible ? <PanelLeft size={16} /> : <PanelRight size={16} />}
         </button>
 
+        <button
+          type="button"
+          onClick={() => setShowPreview(true)}
+          aria-label="Preview lesson"
+          title="Preview lesson"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+            padding: "8px 12px",
+            border: `1px solid ${COLORS.border}`,
+            borderRadius: RADIUS.md,
+            background: COLORS.card,
+            color: COLORS.text,
+            cursor: "pointer",
+            boxShadow: "0 1px 2px rgba(16,24,40,0.06)",
+          }}
+        >
+          <Eye size={16} />
+          <span
+            style={{
+              fontSize: "13px",
+              fontWeight: 600,
+              color: COLORS.label,
+            }}
+          >
+            Preview
+          </span>
+        </button>
+
         <span
           style={{
             fontSize: "14px",
@@ -505,6 +548,14 @@ const SlideEditor = ({ lessonId }) => {
               ? "Error"
               : "Save"}
       </button>
+
+      {showPreview && (
+        <TeacherPreview
+          slides={slides}
+          lessonTitle={currentLesson?.title}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
     </div>
   ) : (
     <p>No Lesson is available!</p>
