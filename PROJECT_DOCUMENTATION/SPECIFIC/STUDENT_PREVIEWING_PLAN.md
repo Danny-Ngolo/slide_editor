@@ -2,7 +2,7 @@
 
 **Project:** VipiClass  
 **Area:** Slide Editor / Student Previewing / Presentation Rendering  
-**Status:** Implementation — plan Phases 1–5 shipped 2026-08 (branch `feature/student-presentation`); Phases 6–8 (teacher preview, VipiClass integration, PDF) pending.
+**Status:** Implementation — plan Phases 1–6 shipped 2026-08 (teacher preview included); Phases 7–8 (VipiClass integration, PDF) pending.
 **Document purpose:** Define the rendering architecture and implementation boundaries before development begins.
 
 ---
@@ -1144,11 +1144,13 @@ Where integration is not yet available, use clearly defined interfaces/mocks rat
 
 ---
 
-## Phase 6 — Teacher Preview
+## Phase 6 — Teacher Preview ✅
 
 Connect the same presentation rendering primitives to a teacher preview mode.
 
 The preview should demonstrate the student-facing appearance without exposing authoring controls inside the presentation itself.
+
+**Status 2026-08 — shipped.** `TeacherPreview` (`src/app/presentation/components/TeacherPreview.jsx`) renders the editor's live slides in a full-screen overlay, reusing `SlideRenderer`, `BlockRouter`, `PresentationNavigation`, and `presentation.css` so the teacher sees exactly what students see. It adds a "Preview" badge, lesson title, slide counter/nav, Arrow/Escape keyboard handling, and an Exit button, while the editor's own keyboard shortcuts are suppressed while the overlay is open. Teacher-only chrome lives in the preview wrapper — outside the student renderer tree. Opened from the "Preview" button in the `SlideEditor` header.
 
 ---
 
@@ -1180,11 +1182,12 @@ Do not make the student renderer responsible for PDF generation.
 
 # 28. Definition of Done
 
-> **Status 2026-08 — plan Phases 1–5 shipped.** The initial student-facing presentation (rendering
-> foundation, all block renderers, presentation shell/navigation, and the exercise/quiz interaction
-> layer) landed on branch `feature/student-presentation` at `/presentation`, rendering bundled demo
-> data that mirrors the persisted slide/block model. The checklist below reflects that shipped scope.
-> Plan Phase 6 (teacher preview), Phase 7 (VipiClass integration) and Phase 8 (PDF) remain.
+> **Status 2026-08 — plan Phases 1–6 shipped.** The student-facing presentation (rendering
+> foundation, all block renderers, presentation shell/navigation, the exercise/quiz interaction
+> layer, and the teacher preview mode) shipped at `/presentation` (student) and via the editor's
+> "Preview" button (teacher), rendering data that mirrors the persisted slide/block model. The
+> checklist below reflects that shipped scope. Plan Phase 7 (VipiClass integration) and Phase 8
+> (PDF) remain.
 
 The Student Presentation phase is considered complete when:
 

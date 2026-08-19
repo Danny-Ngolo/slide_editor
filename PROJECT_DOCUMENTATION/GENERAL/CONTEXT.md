@@ -200,17 +200,20 @@ Most ongoing work focuses on completing the remaining Phase 6 educational blocks
 > Phase 9 (student-facing rendering) shipped** via the new Student Presentation layer (see below);
 > edge-case testing is in progress and UX polish is planned next.
 >
-> **2026-08 — Student Previewing & Presentation Rendering shipped.** The initial student-facing
-> rendering phase (Phases 1–5 of `STUDENT_PREVIEWING_PLAN.md`) is complete (branch
-> `feature/student-presentation`): a `/presentation` route renders persisted slide/block data
+> **2026-08 — Student Previewing & Presentation Rendering shipped.** The student-facing rendering
+> phase (Phases 1–5 of `STUDENT_PREVIEWING_PLAN.md`) is complete and merged to `main`: a
+> `/presentation` route renders persisted slide/block data
 > (bundled demo data for now) through a dedicated, editor-free renderer tree
 > (`PresentationShell` → `SlideRenderer` → `BlockRouter` → per-block renderers). All block types
 > render — text, callout, youtube, image, divider, table, exercise, quiz, math, code — with graceful
 > fallbacks for unknown/empty/malformed content and no mutation of persisted data. Student interaction
 > (exercise answers, quiz selection, hint toggles) is local-only; no grading, submission, or
 > persistence. Security: centralized DOMPurify sanitization for all student-facing rich HTML,
-> escaped/static code rendering, safe link handling (ADR-018). Remaining plan phases: teacher preview
-> (6), VipiClass integration (7), and PDF/export (8).
+> escaped/static code rendering, safe link handling (ADR-018). The teacher preview mode (plan Phase
+> 6) shipped in the same pass: a "Preview" button in the Slide Editor opens a full-screen overlay
+> that renders the live slides through the same presentation primitives, with teacher-only chrome
+> (badge, exit) kept outside the student renderer tree. Remaining plan phases: VipiClass integration
+> (7) and PDF/export (8).
 >
 > **2026-08 — Table editor experience pass shipped (Phase 7 scope, closes Phase 4 gaps).**
 > Excel-style table editing: first click selects a cell, second click enters its editor, Shift-click

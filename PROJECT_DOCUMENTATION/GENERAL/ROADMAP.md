@@ -428,14 +428,18 @@ Future:
 # Phase 8 — Student Previewing & Presentation Rendering ✅
 
 > **2026-08 — Student Presentation layer shipped.** The initial student-facing rendering phase
-> (Phases 1–5 of `STUDENT_PREVIEWING_PLAN.md`) is complete and shipped on branch
-> `feature/student-presentation`. A new `/presentation` route renders persisted slide/block data
+> (Phases 1–5 of `STUDENT_PREVIEWING_PLAN.md`) is complete and merged to `main`. A new `/presentation` route renders persisted slide/block data
 > (bundled demo data for now — no API/persistence wiring yet) through a dedicated, editor-free
 > renderer tree: `PresentationShell` → `SlideRenderer` → `BlockRouter` → per-block renderers. All
 > existing block types render (text, callout, youtube, image, divider, table, exercise, quiz, math,
 > code); unknown/empty/malformed blocks fail gracefully without mutating data. Student interaction is
 > local-only (exercise answers, quiz selection, hint toggles) — no grading, no submission, no
 > persistence. See ADR-018.
+>
+> In the same pass, plan Phase 6 (teacher preview) shipped: a "Preview" button in the Slide Editor
+> opens a full-screen overlay (`TeacherPreview`) that renders the live, unsaved slides through the
+> same presentation primitives — identical student appearance, with teacher-only chrome (preview
+> badge, exit button) kept outside the student renderer tree.
 
 ## Presentation Shell & Navigation
 
@@ -458,9 +462,16 @@ Future:
 - [x] No arbitrary code execution; code rendered escaped/static
 - [x] Safe link handling in shared resources
 
-## Deferred (plan Phases 6–8)
+## Teacher Preview (plan Phase 6) ✅
 
-- [ ] Teacher preview mode (plan Phase 6)
+- [x] Full-screen preview overlay reusing the same presentation primitives (`SlideRenderer`, `BlockRouter`, `PresentationNavigation`, `presentation.css`)
+- [x] Renders the editor's live slides (current, unsaved state)
+- [x] No authoring controls inside the preview; teacher-only chrome kept outside the student renderer tree
+- [x] Arrow-key navigation + Escape exit; editor shortcuts suppressed while open
+- [x] Opened via "Preview" button in the Slide Editor header
+
+## Deferred (plan Phases 7–8)
+
 - [ ] VipiClass integration: persisted lessons, identity, permissions, progress, submissions (plan Phase 7)
 - [ ] PDF / export rendering (plan Phase 8)
 
@@ -619,10 +630,10 @@ Optimization
 
 # Current Priority Order
 
-> **Next:** **Teacher Preview** (plan Phase 6) and then **VipiClass integration** (plan Phase 7) of the
-> Student Presentation layer. The initial student-facing rendering (plan Phases 1–5) shipped 2026-08
-> (Phase 8 above); the CodeBlock still needs UX polish (CODE_BLOCK_PLAN Phase 11), and math V2/V3
-> remains postponed to serve the MVP first.
+> **Next:** **VipiClass integration** (plan Phase 7) of the Student Presentation layer. The
+> student-facing rendering (plan Phases 1–5) and the teacher preview mode (plan Phase 6) shipped
+> 2026-08 (Phase 8 above); the CodeBlock still needs UX polish (CODE_BLOCK_PLAN Phase 11), and math
+> V2/V3 remains postponed to serve the MVP first.
 
 ## Immediate
 
