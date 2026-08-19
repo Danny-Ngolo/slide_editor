@@ -222,7 +222,7 @@ Every mathematical expression is stored as a **LaTeX string**. No rendered HTML 
 
 - portable and versionable;
 - directly editable;
-- AI-friendly (LLMs emit/parse LaTeX natively — relevant for Phase 9);
+- AI-friendly (LLMs emit/parse LaTeX natively — relevant for Phase 10);
 - PDF/export-friendly (KaTeX HTML for web, TeX/LaTeX for print);
 - supported by both KaTeX and MathJax, so the renderer can change without migration;
 - plain string inside JSON → autosave, clipboard, duplicate, history all work unchanged.
@@ -497,7 +497,7 @@ Mirrors `MATH_BLOCK_PLAN.md` V1→V3 while following the project's progressive p
 
 ### M5 — Platform integration ⬜ POSTPONED (MVP-first)
 - SSR KaTeX rendering for export/PDF and read-only lesson view.
-- AI-generated formulas harness (Phase 9) producing canonical LaTeX.
+- AI-generated formulas harness (Phase 10) producing canonical LaTeX.
 - Evaluate MathLive as an optional visual authoring surface; graph plotting later (non-goal now).
 
 ---
@@ -1309,7 +1309,7 @@ reuses the **exact same** components and engines:
 - Quiz prompts, option labels, and explanations;
 - Exams, assignments, and flashcards;
 - inline mathematical editors inside prose;
-- AI-generated formulas (Phase 9) producing canonical LaTeX;
+- AI-generated formulas (Phase 10) producing canonical LaTeX;
 - read-only renderers in student-facing views and PDF/SSR exports.
 
 Each of those consumers uses the engine directly and writes through *its own* functional update

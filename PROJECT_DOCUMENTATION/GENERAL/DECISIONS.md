@@ -707,3 +707,64 @@ Implementation details:
   text is present
 * the table paste path now flows through the native paste event, so paste must happen with a cell
   selection (first-click select) rather than while editing a single cell (which stays native)
+
+---
+
+# ADR-018: Student Presentation Layer Renders Persisted Data, Editor-Free
+
+**Status:** Accepted
+
+## Context
+
+The teacher-side Slide Editor is an authoring system. `STUDENT_PREVIEWING_PLAN.md` requires a
+student-facing presentation that consumes the **persisted structured slide/block data** — never
+editor state (refs, caret, selection, placeholders, editing mode) — shows no authoring controls, fails
+gracefully on empty/unknown/malformed content, and treats persisted content as untrusted data
+(sanitize rich HTML, never execute code). It must reuse existing infrastructure where appropriate
+(Math rendering, highlight.js, block normalizers) and stay minimal (plan §30).
+
+## Decision
+
+1. **Dedicated renderer tree** under `src/app/presentation/`, editor-free by construction:
+   `PresentationShell` → `SlideRenderer` → `BlockRouter` → one renderer per block type
+   (`Text`, `Callout`, `YouTube`, `Image`, `Divider`, `Table`, `Exercise`, `Quiz`, `Math`, `Code`,
+   plus an unknown-block fallback). No authoring component is reused in the renderer.
+2. **New client-only `/presentation` route** loaded with `next/dynamic({ ssr: false })`. DOMPurify is
+   a browser-only library, so the whole presentation subtree renders client-side.
+3. **Centralized sanitization**: one `sanitize` utility with a single DOMPurify allow-list
+   (`components/shared/sanitize.js`) wrapped in a `RichText` component; every student-facing rich-HTML
+   injection must pass through it. No per-renderer or ad-hoc sanitization.
+4. **Reuse only pure/state-free authoring-side infrastructure**: the KaTeX `MathRenderer`,
+   `highlightCode` + `LANGUAGE_OPTIONS` (highlight.js), `withDefaults` normalizers, and
+   `calloutTypes`. Everything editor-specific (toolbars, editors, placeholders) stays out.
+5. **Interaction boundary**: exercise answers, quiz selection, and hint toggles are local component
+   state only. No grading, submission, attempt limits, or persistence. Teacher-only fields
+   (`teacherNotes`, `isCorrect`, `modelAnswer`, `explanation`) are never rendered to students.
+6. **Phase wiring uses bundled demo data** (`demoData.js`) that mirrors persisted block shapes,
+   including legacy/edge-case content; no API, lesson IDs, or backend queries in this phase.
+
+## Rationale
+
+- Keeps the plan's central contract — the structured content model — as the single source both
+  consumers (editor and renderers) share, and keeps authoring/rendering from coupling.
+- Reuse-before-reinvention without forcing authoring components into the student renderer (plan §20).
+- A single sanitization point is easier to audit and trust than sanitizers scattered across renderers.
+- Client-only avoids a Node DOM shim (jsdom/isomorphic-dompurify) and keeps the heavier libs
+  (DOMPurify, KaTeX, highlight.js) out of the initial route chunk.
+
+## Consequences
+
+### Advantages
+
+* any persisted slide (legacy or new, valid or malformed) can be rendered without the editor open
+* teacher preview, student presentation, and future PDF export can share the same rendering primitives
+* one place to configure what rich HTML is allowed into the student view
+* existing teacher authoring is completely untouched
+
+### Trade-offs
+
+* `/presentation` emits no server-rendered HTML for its subtree (irrelevant for an interactive
+  student view; no SEO concern today, but a migration to `isomorphic-dompurify` would be needed if SSR
+  becomes a requirement)
+* until plan Phase 7, the route renders demo data rather than real persisted lessons
+* sanitizer, YouTube `videoId` guard, and safe-link rules must be kept in sync if block models change

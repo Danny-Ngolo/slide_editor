@@ -183,9 +183,9 @@ The editor has reached a stable architectural foundation.
 
 Most ongoing work focuses on completing the remaining Phase 6 educational blocks.
 
-> **2026-08 — Styling & mobile pass shipped (Phase 10 only touched).** A focused pass added touch
+> **2026-08 — Styling & mobile pass shipped (Phase 11 only touched).** A focused pass added touch
 > long-press multi-selection for slides and blocks, restored native long-press text selection inside
-> table cells, and replaced native `<select>`s with custom dropdowns. This touched Phase 10 (Mobile
+> table cells, and replaced native `<select>`s with custom dropdowns. This touched Phase 11 (Mobile
 > Experience) items without completing them; the roadmap will return to that phase later.
 >
 > **2026-08 — Math Block V1 shipped.** The Equation / Math Block V1 authoring is complete (source +
@@ -196,9 +196,21 @@ Most ongoing work focuses on completing the remaining Phase 6 educational blocks
 > 0–8 of `CODE_BLOCK_PLAN.md`): insertion via `+` menu / Insert-Menu-Between / slash menu, an overlay
 > code editor (line numbers, Tab/Shift+Tab indentation, `Ctrl+/` toggle comment for selected lines),
 > language selection (Plain text + 22 languages), highlight.js syntax highlighting, two-tier
-> history/autosave integration, and a copy button that copies the raw source. The remaining CodeBlock
-> phases (9–11: student-facing rendering, edge-case testing, UX polish) are deferred and will be
-> implemented when the VipiClass student/lesson rendering flow exists.
+> history/autosave integration, and a copy button that copies the raw source. **2026-08 — CodeBlock
+> Phase 9 (student-facing rendering) shipped** via the new Student Presentation layer (see below);
+> edge-case testing is in progress and UX polish is planned next.
+>
+> **2026-08 — Student Previewing & Presentation Rendering shipped.** The initial student-facing
+> rendering phase (Phases 1–5 of `STUDENT_PREVIEWING_PLAN.md`) is complete (branch
+> `feature/student-presentation`): a `/presentation` route renders persisted slide/block data
+> (bundled demo data for now) through a dedicated, editor-free renderer tree
+> (`PresentationShell` → `SlideRenderer` → `BlockRouter` → per-block renderers). All block types
+> render — text, callout, youtube, image, divider, table, exercise, quiz, math, code — with graceful
+> fallbacks for unknown/empty/malformed content and no mutation of persisted data. Student interaction
+> (exercise answers, quiz selection, hint toggles) is local-only; no grading, submission, or
+> persistence. Security: centralized DOMPurify sanitization for all student-facing rich HTML,
+> escaped/static code rendering, safe link handling (ADR-018). Remaining plan phases: teacher preview
+> (6), VipiClass integration (7), and PDF/export (8).
 >
 > **2026-08 — Table editor experience pass shipped (Phase 7 scope, closes Phase 4 gaps).**
 > Excel-style table editing: first click selects a cell, second click enters its editor, Shift-click

@@ -448,6 +448,6 @@ The current architecture intentionally prepares for capabilities including
 * reusable document editing
 * additional block types
 * cross-document clipboard
-* mobile editing (in progress — long-press multi-selection and touch text selection shipped 2026-08; Phase 10 roadmap items remain open)
+* mobile editing (in progress — long-press multi-selection and touch text selection shipped 2026-08; Phase 11 roadmap items remain open)
 
 These features should extend the existing architecture rather than replace it.

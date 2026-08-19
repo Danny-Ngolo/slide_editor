@@ -1,14 +1,16 @@
 ````md
 # CodeBlock — Design & Implementation Plan
 
-> Status: **Teacher-facing MVP shipped 2026-08** (Phases 0–8 complete).
+> Status: **Teacher-facing MVP shipped 2026-08** (Phases 0–8 complete). **Phase 9 (student-facing
+> rendering) shipped 2026-08** via the Student Presentation layer; Phase 10 in progress; Phase 11
+> (UX/styling polish) next.
 >
 > This is the reference plan for the CodeBlock. The teacher-facing authoring MVP is implemented and
 > shipped (Phases 0–8 in §27): data model, block integration, overlay code editing, language
-> selection, syntax highlighting, history/persistence, and copy. **Phases 9–11 are deferred** and will
-> be implemented when the VipiClass student/lesson rendering flow exists: Phase 9 (student-facing
-> rendering) depends on that flow, which is not built yet; Phase 10 (edge cases/integration testing)
-> and Phase 11 (UX polish) will follow once that rendering path is available.
+> selection, syntax highlighting, history/persistence, and copy. **Phase 9 (student-facing rendering)
+> shipped 2026-08** in the new Student Presentation layer (`src/app/presentation/.../CodeBlockRenderer`)
+> after the student/lesson rendering flow landed; Phase 10 (edge cases/integration testing) is in
+> progress and Phase 11 (UX polish) is planned next.
 
 ## 1. Purpose
 
@@ -758,9 +760,10 @@ Implementation should proceed incrementally.
 > numbers, Tab/Shift+Tab indentation, native undo/redo, `Ctrl+/` toggle comment for selected lines);
 > language selection (Plain text + 22 languages); highlight.js syntax highlighting (github theme);
 > two-tier history + autosave + clipboard/duplicate integration; copy button that copies the raw
-> source. **Phases 9–11 are deferred**: Phase 9 (student-facing rendering) will be implemented when
-> the VipiClass student/lesson rendering flow exists; Phase 10 (edge cases) and Phase 11 (UX polish)
-> will follow that phase.
+> source. **Phase 9 (student-facing rendering) shipped 2026-08** via the Student Presentation layer —
+> `src/app/presentation/components/blocks/CodeBlockRenderer.jsx` reuses the authoring-side
+> `highlightCode` / `LANGUAGE_OPTIONS` and adds student-facing copy; Phase 10 (edge cases) is in
+> progress and Phase 11 (UX polish) is planned next.
 
 ## Phase 0 — Understand the Existing Architecture ✅ done
 
@@ -939,7 +942,7 @@ Verify:
 
 ---
 
-## Phase 9 — Student-Facing Rendering ⏸ deferred (until student flow)
+## Phase 9 — Student-Facing Rendering ✅ done (2026-08)
 
 If the project already has a lesson/student rendering architecture, integrate CodeBlock there.
 
@@ -955,7 +958,7 @@ No editing controls should appear in the student view.
 
 ---
 
-## Phase 10 — Edge Cases and Integration Testing ⏸ deferred (after student flow)
+## Phase 10 — Edge Cases and Integration Testing 🚧 in progress
 
 Test at least:
 
@@ -997,7 +1000,7 @@ Test at least:
 
 ---
 
-## Phase 11 — UX and Styling Polish ⏸ deferred (after student flow)
+## Phase 11 — UX and Styling Polish ⏸ pending (next)
 
 Only after functionality is stable should the CodeBlock receive visual refinement.
 

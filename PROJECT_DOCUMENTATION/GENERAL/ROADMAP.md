@@ -284,7 +284,7 @@ Implementation:
 > **Back on track after a styling & mobile detour (2026-08).** A mobile/styling pass shipped as
 > commits `de25865` and `cfd2355` (long-press multi-selection for slides and blocks, native
 > long-press text selection inside table cells, custom dropdowns replacing native `<select>`s).
-> That pass only _touched_ Phase 10 (Mobile Experience); those items remain open and we will come
+> That pass only _touched_ Phase 11 (Mobile Experience); those items remain open and we will come
 > back to them when the roadmap reaches that phase. Development now resumes here on the remaining
 > educational blocks.
 >
@@ -294,9 +294,9 @@ Implementation:
 > so we can serve the MVP first.
 >
 > **2026-08 — Code Block teacher-facing MVP shipped.** The CodeBlock authoring (Phases 0–8 of
-> `CODE_BLOCK_PLAN.md`) is complete (see the Code Block section below). The remaining CodeBlock
-> phases (9–11: student-facing rendering, edge-case testing, UX polish) are **deferred** until the
-> VipiClass student/lesson rendering flow exists.
+> `CODE_BLOCK_PLAN.md`) is complete (see the Code Block section below). **2026-08 — Phase 9
+> (student-facing rendering) shipped** via the Student Presentation layer (Phase 8 below); edge-case
+> testing (CODE_BLOCK_PLAN Phase 10) is in progress and UX polish (Phase 11) is planned next.
 
 ## Educational Content Blocks
 
@@ -350,8 +350,8 @@ Teacher-facing authoring MVP shipped (2026-08): see `CODE_BLOCK_PLAN.md` (Phases
 - [x] Two-tier history, autosave, clipboard/duplicate integration
 - [x] Copy source code (raw, no line numbers/markup)
 - [x] No "Turn into" (content is not a single `{html}` field)
-- [ ] Student-facing rendering — deferred until the student/lesson flow exists
-- [ ] Edge-case/integration testing (Phase 10) and UX polish (Phase 11) — after student flow
+- [x] Student-facing rendering — shipped 2026-08 via the Student Presentation layer (Phase 8)
+- [ ] Edge-case/integration testing and UX polish (CODE_BLOCK_PLAN Phases 10–11) — testing in progress, polish planned next
 - [ ] Code formatting
 - [ ] Programming lessons support
 
@@ -393,10 +393,10 @@ Postponed (MVP-first) — Math V2/V3:
 
 ## Navigation
 
-- [ ] Move blocks between slides
-- [ ] Drag blocks across slides
-- [ ] Slide duplication improvements
-- [ ] Better keyboard navigation
+- [x] Move blocks between slides
+- [x] Drag blocks across slides
+- [x] Slide duplication improvements
+- [x] Better keyboard navigation
 
 ---
 
@@ -420,12 +420,53 @@ Current:
 
 Future:
 
-- [ ] Cross-slide copy/paste
-- [ ] Multi-block clipboard
+- [x] Cross-slide copy/paste
+- [x] Multi-block clipboard
 
 ---
 
-# Phase 8 — Platform Integration
+# Phase 8 — Student Previewing & Presentation Rendering ✅
+
+> **2026-08 — Student Presentation layer shipped.** The initial student-facing rendering phase
+> (Phases 1–5 of `STUDENT_PREVIEWING_PLAN.md`) is complete and shipped on branch
+> `feature/student-presentation`. A new `/presentation` route renders persisted slide/block data
+> (bundled demo data for now — no API/persistence wiring yet) through a dedicated, editor-free
+> renderer tree: `PresentationShell` → `SlideRenderer` → `BlockRouter` → per-block renderers. All
+> existing block types render (text, callout, youtube, image, divider, table, exercise, quiz, math,
+> code); unknown/empty/malformed blocks fail gracefully without mutating data. Student interaction is
+> local-only (exercise answers, quiz selection, hint toggles) — no grading, no submission, no
+> persistence. See ADR-018.
+
+## Presentation Shell & Navigation
+
+- [x] Client-only `/presentation` route (`next/dynamic` + `ssr: false` — DOMPurify is browser-only)
+- [x] Slide navigation (counter + prev/next buttons + Arrow keys)
+- [x] Responsive layout and overflow handling
+
+## Block Rendering
+
+- [x] Central `BlockRouter` dispatch + unknown-block fallback
+- [x] Text / Callout / YouTube / Image / Divider renderers
+- [x] Table renderer (headers, spans, hidden cells, overflow)
+- [x] Exercise / Quiz renderers (student interaction, local state only)
+- [x] Math renderer (reuses the KaTeX `MathRenderer`)
+- [x] Code renderer (reuses highlight.js + student copy button)
+
+## Security
+
+- [x] Centralized DOMPurify sanitization for all student-facing rich HTML (single allow-list, ADR-018)
+- [x] No arbitrary code execution; code rendered escaped/static
+- [x] Safe link handling in shared resources
+
+## Deferred (plan Phases 6–8)
+
+- [ ] Teacher preview mode (plan Phase 6)
+- [ ] VipiClass integration: persisted lessons, identity, permissions, progress, submissions (plan Phase 7)
+- [ ] PDF / export rendering (plan Phase 8)
+
+---
+
+# Phase 9 — Platform Integration
 
 ## Lesson Management
 
@@ -467,7 +508,7 @@ Possible storage:
 
 ---
 
-# Phase 9 — AI Integration (Tafsiri AI)
+# Phase 10 — AI Integration (Tafsiri AI)
 
 The editor should become AI-ready.
 
@@ -513,7 +554,7 @@ Creates:
 
 ---
 
-# Phase 10 — Collaboration & Advanced Platform Features
+# Phase 11 — Collaboration & Advanced Platform Features
 
 Future long-term evolution:
 
@@ -541,7 +582,7 @@ Future long-term evolution:
 > explored this area during the styling detour: touch long-press multi-selection for slides and
 > blocks, native long-press text selection inside table cells, and custom dropdowns replacing native
 > `<select>`s in block controls. This is an exploratory detour, **not** the completion of this
-> phase. All items below remain open and will be addressed when the roadmap reaches Phase 10.
+> phase. All items below remain open and will be addressed when the roadmap reaches Phase 11.
 
 - [ ] Touch-friendly editing
 - [ ] Mobile toolbar
@@ -578,8 +619,10 @@ Optimization
 
 # Current Priority Order
 
-> **Next:** the **Code Block** (Phase 6 remaining block). Math Block V1 is shipped; the rest of
-> the math roadmap (V2/V3) is postponed to serve the MVP first.
+> **Next:** **Teacher Preview** (plan Phase 6) and then **VipiClass integration** (plan Phase 7) of the
+> Student Presentation layer. The initial student-facing rendering (plan Phases 1–5) shipped 2026-08
+> (Phase 8 above); the CodeBlock still needs UX polish (CODE_BLOCK_PLAN Phase 11), and math V2/V3
+> remains postponed to serve the MVP first.
 
 ## Immediate
 
