@@ -3,8 +3,8 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .rtf-field:focus-within {
-  border-color: #4f6ef7;
-  box-shadow: 0 0 0 3px #eef1ff;
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px var(--brand-blue-soft);
 }
 
 /* Inline editor cards (TextBlock) */
@@ -12,8 +12,8 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .editor-card:focus-within {
-  border-color: #4f6ef7;
-  box-shadow: 0 0 0 3px #eef1ff;
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px var(--brand-blue-soft);
 }
 
 .editor-card .ProseMirror {

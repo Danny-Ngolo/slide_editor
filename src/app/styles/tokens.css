@@ -1,0 +1,18 @@
+:root {
+  --brand-navy: #1d2b64;
+  --brand-blue: #1d2b64;
+  --brand-blue-text: #1d2b64;
+  --brand-blue-soft: #e8e9f4;
+
+  --on-brand: #ffffff;
+  --on-brand-muted: #cdd6f6;
+
+  --surface: #ffffff;
+  --surface-alt: #f7f8fa;
+  --text: #1f2328;
+  --text-muted: #5b6472;
+  --border: #e2e5ea;
+
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-size-base: 18px;
+}

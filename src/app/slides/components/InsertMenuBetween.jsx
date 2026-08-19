@@ -39,11 +39,11 @@ const InsertMenuBetween = ({ onInsert }) => {
           alignItems: "center",
           justifyContent: "center",
           background: COLORS.card,
-          border: `1px solid ${COLORS.border}`,
+          border: `1px solid ${COLORS.brandBlue}`,
           borderRadius: RADIUS.pill,
           padding: "4px",
           cursor: "pointer",
-          color: COLORS.accent,
+          color: COLORS.brandBlueText,
           boxShadow: SHADOWS.card,
         }}
       >

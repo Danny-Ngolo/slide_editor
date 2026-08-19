@@ -124,7 +124,7 @@ th {
 }
 
 .table-drag-handle:hover {
-  color: #4f6ef7;
+  color: var(--brand-blue);
 }
 
 .table-drag-handle:active {

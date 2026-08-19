@@ -1,5 +1,5 @@
 const demoImageSrc = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400"><rect width="640" height="400" fill="#4f6ef7"/><rect x="40" y="40" width="560" height="320" fill="none" stroke="#ffffff" stroke-width="4" rx="12"/><text x="320" y="210" fill="#ffffff" font-family="Arial, sans-serif" font-size="34" text-anchor="middle">Sample diagram</text></svg>`,
+  `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400"><rect width="640" height="400" fill="#1d2b64"/><rect x="40" y="40" width="560" height="320" fill="none" stroke="#ffffff" stroke-width="4" rx="12"/><text x="320" y="210" fill="#ffffff" font-family="Arial, sans-serif" font-size="34" text-anchor="middle">Sample diagram</text></svg>`,
 )}`;
 
 const rich = {

@@ -12,6 +12,7 @@ import EditorToolBar from "./EditorToolBar";
 import InsertMenu from "./InsertMenu";
 import InsertMenuBetween from "./InsertMenuBetween";
 import SortableBlock from "./SortableBlock";
+import { primaryButtonStyle } from "./blocks/shared/styles";
 import { useEditorContext } from "./EditorContext";
 import { useSlides } from "../hooks/useSlides";
 import { computeFixedMenuPosition } from "../utils/menuPosition";
@@ -142,7 +143,7 @@ const SlideCanvas = ({ slide, slides }) => {
 
             <button
               onClick={handleClickAddBlock}
-              style={{ marginTop: "20px", padding: "10px 15px" }}
+              style={{ ...primaryButtonStyle, marginTop: "20px" }}
             >
               + Add Block
             </button>

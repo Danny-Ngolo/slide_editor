@@ -1,26 +1,17 @@
 .presentation {
-  --p-surface: #ffffff;
-  --p-surface-alt: #f7f8fa;
-  --p-text: #1f2328;
-  --p-text-muted: #6b7280;
-  --p-border: #e2e5ea;
-  --p-accent: #4f6ef7;
-  --p-accent-text: #3b5bf0;
-
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: var(--p-surface-alt);
-  color: var(--p-text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
-  font-size: 16px;
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
 .presentation :focus-visible {
-  outline: 2px solid var(--p-accent);
+  outline: 2px solid var(--brand-blue);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -30,8 +21,8 @@
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  background: var(--p-surface);
-  border-bottom: 1px solid var(--p-border);
+  background: var(--brand-navy);
+  color: var(--on-brand);
   flex-shrink: 0;
 }
 
@@ -40,7 +31,7 @@
   min-width: 0;
   font-size: 15px;
   font-weight: 600;
-  color: var(--p-text);
+  color: var(--on-brand);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -48,7 +39,7 @@
 
 .presentation-counter {
   font-size: 13px;
-  color: var(--p-text-muted);
+  color: var(--on-brand-muted);
   white-space: nowrap;
 }
 
@@ -58,18 +49,17 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid var(--p-border);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
-  background: var(--p-surface);
-  color: var(--p-text);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--on-brand);
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .presentation-nav-button:hover:not(:disabled) {
-  background: var(--p-surface-alt);
-  border-color: var(--p-accent);
-  color: var(--p-accent-text);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--on-brand);
 }
 
 .presentation-nav-button:disabled {
@@ -87,8 +77,8 @@
 .presentation-slide {
   max-width: min(820px, 100%);
   margin: 0 auto;
-  background: var(--p-surface);
-  border: 1px solid var(--p-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: clamp(20px, 4vw, 44px);
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
@@ -99,7 +89,7 @@
   font-weight: 700;
   line-height: 1.2;
   margin: 0 0 0.6em;
-  color: var(--p-text);
+  color: var(--brand-navy);
 }
 
 .presentation-block {
@@ -115,22 +105,22 @@
   font-weight: 700;
   line-height: 1.3;
   margin: 0 0 0.4em;
-  color: var(--p-text);
+  color: var(--brand-navy);
 }
 
 .presentation-empty {
-  color: var(--p-text-muted);
+  color: var(--text-muted);
   font-style: italic;
   text-align: center;
   padding: 32px 0;
 }
 
 .presentation-unknown {
-  border: 1px dashed var(--p-border);
+  border: 1px dashed var(--border);
   border-radius: 8px;
   padding: 12px 16px;
-  color: var(--p-text-muted);
-  font-size: 14px;
+  color: var(--text-muted);
+  font-size: 15px;
 }
 
 /* ---- Rich text content ---- */
@@ -223,7 +213,7 @@
 }
 
 .presentation-rich a {
-  color: var(--p-accent-text);
+  color: var(--brand-blue-text);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -236,7 +226,7 @@
 
 .presentation-rich hr {
   border: none;
-  border-top: 1px solid var(--p-border);
+  border-top: 1px solid var(--border);
   margin: 1em 0;
 }
 
@@ -265,14 +255,14 @@
   width: 16px;
   height: 16px;
   cursor: default;
-  accent-color: var(--p-accent);
+  accent-color: var(--brand-blue);
 }
 
 /* ---- Divider ---- */
 
 .presentation-divider {
   border: none;
-  border-top: 1px solid var(--p-border);
+  border-top: 1px solid var(--border);
   margin: 24px 0;
 }
 
@@ -347,17 +337,17 @@
 
 .presentation-image-caption {
   margin-top: 6px;
-  font-size: 14px;
-  color: var(--p-text-muted);
+  font-size: 15px;
+  color: var(--text-muted);
   text-align: center;
 }
 
 .presentation-image-missing {
-  border: 1px dashed var(--p-border);
+  border: 1px dashed var(--border);
   border-radius: 8px;
   padding: 24px;
-  color: var(--p-text-muted);
-  font-size: 14px;
+  color: var(--text-muted);
+  font-size: 15px;
   text-align: center;
   width: 100%;
 }
@@ -384,16 +374,16 @@
 
 .presentation-video-caption {
   margin-top: 8px;
-  font-size: 14px;
-  color: var(--p-text-muted);
+  font-size: 15px;
+  color: var(--text-muted);
 }
 
 .presentation-video-missing {
-  border: 1px dashed var(--p-border);
+  border: 1px dashed var(--border);
   border-radius: 8px;
   padding: 24px;
-  color: var(--p-text-muted);
-  font-size: 14px;
+  color: var(--text-muted);
+  font-size: 15px;
   text-align: center;
 }
 
@@ -408,19 +398,19 @@
   width: 100%;
   border-collapse: collapse;
   border-spacing: 0;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .presentation-table th,
 .presentation-table td {
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--border);
   padding: 8px 12px;
   vertical-align: top;
   text-align: left;
 }
 
 .presentation-table th {
-  background: #f6f8fa;
+  background: var(--surface-alt);
   font-weight: 600;
 }
 
@@ -448,15 +438,15 @@
 }
 
 .presentation-math-empty {
-  color: var(--p-text-muted);
+  color: var(--text-muted);
   font-style: italic;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 /* ---- Code ---- */
 
 .presentation-code {
-  border: 1px solid var(--p-border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -467,14 +457,14 @@
   justify-content: space-between;
   gap: 8px;
   padding: 8px 12px;
-  background: var(--p-surface-alt);
-  border-bottom: 1px solid var(--p-border);
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--border);
 }
 
 .presentation-code-lang {
   font-size: 11px;
   font-weight: 700;
-  color: var(--p-text-muted);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
 }
@@ -484,18 +474,18 @@
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  border: 1px solid var(--p-border);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: var(--p-surface);
-  color: var(--p-text);
-  font-size: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .presentation-code-copy:hover {
-  border-color: var(--p-accent);
-  color: var(--p-accent-text);
+  border-color: var(--brand-blue);
+  color: var(--brand-blue-text);
 }
 
 .presentation-code pre {
@@ -503,9 +493,9 @@
   padding: 12px 14px;
   overflow-x: auto;
   background: #ffffff;
-  color: var(--p-text);
+  color: var(--text);
   font-family: "Courier New", monospace;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
   white-space: pre;
 }
@@ -521,19 +511,19 @@
 
 .presentation-meta-chip {
   font-size: 12px;
-  color: var(--p-text-muted);
-  background: var(--p-surface-alt);
-  border: 1px solid var(--p-border);
+  color: var(--text-muted);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
   border-radius: 999px;
   padding: 2px 10px;
 }
 
 .presentation-question {
-  border: 1px solid var(--p-border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 14px 16px;
   margin-bottom: 14px;
-  background: var(--p-surface);
+  background: var(--surface);
 }
 
 .presentation-question:last-child {
@@ -543,7 +533,7 @@
 .presentation-question-index {
   font-size: 12px;
   font-weight: 700;
-  color: var(--p-text-muted);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
   margin-bottom: 8px;
@@ -558,7 +548,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 8px 10px;
-  border: 1px solid var(--p-border);
+  border: 1px solid var(--border);
   border-radius: 6px;
   margin-bottom: 6px;
   cursor: pointer;
@@ -566,12 +556,12 @@
 }
 
 .presentation-option:hover {
-  border-color: var(--p-accent);
+  border-color: var(--brand-blue);
 }
 
 .presentation-option:has(input:checked) {
-  border-color: var(--p-accent);
-  background: #eef1ff;
+  border-color: var(--brand-blue);
+  background: var(--brand-blue-soft);
 }
 
 .presentation-option input {
@@ -579,7 +569,7 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  accent-color: var(--p-accent);
+  accent-color: var(--brand-blue);
   cursor: pointer;
 }
 
@@ -592,16 +582,16 @@
   width: 100%;
   min-height: 88px;
   padding: 10px 12px;
-  border: 1px solid var(--p-border);
+  border: 1px solid var(--border);
   border-radius: 6px;
   font: inherit;
-  color: var(--p-text);
-  background: var(--p-surface);
+  color: var(--text);
+  background: var(--surface);
   resize: vertical;
 }
 
 .presentation-answer:focus {
-  border-color: var(--p-accent);
+  border-color: var(--brand-blue);
   outline: none;
 }
 
@@ -614,37 +604,37 @@
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  border: 1px solid var(--p-border);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: var(--p-surface-alt);
-  color: var(--p-text);
+  background: var(--surface-alt);
+  color: var(--text);
   font-size: 13px;
   cursor: pointer;
 }
 
 .presentation-hint-toggle:hover {
-  border-color: var(--p-accent);
-  color: var(--p-accent-text);
+  border-color: var(--brand-blue);
+  color: var(--brand-blue-text);
 }
 
 .presentation-hint-content {
   margin-top: 8px;
   padding: 10px 12px;
-  border-left: 3px solid var(--p-accent);
-  background: var(--p-surface-alt);
+  border-left: 3px solid var(--brand-blue);
+  background: var(--surface-alt);
   border-radius: 0 6px 6px 0;
 }
 
 .presentation-resources {
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid var(--p-border);
+  border-top: 1px solid var(--border);
 }
 
 .presentation-resources-label {
   font-size: 11px;
   font-weight: 700;
-  color: var(--p-text-muted);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
   margin-bottom: 6px;
@@ -660,8 +650,8 @@
 }
 
 .presentation-resources-list a {
-  color: var(--p-accent-text);
-  font-size: 14px;
+  color: var(--brand-blue-text);
+  font-size: 15px;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -683,7 +673,7 @@
   }
 
   .presentation-table {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .presentation-table th,

@@ -1,17 +1,22 @@
 export const COLORS = {
-  card: "#ffffff",
-  text: "#1f2328",
+  card: "var(--surface)",
+  text: "var(--text)",
   label: "#374151",
   fieldBg: "#f6f8fa",
   fieldBorder: "#d0d7de",
   inputBg: "#ffffff",
-  border: "#e2e5ea",
+  border: "var(--border)",
   placeholder: "#6b7280",
 
-  accent: "#4f6ef7",
-  accentSoft: "#eef1ff",
-  accentBorder: "#c7d0fb",
-  accentText: "#3b5bf0",
+  brandNavy: "#1d2b64",
+  brandBlue: "#1d2b64",
+  brandBlueText: "#1d2b64",
+  brandBlueSoft: "#e8e9f4",
+
+  accent: "#1d2b64",
+  accentSoft: "#e8e9f4",
+  accentBorder: "#c9cbe2",
+  accentText: "#1d2b64",
 
   danger: "#dc2626",
   dangerSoft: "#fef2f2",
@@ -22,8 +27,8 @@ export const COLORS = {
   warn: "#b45309",
   warnSoft: "#fffbeb",
 
-  surface: "#ffffff",
-  surfaceAlt: "#f7f8fa",
+  surface: "var(--surface)",
+  surfaceAlt: "var(--surface-alt)",
 };
 
 export const RADIUS = {
@@ -75,10 +80,10 @@ export const addButtonStyle = {
   alignItems: "center",
   gap: "4px",
   padding: "4px 10px",
-  border: `1px solid ${COLORS.fieldBorder}`,
+  border: `1px solid ${COLORS.brandBlue}`,
   borderRadius: "4px",
-  background: COLORS.inputBg,
-  color: COLORS.text,
+  background: COLORS.brandBlueSoft,
+  color: COLORS.brandBlueText,
   fontSize: "12px",
   cursor: "pointer",
 };
@@ -120,7 +125,7 @@ export const primaryButtonStyle = {
   padding: "8px 14px",
   border: "none",
   borderRadius: RADIUS.md,
-  background: COLORS.accent,
+  background: COLORS.brandNavy,
   color: "#ffffff",
   fontSize: "13px",
   fontWeight: 600,
